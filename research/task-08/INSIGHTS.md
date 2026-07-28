@@ -70,6 +70,11 @@ claimed.
   131.959 seconds versus 44.028 seconds with `4x4`. Path quality is reused
   across 32 blocks, so the expert's modest extra TreeSA search pays back many
   times during execution.
+- Absorbing 42 commuting final RX nodes into 21 vertical RXX gates is
+  algebraically correct and improves the 44-observable light-cone audit
+  (11.032 -> 9.618 seconds), but worsens full perfect sampling
+  (44.028 -> 60.989 seconds). Contraction topology/code generation for the
+  actual operation matters more than raw node count.
 
 ## Open hypotheses
 

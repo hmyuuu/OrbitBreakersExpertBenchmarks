@@ -322,3 +322,41 @@ Decision: `discard`. Reducing 16 TreeSA trial/iteration combinations to one
 does reduce search work, but it selects contraction paths whose repeated
 execution across 32 chunks is nearly 3x slower end to end. Preserve the
 expert's `omeco-4-4` budget.
+
+## Experiment `e07`: fuse commuting final RX gates
+
+Branch: `codex/orbitbreakers/task-08/e07-fuse-final-rx`.
+
+Parent candidate: Python-loop 256-shot chunks with OMECo 4x4.
+
+Candidate commit: `caa0f2b`.
+
+Candidate SHA-256:
+`3eef7ec94a6b4268cc6806d1e1a2327b255cf40393f13b5f5bfd0169d91be09b`.
+
+Diff SHA-256:
+`b08233efdfcabdb6e930dc00451400b5c76163ad6bfb9336bdec81a7ad134b6c`.
+
+The candidate was committed before both validations. Sanitized record:
+`profiles/e07-fuse-final-rx-screen.json`.
+
+The exact transformation uses `[RX_i tensor RX_j] RXX_ij` on 21 disjoint
+vertical edges. Since every `RX_i` commutes with every vertical `RXX`, this
+absorbs 42 final single-qubit nodes without changing the circuit unitary;
+seven row-6 RX nodes remain.
+
+```text
+exact_observables_passed: 44/44
+exact_max_abs_error: 1.0180551e-06
+exact_elapsed_sec: 9.617958
+reference_exact_elapsed_sec: 11.031931
+
+8192_shot_runtime_sec: 60.989109
+valid: true
+unfused_chunk256_runtime_sec: 44.028239
+regression_vs_unfused: 38.5222%
+```
+
+Decision: `discard`. Explicit fusion helps light-cone expectation
+contractions but produces worse paths/code for the 49 repeated conditional
+sampling contractions. Keep the original TensorCircuit RX/RXX nodes.
