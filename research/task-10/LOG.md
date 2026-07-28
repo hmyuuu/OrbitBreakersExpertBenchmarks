@@ -171,3 +171,212 @@ is mathematically valid, but its gauge/rounding path perturbs this sensitive
 200-step Adam trajectory. The next experiment will remove canonicalization
 entirely: the known bond dimensions grow only `1 -> 2 -> 4`, so the raw
 framework MPO-times-MPS tensors are already exact and bounded.
+
+## Experiment `e02-noqr-mps`: promoted campaign best
+
+Date: 2026-07-29
+
+Branch: `codex/orbitbreakers/task-10/noqr-mps`
+
+Latest accepted parent commit:
+`02f4d37adadcdb33f7ba4336d69668d533378ffd`
+
+Candidate commit:
+`34171c020c2f9613efefaddefb94dc87ec9cbf16`
+
+Candidate SHA-256:
+`ad3154ccdfec1a329493e1dc7bbe6e3d30ee4e5d0cc7ac16c9922c57976d1262`
+
+Expert-to-candidate diff SHA-256:
+`8a404895e36a14246f82c4e40d239cb1b1ca2d12a042377b685953713011c06f`
+
+Raw paired report SHA-256:
+`a75f15f0cb67e93e27458e63248ffb462e4c7c8d7d3ee1c30ff7cdcbc8868f54`
+
+Sanitized evidence:
+[`profiles/e02-latest-nightly-paired.json`](profiles/e02-latest-nightly-paired.json)
+
+### Hypothesis
+
+The two exact bond-2 CMZ applications bound the state bond dimension by four.
+Applying their local MPO-times-MPS contraction without QR/RQ will preserve the
+expert's complex64 optimizer trajectory, shrink tracing/compilation work, and
+pass the evaluator. The exact bond-3 TFIM expectation and all 200 Adam updates
+remain in TensorCircuit-NG backend operations, with the updates executed by one
+`K.jaxy_scan`.
+
+Falsification rule: invalid if any evaluator gate fails, any exact rank is
+truncated, fewer than 200 updates run, any returned shape changes, fewer than
+five eligible matched pairs remain, the candidate loses two or more of the
+first five pairs, or the predeclared paired-speedup 95% lower bound is at or
+below 1.0.
+
+### Data, command, seed, and environment
+
+Public dataset version: `orbitq-workloads-v20260729.3`
+
+Public Task 10 workload SHA-256:
+`c978b7b0c45affa8c1842c0f26d19131a24c5ec8b7253a5e531ad48b7faa8340`
+
+Private evaluation used: `no`
+
+Seed: `2040`
+
+Evaluator SHA-256:
+`0ab012597cfa79ec32ebc55bb28307c7b15309315f8057604760df5ad4be71db`
+
+Immutable reference SHA-256:
+`0e3266857e4faa8a4d65092b0e88c2866042d716cb0ef8a278633a4f30bb6172`
+
+Command:
+
+```bash
+./bench run 10 \
+  --solution optimized \
+  --compare-to reference \
+  --repeat 6 \
+  --engine docker \
+  --timeout 300 \
+  --no-build \
+  --output results/task-10-e02-latest-6cpu
+```
+
+Image:
+`sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833`
+
+Image packages:
+TensorCircuit nightly `1.8.0.dev20260726`, Python `3.11.15`,
+JAX/JAXLIB `0.10.0`, Optax `0.2.8`, Quimb `1.11.1`, OMECo `0.2.4`,
+TensorNetwork-NG `0.5.1`, NumPy `2.2.6`, SciPy `1.17.1`.
+
+Container allocation: `6 CPUs`, `7 GiB`, network disabled.
+
+Host fingerprint SHA-256:
+`c627504db97dc65b8d998afb4b9cdf73cfc3eff2ce2ac589b4a7a4aa0c7fdc48`
+
+Pair order: odd `reference -> candidate`, even
+`candidate -> reference`.
+
+Each cell started a fresh evaluator process in one shared container. The
+measured region was the evaluator timer around `run_solution(config)`.
+
+### Functional result
+
+All six candidate cells passed. A direct full candidate evaluation reported:
+
+```text
+Initial energy density: 0.9718861580
+Final energy density: -1.1781773567
+Exact ground energy density: -1.2925285569
+VQE energy-density gap: 0.1143512002
+Energy history shape: (200,)
+Final parameter shape: (2, 22, 3)
+Overall: PASS
+```
+
+The immutable expert's profiled final energy density was `-1.1781759262`.
+No singular-value truncation, rank cap, changed Hamiltonian, skipped update,
+or hard-coded output is present.
+
+### First-five result requested by the user
+
+Pairwise runtimes `(reference, candidate, speedup)`:
+
+```text
+(20.254729, 3.908787, 5.181845)
+(18.556855, 3.630935, 5.110765)
+(18.895129, 4.107835, 4.599778)
+(18.175488, 3.784015, 4.803228)
+(18.774277, 3.914864, 4.795640)
+```
+
+```text
+reference_mean_sec: 18.9312956
+reference_median_sec: 18.774277
+reference_stdev_sec: 0.7888107693
+reference_stderr_sec: 0.3527669003
+candidate_mean_sec: 3.8692872
+candidate_median_sec: 3.908787
+candidate_stdev_sec: 0.1765117922
+candidate_stderr_sec: 0.0789384732
+ratio_of_means_speedup: 4.8927088173
+ratio_of_means_improvement_pct: 79.5614242060
+paired_speedup_mean: 4.8982511930
+paired_speedup_stderr: 0.1082202220
+paired_speedup_ci_low: 4.5977836874
+paired_speedup_ci_high: 5.1987186987
+paired_wins: 5/5
+```
+
+### Supplemental sixth pair
+
+Pair 6 measured `(18.869560, 3.665339, 5.148108)`. Across all six pairs:
+
+```text
+reference_mean_sec: 18.9210063333
+candidate_mean_sec: 3.8352958333
+ratio_of_means_speedup: 4.9333890150
+ratio_of_means_improvement_pct: 79.7299585140
+paired_speedup_mean: 4.9398939474
+paired_speedup_stderr: 0.0976824615
+paired_speedup_ci_low: 4.6887931860
+paired_speedup_ci_high: 5.1909947088
+paired_wins: 6/6
+all_evaluator_cells_passed: yes
+```
+
+### Profiling result
+
+The candidate profiling harness was added in later evidence-only commit
+`fe82655`; it did not alter the measured candidate bytes.
+
+Reference natural JIT boundary (one optimizer step):
+
+```text
+jit_lower_sec: 4.3702465110
+xla_compile_sec: 13.1435420480
+stablehlo_line_count: 20474
+steady_step_ms: 0.3174230
+full_run_solution_sec: 18.3647714800
+```
+
+Candidate natural JIT boundary (complete 200-step scan):
+
+```text
+jit_lower_sec: 0.6671965030
+xla_compile_sec: 2.8734394700
+stablehlo_line_count: 19252
+steady_full_training_ms: 39.6777508
+full_run_solution_after_profile_sec: 3.6463986430
+```
+
+Lowering plus XLA compilation fell from `17.513789 s` to `3.540636 s`,
+a `79.78%` reduction. The natural entry signatures differ, so StableHLO line
+counts are diagnostic; the cold-process paired evaluator timings remain the
+performance authority.
+
+### Decision
+
+Decision: `accept-campaign-best-for-pr`
+
+The candidate passes the functional contract, wins every pair, lowers mean
+and median runtime, and has a paired-speedup confidence lower bound far above
+1.0. It is eligible for a same-host relative improvement claim over the
+bundled human expert.
+
+The final comparison intentionally used the latest available TensorCircuit
+nightly for both sides and a symmetric 6-CPU/7-GiB allocation because the
+backend cannot supply the requested 8 CPUs. Per the user's direction, exact
+downgrade to the repository's older TensorCircuit lock is not required. The
+result is not labeled as the default pinned baseline or global SOTA.
+
+No solution tuning occurred after this final paired benchmark. Subsequent
+changes add only profiling, sanitized evidence, and research documentation.
+
+## Append-only corrections
+
+The initial campaign entry described the unavailable exact-lock image as a
+prerequisite for the final comparison. The user later clarified that the
+latest TensorCircuit release is acceptable and that only the same-machine
+relative performance matters. Experiment e02 follows that clarified scope
+and records the exact image ID and symmetric resource limits.

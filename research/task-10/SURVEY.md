@@ -199,3 +199,22 @@ promotion; results from the newer ORBIT-Q development image are exploratory.
 - The primary exact-MPS hypothesis has not yet been implemented or timed.
 - Scaling beyond the canonical two-layer configuration is out of claim scope
   unless an explicit public scale dataset is added before measurement.
+
+## Post-freeze campaign outcome
+
+This section records the result without changing the predeclared hypotheses or
+statistics plan above.
+
+The exact-MPS hypothesis passed as experiment `e02-noqr-mps` after removing
+unnecessary QR/RQ canonicalization from the exact bond-dimension-four path.
+The first five matched pairs measured a `4.892709x` ratio-of-means speedup and
+`79.561424%` runtime reduction; all cells passed. The sixth predeclared pair
+also passed, and the six-pair mean speedup confidence interval excluded 1.0.
+See [`IMPLEMENTATION_COMPARISON.md`](IMPLEMENTATION_COMPARISON.md).
+
+At the user's direction, the final relative comparison used the latest
+available TensorCircuit nightly image for both sides rather than waiting for
+the older exact-lock image. It ran with a symmetric 6-CPU/7-GiB container
+profile because the Docker backend cannot supply the repository's requested
+8 CPUs. This supports the same-machine relative claim but is not labeled as
+the repository's default pinned-environment baseline or as global SOTA.
