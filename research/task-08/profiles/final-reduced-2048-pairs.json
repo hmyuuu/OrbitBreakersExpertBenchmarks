@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "task_id": "08",
+  "workload": "public evaluator-supported n_samples=2048 scale probe",
+  "classification": "descriptive paired result; frozen promotion rule not met",
+  "raw_report_sha256": "cf254f54739057b85903702df7f824d018081106339b3b27003c7e65057dc178",
+  "reference_sha256": "0b0df74257e8f55d717ca29bb36e2edbb803206e9b2966fa423fefca9f15c311",
+  "candidate_sha256": "7696f4d742d07da92a06cf5bdd4634f26ca5fe9251471163a90a4b6da280b45d",
+  "evaluator_sha256": "bffda6b012b07fd1cb8d5a1ec8a763bba4f1b967e5adc0d2b704e6ae99de9c41",
+  "sitecustomize_sha256": "02800060761f2b15abe9055aded49d2af3877ab93d7b0fae8af94b30bac30120",
+  "snapshot_sha256": "f86c4c80348483cd441f1c60d5cf3ff2fabad70049fdee12fe020a331571f3ab",
+  "environment_image_id": "sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833",
+  "container_id": "a9586f55984b7775227ed34be7f6097b0a8b434b309b91034fd7010890d17bb7",
+  "host_fingerprint_sha256": "8188765e4acb94ead1ba5de9e79cb6cb2be366ecfa06948a06df2ef871880aab",
+  "cpu_limit": 6,
+  "memory_limit": "7 GiB",
+  "pair_order": "odd reference->candidate; even candidate->reference",
+  "fresh_evaluator_process_per_cell": true,
+  "reference_runtimes_sec": [
+    29.965212,
+    39.589037,
+    28.130474,
+    30.583924,
+    35.193469,
+    30.014218
+  ],
+  "candidate_runtimes_sec": [
+    27.435688,
+    29.119827,
+    31.500896,
+    30.33802,
+    27.661507,
+    32.975788
+  ],
+  "pairwise_speedups": [
+    1.0921983075474544,
+    1.359521710070599,
+    0.8930055195890301,
+    1.0081054729346213,
+    1.2722903708753106,
+    0.9101895608984385
+  ],
+  "reference": {
+    "passing_runs": 6,
+    "mean_sec": 32.24605566666666,
+    "median_sec": 30.299070999999998,
+    "sample_stdev_sec": 4.3009455135739,
+    "stderr_sec": 1.7558536532947664,
+    "min_sec": 28.130474,
+    "max_sec": 39.589037
+  },
+  "candidate": {
+    "passing_runs": 6,
+    "mean_sec": 29.838621,
+    "median_sec": 29.7289235,
+    "sample_stdev_sec": 2.185632700553138,
+    "stderr_sec": 0.8922808135827349,
+    "min_sec": 27.435688,
+    "max_sec": 32.975788
+  },
+  "ratio_of_means_speedup": 1.0806818340119224,
+  "ratio_of_means_improvement_pct": 7.4658268023622885,
+  "mean_pairwise_speedup": 1.0892184903192423,
+  "pairwise_speedup_stderr": 0.07825561373059682,
+  "pairwise_speedup_ci_95": [
+    0.8880560310513845,
+    1.2903809495871001
+  ],
+  "candidate_pair_wins": 4,
+  "candidate_pair_losses": 2,
+  "promotion_rule_passed": false,
+  "failure_reasons": [
+    "Candidate won 4/6 pairs, below the frozen 5/6 requirement.",
+    "The 95% paired-speedup confidence interval includes 1.0."
+  ]
+}

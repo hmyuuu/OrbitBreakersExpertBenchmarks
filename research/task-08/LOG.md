@@ -360,3 +360,82 @@ regression_vs_unfused: 38.5222%
 Decision: `discard`. Explicit fusion helps light-cone expectation
 contractions but produces worse paths/code for the 49 repeated conditional
 sampling contractions. Keep the original TensorCircuit RX/RXX nodes.
+
+## Final accepted implementation
+
+Candidate commit on campaign branch: `9da76f1`.
+
+Candidate SHA-256:
+`7696f4d742d07da92a06cf5bdd4634f26ca5fe9251471163a90a4b6da280b45d`.
+
+Implementation: original TensorCircuit network and OMECo 4x4 contractor;
+pre-generate the unchanged seed-2033 status matrix; evaluate the cached
+`K.jit(K.vmap(perfect_sampling))` on contiguous 256-shot blocks; copy each
+small output block to NumPy and concatenate in original order.
+
+### Final canonical five-pair session
+
+Command:
+
+```bash
+python3 research/task-08/run_docker_matrix.py \
+  --mode paired --n-samples 8192 --repeat 5 \
+  --timeout 300 --cpus 6 --memory 7g \
+  --output results/task-08-final-canonical-5-pairs
+```
+
+Raw report SHA-256:
+`02319130b267855985eb60d4e86bcc5523f1edb6df62c7695a4667ef9227148f`.
+
+Tracked sanitized record:
+`profiles/final-canonical-8192-five-pairs.json`.
+
+```text
+reference: 0/5 PASS; runtime_sec unavailable in every cell
+reference terminal states: RESOURCE_EXHAUSTED/exit 137 x 5
+candidate: 5/5 PASS
+candidate runtimes_sec:
+  40.537079, 51.583744, 55.098628, 45.220425, 44.341687
+candidate mean_sec: 47.356313
+candidate median_sec: 45.220425
+candidate sample_stdev_sec: 5.872958
+candidate stderr_sec: 2.626467
+```
+
+Decision: `keep for feasibility`. This establishes OOM-to-PASS and bounded
+peak-memory behavior. It does not establish a numerical speedup because there
+are zero eligible canonical runtime pairs.
+
+### Final reduced 2048-shot six-pair session
+
+Command:
+
+```bash
+python3 research/task-08/run_docker_matrix.py \
+  --mode paired --n-samples 2048 --repeat 6 \
+  --timeout 300 --cpus 6 --memory 7g \
+  --output results/task-08-final-reduced-2048-pairs
+```
+
+Raw report SHA-256:
+`cf254f54739057b85903702df7f824d018081106339b3b27003c7e65057dc178`.
+
+Tracked sanitized record: `profiles/final-reduced-2048-pairs.json`.
+
+```text
+valid: 12/12 PASS
+reference mean_sec: 32.246056
+candidate mean_sec: 29.838621
+ratio_of_means_improvement: 7.4658%
+mean_pairwise_speedup: 1.089218
+paired_speedup_stderr: 0.078256
+paired_speedup_95pct_t_ci: [0.888056, 1.290381]
+candidate pair wins: 4/6
+```
+
+Decision: `not promoted as a runtime speedup`. The descriptive mean is lower,
+but the frozen rule required at least 5/6 wins and a confidence-interval lower
+bound above 1.0. Both conditions fail.
+
+Full interpretation and PR wording:
+[`IMPLEMENTATION_COMPARISON.md`](IMPLEMENTATION_COMPARISON.md).

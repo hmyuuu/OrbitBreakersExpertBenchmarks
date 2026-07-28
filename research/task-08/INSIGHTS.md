@@ -8,10 +8,18 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-Provisional only: e03 with 256-shot chunks. It turns the canonical workload
-from reference OOM into a 44.028-second PASS, improving on e02's 50.843-second
-512-shot screen. Formal repeated evidence is still pending, so no speedup is
-claimed.
+The accepted Task 08 implementation is the original TensorCircuit circuit and
+OMECo 4x4 contractor with contiguous 256-shot Python chunks around one cached
+`K.jit(K.vmap(perfect_sampling))`
+(`sha256:7696f4d742d07da92a06cf5bdd4634f26ca5fe9251471163a90a4b6da280b45d`).
+
+In the final canonical session, the immutable expert failed 5/5 attempts with
+OOM/exit 137 while the candidate passed 5/5 at 47.356 ± 2.626 seconds (mean ±
+standard error). This is an OOM-to-PASS result, not a numerical speedup.
+
+At 2048 shots the candidate mean is 7.47% lower, but it wins only 4/6 pairs
+and the paired-speedup 95% interval `[0.888, 1.290]` includes 1.0. No confirmed
+runtime-speedup claim is made.
 
 ## Preserved semantics
 
@@ -87,6 +95,8 @@ claimed.
 
 ## Evidence limits
 
-The campaign has one canonical OOM and one passing 2048-shot probe, not a
-repeated reference baseline. Results will apply only to this fixed Docker
-image, six-CPU/7-GiB host allocation, circuit and evaluator.
+Canonical evidence has five interleaved expert failures and five candidate
+passes, but no eligible speedup pairs. The reduced six-pair comparison is
+descriptive because it fails the frozen confidence/win-count rule. Results
+apply only to this fixed Docker image, six-CPU/7-GiB allocation, circuit and
+evaluator; no cross-hardware, global-SOTA or scaling claim is established.
