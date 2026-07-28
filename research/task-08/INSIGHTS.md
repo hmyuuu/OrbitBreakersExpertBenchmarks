@@ -62,13 +62,15 @@ claimed.
 - 128-shot Python chunks are too small: the full run is 55.182 seconds,
   25.3% slower than the 256-shot screen. Extra dispatch and synchronization
   dominate below 256 on this host.
+- Wrapping 256-shot blocks in TensorCircuit `K.jaxy_scan` is also worse:
+  67.401 seconds, 53.1% above the Python-loop screen. The body contains all
+  49 conditional network contractions, so staging it inside XLA control flow
+  costs far more than 31 cached-jit dispatches.
 
 ## Open hypotheses
 
-1. Stage the 256-shot chunks in TensorCircuit `K.jaxy_scan` to remove Python
-   dispatch while retaining bounded intermediates.
-2. Grid-aware measurement ordering with inverse output permutation.
-3. OMECo path-search budget selection based on end-to-end contraction cost.
+1. Grid-aware measurement ordering with inverse output permutation.
+2. OMECo path-search budget selection based on end-to-end contraction cost.
 4. An analytic, non-SVD Pauli MPO only if paired with better graph
    simplification/path evidence.
 5. Commuting/fusing the final `Rx` layer with the `RXX` network if framework

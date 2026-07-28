@@ -265,3 +265,31 @@ Decision: `discard`. The extra 32 Python dispatch/synchronization boundaries
 outweigh the smaller mapped graph. The measured optimum among 128/256/512 is
 256. Next pivot: retain 256-shot memory bounding but stage all chunks with the
 TensorCircuit-native `K.jaxy_scan` wrapper to remove host dispatch.
+
+## Experiment `e05`: TensorCircuit `K.jaxy_scan` over 256-shot chunks
+
+Branch: `codex/orbitbreakers/task-08/e05-scan256`.
+
+Candidate commit: `c07c660`.
+
+Candidate SHA-256:
+`51c55e16ce6021b4ac3ff3da0387038beb347dd0b4105d91b416953d5b1bcb87`.
+
+Diff SHA-256:
+`6aba49e302f4e0bb2f6698b95d308fdb9d503f7b21d2af9eaa7f601e7dd30c52`.
+
+The candidate was committed before the canonical screen. Sanitized record:
+`profiles/e05-scan256-screen.json`.
+
+```text
+8192_shot_runtime_sec: 67.400915
+valid: true
+python_chunk256_runtime_sec: 44.028239
+regression_vs_python_chunk256: 53.0855%
+```
+
+Decision: `discard`. Although `K.jaxy_scan` removes 31 Python dispatches, it
+places the large mapped 49-measurement conditional-contraction body inside XLA
+control flow. Compilation/optimization and loop execution cost dominate the
+saved dispatch. Keep the simpler Python loop with one cached `K.jit` per
+256-shot block.
