@@ -42,14 +42,21 @@ candidate.
 - The unmodified canonical expert does not fit the fixed 7-GiB environment.
 - Merely requesting more CPUs is irrelevant to the semantic comparison and
   does not address the 18-GB allocation.
+- TensorCircuit's generic rank-2 SVD split is counterproductive here. It
+  preserves all 256 diagnostic samples exactly, but takes 30.307 seconds
+  versus 24.601 seconds for the dense-gate reference; the 44 exact
+  light-cone contractions take 75.652 seconds versus 11.032 seconds, and
+  accumulated complex64 SVD rounding reaches `8.56e-6`. Do not repeat e01
+  unless the framework gains an analytic Pauli-rotation MPO and a path
+  optimizer that benefits from the larger node graph.
 
 ## Open hypotheses
 
-1. TensorCircuit-native exact rank-2 splitting for every two-qubit Pauli
-   rotation.
-2. Contiguous status-matrix chunks after separately measuring split gates.
-3. Grid-aware measurement ordering with inverse output permutation.
-4. OMECo path-search budget selection based on end-to-end contraction cost.
+1. Contiguous status-matrix chunks on the original dense-gate network.
+2. Grid-aware measurement ordering with inverse output permutation.
+3. OMECo path-search budget selection based on end-to-end contraction cost.
+4. An analytic, non-SVD Pauli MPO only if paired with better graph
+   simplification/path evidence.
 5. Commuting/fusing the final `Rx` layer with the `RXX` network if framework
    simplification does not already achieve it.
 

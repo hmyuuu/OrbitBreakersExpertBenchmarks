@@ -126,3 +126,38 @@ Pending. Append results; never overwrite prior failure evidence.
 
 Append corrections below this heading. Never rewrite a result after it has
 informed another experiment.
+
+## Experiment `e01` diagnostic result
+
+Candidate commit: `794172f`.
+
+Candidate SHA-256:
+`1ed6ec65bb0402078307a4ade8e0582381dd659089b82c496c1b3a98a4946eb2`.
+
+Diff SHA-256:
+`65ceec453bcc082d4e05cbc1ce3a9aa694c5bfd51d40f400a333a0b24221818d`.
+
+Sanitized record:
+`profiles/e01-rank2-split-diagnostic.json`.
+
+The exploratory diagnostic was run before the hypothesis commit, so it is
+explicitly ineligible for a formal performance claim. It is retained because
+it decisively falsifies the idea and prevents an expensive 2048-shot run.
+
+```text
+exact_observable_reference_elapsed_sec: 11.031931
+exact_observable_candidate_elapsed_sec: 75.651599
+candidate_max_abs_error: 8.5601921e-06
+predeclared_max_abs_error: 2e-06
+256_shot_reference_runtime_sec: 24.601082
+256_shot_candidate_runtime_sec: 30.307426
+candidate/reference_runtime_ratio: 1.231955
+sample_arrays_equal: true
+```
+
+Decision: `discard`. TensorCircuit's generic SVD split doubles the entangler
+node count, worsens OMECo path/contraction cost, and misses the strict exact
+observable threshold. Do not benchmark it at 2048 or 8192 shots unchanged.
+
+Next pivot: `e02`, bounded contiguous shot chunks on the original dense-gate
+network.

@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "task_id": "08",
+  "experiment": "e01-rank2-split",
+  "classification": "discarded diagnostic screen",
+  "candidate_commit": "794172f",
+  "candidate_sha256": "1ed6ec65bb0402078307a4ade8e0582381dd659089b82c496c1b3a98a4946eb2",
+  "diff_sha256": "65ceec453bcc082d4e05cbc1ce3a9aa694c5bfd51d40f400a333a0b24221818d",
+  "environment_image_id": "sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833",
+  "cpu_limit": 6,
+  "memory_limit": "7 GiB",
+  "exact_observable_screen": {
+    "candidate_elapsed_sec": 75.6515989920008,
+    "candidate_max_abs_error": 8.560192065076855e-06,
+    "candidate_mean_abs_error": 7.10255003285259e-06,
+    "predeclared_max_abs_error": 2e-06,
+    "passed": false,
+    "reference_elapsed_sec": 11.031930867000483,
+    "reference_max_abs_error": 1.1976988650852505e-06
+  },
+  "sampling_screen": {
+    "n_samples": 256,
+    "candidate_runtime_sec": 30.307426,
+    "reference_runtime_sec": 24.601082,
+    "candidate_over_reference_ratio": 1.231954996,
+    "sample_arrays_equal": true,
+    "functional_pass_expected_at_this_sample_count": false,
+    "note": "The public tolerances target 8192 samples; 256 is only a path/runtime diagnostic."
+  },
+  "decision": "discard",
+  "reason": "The native split doubles the number of entangler nodes, makes exact light-cone contractions about 6.86x slower, is about 23.2% slower in the matched 256-shot screen, and misses the frozen 2e-6 exact-observable threshold."
+}
