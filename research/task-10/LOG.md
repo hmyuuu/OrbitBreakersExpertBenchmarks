@@ -380,3 +380,19 @@ prerequisite for the final comparison. The user later clarified that the
 latest TensorCircuit release is acceptable and that only the same-machine
 relative performance matters. Experiment e02 follows that clarified scope
 and records the exact image ID and symmetric resource limits.
+
+The publication branch was subsequently rebased onto upstream commit
+`5af98f27b9404c513df8eee0f4568b1512edee19` after Task 11 PR #7 merged.
+The measured candidate commit `34171c0` became
+`a17d4237d37056de93272ba4ce3947493c1b7817`; its source SHA-256 remains
+exactly `ad3154ccdfec1a329493e1dc7bbe6e3d30ee4e5d0cc7ac16c9922c57976d1262`,
+and its expert-to-candidate diff SHA-256 remains exactly
+`8a404895e36a14246f82c4e40d239cb1b1ca2d12a042377b685953713011c06f`.
+The profiling-harness commit `fe82655` became `def9ba5`. No benchmarked code,
+timing, or functional result changed.
+
+The rebase resolved the additive public-manifest overlap by retaining the
+Task 11 and Task 10 cases and advancing the current manifest to
+`orbitq-workloads-v20260729.4`. The Task 10 canonical file and its SHA-256
+remain unchanged; the benchmark-time dataset version recorded above remains
+`orbitq-workloads-v20260729.3`.

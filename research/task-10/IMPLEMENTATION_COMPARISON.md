@@ -20,7 +20,7 @@ all 12 evaluator cells passed and the candidate won all six pairs.
 | Role | Artifact | Commit or hash |
 |---|---|---|
 | Immutable human expert | [`references/task-10/solution_10.py`](../../references/task-10/solution_10.py) | SHA-256 `0e3266857e4faa8a4d65092b0e88c2866042d716cb0ef8a278633a4f30bb6172` |
-| Campaign best | [`src/solutions/task-10/solution_10.py`](../../src/solutions/task-10/solution_10.py) | Commit `34171c020c2f9613efefaddefb94dc87ec9cbf16`, SHA-256 `ad3154ccdfec1a329493e1dc7bbe6e3d30ee4e5d0cc7ac16c9922c57976d1262` |
+| Campaign best | [`src/solutions/task-10/solution_10.py`](../../src/solutions/task-10/solution_10.py) | Current candidate commit `a17d4237d37056de93272ba4ce3947493c1b7817`; measured pre-rebase commit `34171c020c2f9613efefaddefb94dc87ec9cbf16`; SHA-256 `ad3154ccdfec1a329493e1dc7bbe6e3d30ee4e5d0cc7ac16c9922c57976d1262` |
 | Candidate diff | Expert-to-candidate patch | SHA-256 `8a404895e36a14246f82c4e40d239cb1b1ca2d12a042377b685953713011c06f` |
 | Evaluator | [`tasks/task-10/evaluator/evaluate_10.py`](../../tasks/task-10/evaluator/evaluate_10.py) | SHA-256 `0ab012597cfa79ec32ebc55bb28307c7b15309315f8057604760df5ad4be71db` |
 | Sanitized measurement | [`profiles/e02-latest-nightly-paired.json`](profiles/e02-latest-nightly-paired.json) | Raw report SHA-256 `a75f15f0cb67e93e27458e63248ffb462e4c7c8d7d3ee1c30ff7cdcbc8868f54` |

@@ -1,6 +1,7 @@
 {
   "artifact_type": "sanitized_paired_benchmark_evidence",
   "candidate_commit": "34171c020c2f9613efefaddefb94dc87ec9cbf16",
+  "current_rebased_candidate_commit": "a17d4237d37056de93272ba4ce3947493c1b7817",
   "candidate_sha256": "ad3154ccdfec1a329493e1dc7bbe6e3d30ee4e5d0cc7ac16c9922c57976d1262",
   "environment": {
     "architecture": "arm64",
