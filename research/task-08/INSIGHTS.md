@@ -59,10 +59,14 @@ claimed.
   accumulated complex64 SVD rounding reaches `8.56e-6`. Do not repeat e01
   unless the framework gains an analytic Pauli-rotation MPO and a path
   optimizer that benefits from the larger node graph.
+- 128-shot Python chunks are too small: the full run is 55.182 seconds,
+  25.3% slower than the 256-shot screen. Extra dispatch and synchronization
+  dominate below 256 on this host.
 
 ## Open hypotheses
 
-1. Contiguous status-matrix chunks on the original dense-gate network.
+1. Stage the 256-shot chunks in TensorCircuit `K.jaxy_scan` to remove Python
+   dispatch while retaining bounded intermediates.
 2. Grid-aware measurement ordering with inverse output permutation.
 3. OMECo path-search budget selection based on end-to-end contraction cost.
 4. An analytic, non-SVD Pauli MPO only if paired with better graph

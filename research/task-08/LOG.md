@@ -238,3 +238,30 @@ small number of threshold-adjacent draws, so sample arrays need not be
 byte-identical. The fixed circuit, complete status matrix, exact conditional
 algorithm and statistical output meaning are preserved, and every functional
 check passes comfortably.
+
+## Experiment `e04`: 128-shot chunks
+
+Branch: `codex/orbitbreakers/task-08/e04-chunk128`.
+
+Candidate commit: `d7bd87d`.
+
+Candidate SHA-256:
+`5caecfd033af167849503c3cbc6bfa918208ff0344b72c7a58bdb82c9e02485e`.
+
+Diff SHA-256:
+`104366a653faaf2341991981fe60bc32b4bb0bfe1d750dcaa4ad5b94ddb2dc46`.
+
+The candidate was committed before the canonical screen. Sanitized record:
+`profiles/e04-chunk128-screen.json`.
+
+```text
+8192_shot_runtime_sec: 55.182176
+valid: true
+chunk256_screen_runtime_sec: 44.028239
+regression_vs_chunk256: 25.3336%
+```
+
+Decision: `discard`. The extra 32 Python dispatch/synchronization boundaries
+outweigh the smaller mapped graph. The measured optimum among 128/256/512 is
+256. Next pivot: retain 256-shot memory bounding but stage all chunks with the
+TensorCircuit-native `K.jaxy_scan` wrapper to remove host dispatch.
