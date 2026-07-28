@@ -204,3 +204,37 @@ result, not a speedup. The 2048-shot number is a single non-paired screen and
 cannot support a performance claim. Predeclared next pivot: test smaller and
 larger chunk sizes in fresh worktrees, then run formal pairs only for the
 frozen winner.
+
+## Experiment `e03`: 256-shot chunks
+
+Branch: `codex/orbitbreakers/task-08/e03-chunk256`.
+
+Candidate commit: `41713dd`.
+
+Candidate SHA-256:
+`7696f4d742d07da92a06cf5bdd4634f26ca5fe9251471163a90a4b6da280b45d`.
+
+Diff SHA-256:
+`848a3f800555f43d5e0489e1d27e5c6800ca02824de5a1859ee9fa8809b392bb`.
+
+The candidate was committed before the canonical screen. Sanitized record:
+`profiles/e03-chunk256-screen.json`.
+
+```text
+8192_shot_runtime_sec: 44.028239
+valid: true
+sample_shape: (8192, 49)
+max_single_z_error: 0.0046682336
+max_hidden_error: 0.0188068181
+mean_hidden_error: 0.0039754143
+chunk512_screen_runtime_sec: 50.843383
+screen_improvement_over_chunk512: 13.4042%
+```
+
+Decision: `keep provisionally`. This one-run comparison selects the direction
+for another isolated chunk-size experiment; it is not a formal speedup claim.
+Different mapped batch shapes change complex64 rounding enough to flip a
+small number of threshold-adjacent draws, so sample arrays need not be
+byte-identical. The fixed circuit, complete status matrix, exact conditional
+algorithm and statistical output meaning are preserved, and every functional
+check passes comfortably.

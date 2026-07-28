@@ -8,10 +8,10 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-Provisional only: e02 with 512-shot chunks. It turns the canonical workload
-from reference OOM into a 50.843-second PASS and screens at 31.479 seconds on
-2048 shots versus the initial 48.113-second reference. Formal paired evidence
-is still pending, so no speedup is claimed.
+Provisional only: e03 with 256-shot chunks. It turns the canonical workload
+from reference OOM into a 44.028-second PASS, improving on e02's 50.843-second
+512-shot screen. Formal repeated evidence is still pending, so no speedup is
+claimed.
 
 ## Preserved semantics
 
@@ -42,6 +42,10 @@ is still pending, so no speedup is claimed.
   memory. A 512-shot block makes the full 8192-shot evaluator pass in
   50.843 seconds within 7 GiB. At 2048 shots it passes in 31.479 seconds with
   the same printed observable metrics as the 48.113-second reference screen.
+- Reducing the block to 256 shots lowers the first full screen to 44.028
+  seconds (13.4% below the 512-shot screen). Batch size therefore controls
+  more than peak memory: smaller XLA graphs/temporaries currently outweigh
+  the extra dispatches.
 
 ## What did not work
 

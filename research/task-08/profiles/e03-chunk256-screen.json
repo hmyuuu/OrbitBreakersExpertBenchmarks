@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "task_id": "08",
+  "experiment": "e03-chunk256",
+  "classification": "passing candidate screen; formal repeated benchmark pending",
+  "candidate_commit": "41713dd",
+  "candidate_sha256": "7696f4d742d07da92a06cf5bdd4634f26ca5fe9251471163a90a4b6da280b45d",
+  "diff_sha256": "848a3f800555f43d5e0489e1d27e5c6800ca02824de5a1859ee9fa8809b392bb",
+  "chunk_size": 256,
+  "environment_image_id": "sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833",
+  "cpu_limit": 6,
+  "memory_limit": "7 GiB",
+  "canonical_8192_screen": {
+    "runtime_sec": 44.028239,
+    "passed": true,
+    "sample_shape": [
+      8192,
+      49
+    ],
+    "max_single_z_error": 0.0046682336,
+    "max_hidden_z_string_error": 0.0188068181,
+    "mean_hidden_z_string_error": 0.0039754143
+  },
+  "comparison_to_chunk512_screen": {
+    "chunk512_runtime_sec": 50.843383,
+    "ratio_of_screen_times": 0.865958,
+    "improvement_pct": 13.4042,
+    "formal_claim_eligible": false,
+    "reason": "One independent screen per candidate, not repeated matched pairs."
+  },
+  "numerical_note": "Changing the vmap batch shape changes complex64 contraction rounding and can flip a small number of threshold-adjacent random draws. The circuit, status matrix, conditional-sampling algorithm and distribution semantics are unchanged; all functional observable checks pass comfortably.",
+  "decision": "keep provisionally; test smaller chunks"
+}
