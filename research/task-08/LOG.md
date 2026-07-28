@@ -293,3 +293,32 @@ places the large mapped 49-measurement conditional-contraction body inside XLA
 control flow. Compilation/optimization and loop execution cost dominate the
 saved dispatch. Keep the simpler Python loop with one cached `K.jit` per
 256-shot block.
+
+## Experiment `e06`: OMECo 1x1 search budget
+
+Branch: `codex/orbitbreakers/task-08/e06-omeco1x1`.
+
+Parent candidate: Python-loop 256-shot chunks.
+
+Candidate commit: `74b4be2`.
+
+Candidate SHA-256:
+`861b610773d33f4f04cbf5422aa7b71c419105811c991f7bcd5ccd36220f050b`.
+
+Diff SHA-256:
+`e9c000f299a1585021c87ba0c1ebe07b02567e1c747e3d84fb994488e5bfc321`.
+
+The candidate was committed before the canonical screen. Sanitized record:
+`profiles/e06-omeco1x1-screen.json`.
+
+```text
+8192_shot_runtime_sec: 131.958540
+valid: true
+omeco4x4_runtime_sec: 44.028239
+regression_vs_omeco4x4: 199.7132%
+```
+
+Decision: `discard`. Reducing 16 TreeSA trial/iteration combinations to one
+does reduce search work, but it selects contraction paths whose repeated
+execution across 32 chunks is nearly 3x slower end to end. Preserve the
+expert's `omeco-4-4` budget.

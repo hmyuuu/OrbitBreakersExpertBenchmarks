@@ -66,6 +66,10 @@ claimed.
   67.401 seconds, 53.1% above the Python-loop screen. The body contains all
   49 conditional network contractions, so staging it inside XLA control flow
   costs far more than 31 cached-jit dispatches.
+- OMECo `1x1` is catastrophically under-searched for this network:
+  131.959 seconds versus 44.028 seconds with `4x4`. Path quality is reused
+  across 32 blocks, so the expert's modest extra TreeSA search pays back many
+  times during execution.
 
 ## Open hypotheses
 
