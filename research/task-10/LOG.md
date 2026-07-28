@@ -113,3 +113,61 @@ its first benchmark.
 ## Append-only corrections
 
 None.
+
+## Experiment `e01-exact-mps-scan`: measured result
+
+Candidate commit: `05ba40c`
+
+Candidate SHA-256:
+`c1705d11d5c9e984ec7628b2dfcc08272c8ae3ff2e568c901de52f9a5ed1fc56`
+
+Diff SHA-256:
+`79d54f78de99c6b4242b43ef5a1809791bf9c686b836d29c4fe9de13fd991197`
+
+Environment image:
+`sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833`
+(exploratory newer ORBIT-Q image, 6 CPUs / 7 GiB, network disabled).
+
+The exact bond-2 CMZ MPO, bond-3 TFIM contraction, fused rotations, and
+whole-training scan completed in 10.260367 seconds, but failed the functional
+energy-gap gate:
+
+```text
+initial_energy_density: 0.9718867540
+final_energy_density: -0.7872041464
+exact_ground_energy_density: -1.2925285569
+vqe_gap: 0.5053244105
+Overall: FAIL
+```
+
+The first five reference and candidate histories agreed to low absolute error:
+
+```text
+reference: 0.9718865752, 0.8913648129, 0.7948441505, 0.6822248101, 0.5538985729
+candidate: 0.9718867540, 0.8913646340, 0.7948451042, 0.6822254658, 0.5539006591
+max parameter delta after five updates: 5.95897e-05
+```
+
+This establishes semantic equivalence at the start but numerical trajectory
+divergence over 200 complex64 updates. The result is invalid and has no
+performance standing.
+
+Decision: `invalid`
+
+### e01 numerical follow-ups
+
+Commit `d9a5336` removed rotation fusion to reproduce the expert's explicit
+`RX -> RZ -> RY` gate sequence. Its five-step maximum parameter delta grew to
+`1.01790e-04`, so it was discarded as a regression.
+
+Commit `3d48da0` restored fused rotations and changed only the MPS/CMZ/TFIM
+intermediate dtype to complex128 while retaining float32 parameters and Adam
+state. It completed `run_solution` in 10.790999 seconds but ended at
+`-0.2665115864`, also invalid. Higher precision does not cure the optimization
+basin sensitivity.
+
+Failure interpretation: differentiating through exact QR/RQ canonicalization
+is mathematically valid, but its gauge/rounding path perturbs this sensitive
+200-step Adam trajectory. The next experiment will remove canonicalization
+entirely: the known bond dimensions grow only `1 -> 2 -> 4`, so the raw
+framework MPO-times-MPS tensors are already exact and bounded.

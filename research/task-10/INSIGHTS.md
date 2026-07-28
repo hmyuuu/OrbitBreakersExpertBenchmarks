@@ -8,7 +8,7 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-None. Candidate work is gated on the public Task 10 workload record.
+None. e01 was faster in one exploratory run but failed the functional gate.
 
 ## Preserved semantics
 
@@ -28,11 +28,15 @@ None. Candidate work is gated on the public Task 10 workload record.
   bond-dimension bound of four; the generic contraction does not expose that
   simple sequential structure to the implementation.
 - A fresh immutable-reference validation took 18.117244 seconds in the
-  available newer ORBIT-Q image and passed. Phase-split profiling is pending.
+  available newer ORBIT-Q image and passed.
+- Phase-split profiling shows the 18.36-second reference is dominated by
+  4.37 seconds of lowering/path search and 13.14 seconds of XLA compilation;
+  the compiled optimizer step takes only 0.317 ms.
 
 ## What worked
 
-No candidate has been measured.
+No candidate has passed. e01 reduced exploratory wall time to 10.26 seconds,
+but its 200-step trajectory failed the energy-gap criterion.
 
 ## What did not work
 
@@ -40,14 +44,19 @@ No candidate has been measured.
   interruption. Retry rather than changing the environment lock.
 - Prior ORBIT-Q evidence found a dense-state Task 10 implementation around
   18 times slower than the expert. Do not repeat that representation unchanged.
+- Exact `MPSCircuit.apply_MPO` with QR/RQ canonicalization matches the first
+  five optimization steps closely but diverges into a failing basin by step
+  200. Explicit unfused rotations and complex128 intermediates both worsened
+  the numerical trajectory.
 
 ## Open hypotheses
 
-1. Exact `MPSCircuit.apply_MPO` CMZ plus direct local MPS contractions and a
-   whole-training scan.
+1. Reuse the local contraction kernel from `MPSCircuit.apply_MPO` without
+   canonicalization. The exact rank is statically bounded at four, so QR/SVD
+   is unnecessary and removing it should improve both gradient stability and
+   compile size.
 2. Scan-only ablation on the immutable expert objective.
-3. Fusing each three-rotation block into one TensorCircuit 2x2 gate.
-4. Smaller OMECo search budgets as a reference-path ablation.
+3. Smaller OMECo search budgets as a reference-path ablation.
 
 ## Evidence limits
 
