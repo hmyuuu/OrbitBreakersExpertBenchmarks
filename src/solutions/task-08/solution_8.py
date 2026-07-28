@@ -104,5 +104,12 @@ def run_solution(config):
         return sample
 
     sample_batch = K.jit(K.vmap(sample_one))
-    samples = sample_batch(status)
-    return {"samples": np.asarray(K.numpy(samples), dtype=np.int32)}
+    chunk_size = 256
+    samples = [
+        np.asarray(
+            K.numpy(sample_batch(status[start : start + chunk_size])),
+            dtype=np.int32,
+        )
+        for start in range(0, config["n_samples"], chunk_size)
+    ]
+    return {"samples": np.concatenate(samples, axis=0)}
