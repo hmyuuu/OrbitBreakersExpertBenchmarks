@@ -1,0 +1,60 @@
+# Task 08 Research Insights
+
+Task: `task-08`
+
+Last consolidated: 2026-07-29
+
+Evidence ledger: [`LOG.md`](LOG.md)
+
+## Current best
+
+None. No candidate has passed the frozen measurement rule.
+
+## Preserved semantics
+
+- Build the fixed 49-qubit 7x7 TensorCircuit network from `|0>^49`.
+- Apply all 49 `Ry`, 42 horizontal `RZZ`, 42 vertical `RXX`, and 49 `Rx`
+  gates with the evaluator's exact angle formulas.
+- Use complex64 framework semantics and the OMECo contractor path.
+- Generate the complete float32 status matrix with NumPy RNG seed 2033.
+- Return exact conditional computational-basis samples in the same row/column
+  order as the expert, with shape `(n_samples, 49)` and integer NumPy dtype.
+- Materialize neither a dense `2^49` state nor a dense probability vector.
+
+## Confirmed bottlenecks
+
+- The expert's monolithic `jit(vmap(perfect_sampling))` over 8192 shots asks
+  XLA for a 17,998,348,288-byte buffer and fails in a 7-GiB cgroup.
+- The same implementation passes at 2048 shots in 48.113225 seconds, so mapped
+  batch size is a primary memory multiplier.
+- `perfect_sampling` performs 49 sequential conditional double-layer
+  contractions per shot; every later measurement attaches more projectors.
+- `RZZ` and `RXX` have exact operator Schmidt rank two, but the expert stores
+  each as one dense rank-4 node.
+
+## What worked
+
+None yet. The exact-observable oracle is infrastructure, not an optimized
+candidate.
+
+## What did not work
+
+- The unmodified canonical expert does not fit the fixed 7-GiB environment.
+- Merely requesting more CPUs is irrelevant to the semantic comparison and
+  does not address the 18-GB allocation.
+
+## Open hypotheses
+
+1. TensorCircuit-native exact rank-2 splitting for every two-qubit Pauli
+   rotation.
+2. Contiguous status-matrix chunks after separately measuring split gates.
+3. Grid-aware measurement ordering with inverse output permutation.
+4. OMECo path-search budget selection based on end-to-end contraction cost.
+5. Commuting/fusing the final `Rx` layer with the `RXX` network if framework
+   simplification does not already achieve it.
+
+## Evidence limits
+
+The campaign has one canonical OOM and one passing 2048-shot probe, not a
+repeated reference baseline. Results will apply only to this fixed Docker
+image, six-CPU/7-GiB host allocation, circuit and evaluator.
