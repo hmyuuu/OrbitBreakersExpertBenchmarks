@@ -161,3 +161,46 @@ observable threshold. Do not benchmark it at 2048 or 8192 shots unchanged.
 
 Next pivot: `e02`, bounded contiguous shot chunks on the original dense-gate
 network.
+
+## Experiment `e02`: 512-shot chunks
+
+Branch: `codex/orbitbreakers/task-08/e02-shot-chunks`.
+
+Candidate commit: `673b3b3`.
+
+Candidate SHA-256:
+`60f23741c1fcbc13ae67884b3c6f94ad939548056820bbace2b73da7c9a27e03`.
+
+Diff SHA-256:
+`90314a596f75ebc26d11bd5fdab9f3a2d18e71741fd632b327931be36c785f81`.
+
+Hypothesis: execute the original
+`K.jit(K.vmap(circuit.perfect_sampling))` on contiguous 512-row slices of the
+already generated status matrix and concatenate the host arrays. This bounds
+the mapped-axis intermediate memory without changing the circuit, each
+conditional trajectory, random numbers, sample order, or framework path.
+
+The candidate was committed before both screens. Sanitized record:
+`profiles/e02-chunk512-screen.json`.
+
+```text
+2048_shot_reference_initial_runtime_sec: 48.113225
+2048_shot_candidate_runtime_sec: 31.478739
+2048_shot_screen_speedup: 1.528443
+2048_shot_candidate_valid: true
+observable_metrics_identical_to_reference: true
+
+8192_shot_reference_status: RESOURCE_EXHAUSTED
+8192_shot_candidate_runtime_sec: 50.843383
+8192_shot_candidate_valid: true
+sample_shape: (8192, 49)
+max_single_z_error: 0.0046486279
+max_hidden_error: 0.0188068181
+mean_hidden_error: 0.0039865117
+```
+
+Decision: `keep provisionally`. The full result is an OOM-to-PASS feasibility
+result, not a speedup. The 2048-shot number is a single non-paired screen and
+cannot support a performance claim. Predeclared next pivot: test smaller and
+larger chunk sizes in fresh worktrees, then run formal pairs only for the
+frozen winner.

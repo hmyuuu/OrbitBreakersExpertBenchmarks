@@ -8,7 +8,10 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-None. No candidate has passed the frozen measurement rule.
+Provisional only: e02 with 512-shot chunks. It turns the canonical workload
+from reference OOM into a 50.843-second PASS and screens at 31.479 seconds on
+2048 shots versus the initial 48.113-second reference. Formal paired evidence
+is still pending, so no speedup is claimed.
 
 ## Preserved semantics
 
@@ -34,8 +37,11 @@ None. No candidate has passed the frozen measurement rule.
 
 ## What worked
 
-None yet. The exact-observable oracle is infrastructure, not an optimized
-candidate.
+- Splitting only the mapped shot axis into contiguous blocks, while leaving
+  TensorCircuit's circuit and `perfect_sampling` unchanged, bounds XLA peak
+  memory. A 512-shot block makes the full 8192-shot evaluator pass in
+  50.843 seconds within 7 GiB. At 2048 shots it passes in 31.479 seconds with
+  the same printed observable metrics as the 48.113-second reference screen.
 
 ## What did not work
 
