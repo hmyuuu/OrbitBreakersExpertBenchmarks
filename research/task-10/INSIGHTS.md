@@ -81,14 +81,19 @@ every functional check.
 - The exact-lock image detour was unnecessary for this campaign. The final
   relative comparison deliberately used the latest available TensorCircuit
   nightly for both implementations.
+- An exact explicit product-branch implementation was numerically sound but
+  slow to compile. Materializing all X/ZZ products took `16.063 s` for five
+  updates versus e02's `3.804 s`.
+- Replacing those products with one exact 4x4 observable transfer scan improved
+  the branch prototype to `13.321 s`, still `3.50x` slower than e02. The
+  product-branch observation is useful algebraically but not a win under this
+  cold-compilation evaluator.
 
 ## Open hypotheses
 
 1. A scan-only ablation on the immutable expert objective would quantify how
    much of the gain comes from host dispatch rather than representation.
-2. Smaller OMECo search budgets could reduce reference-path staging, although
-   the fixed low-rank MPS graph already removes path search entirely.
-3. Persistent compilation caching could help repeated applications, but the
+2. Persistent compilation caching could help repeated applications, but the
    evaluator intentionally measures cold fresh processes, so it is outside the
    present comparison contract.
 

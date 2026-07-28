@@ -233,6 +233,32 @@ outside the evaluator threshold. Rotation-order and complex128 follow-ups
 also failed. These are recorded in [`LOG.md`](LOG.md) and receive no speedup
 claim.
 
+## Starter-insight coverage and follow-up
+
+| Starter insight | Used in e02? | Outcome |
+|---|---|---|
+| Native exact CMZ MPO | Yes | Exact bond-2 `I - 2P` representation |
+| Tune OMECo or greedy | Superseded | E02 removes generic contraction/path search entirely |
+| One scan for 200 Adam steps | Yes | `K.jaxy_scan` around the complete optimizer |
+| Fuse `RX -> RZ -> RY` | Yes | One TensorCircuit-built 2x2 unitary per qubit/layer |
+| Direct TFIM MPO | Yes | Exact bond-3 MPO, no Quimb conversion |
+| Few product-state branches | Follow-up | Exact but slower in both tested forms |
+
+The last observation requires up to four branches in the general two-layer
+workload, rather than three, because local rotations separate the two CMZ
+reflections. Two TensorCircuit-backend prototypes preserved the five-step
+trajectory within `4.77e-7`:
+
+- explicit branch-pair Hamiltonian products: `16.063 s`;
+- one compact 4x4 branch transfer scan: `13.321 s`;
+- accepted e02 MPS screen: `3.804 s`.
+
+The branch transfer was a meaningful improvement over explicit term products,
+but still a `3.50x` regression. Both were rejected before full evaluation;
+details and source hashes are preserved in [`LOG.md`](LOG.md) and
+[`profiles/e03-five-step-comparison.json`](profiles/e03-five-step-comparison.json) /
+[`profiles/e04-five-step-screen.json`](profiles/e04-five-step-screen.json).
+
 ## Claim limits and next work
 
 - The result establishes a same-host, same-container improvement over the

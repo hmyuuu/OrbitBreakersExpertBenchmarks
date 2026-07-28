@@ -396,3 +396,72 @@ Task 11 and Task 10 cases and advancing the current manifest to
 `orbitq-workloads-v20260729.4`. The Task 10 canonical file and its SHA-256
 remain unchanged; the benchmark-time dataset version recorded above remains
 `orbitq-workloads-v20260729.3`.
+
+## Post-publication starter-insight ablations
+
+Date: 2026-07-29
+
+The user supplied a starter-insight list after Draft PR #8 was opened. Four of
+its five ordinary proposals were already present in e02: exact bond-2 CMZ MPO,
+whole-training scan, fused rotations, and direct bond-3 TFIM MPO. OMECo budget
+tuning was superseded because e02 removes OMECo and general path search from
+the objective entirely.
+
+The remaining specialized product-state-branch observation was tested in two
+fresh experiment worktrees. With arbitrary local rotations between the two
+CMZ reflections the exact general bound is four branches, not three:
+one branch doubles to two after CMZ 1, local gates retain two, and CMZ 2 may
+double both to four.
+
+### Experiment `e03-product-branches`
+
+Branch: `codex/orbitbreakers/task-10/product-branches`
+
+Candidate commit: `c5bceb7`
+
+Candidate SHA-256:
+`2ab82c80b4df3841dde3400fac12570a32c794b1033e2049b2812be59ad140e8`
+
+Sanitized evidence:
+[`profiles/e03-five-step-comparison.json`](profiles/e03-five-step-comparison.json)
+
+E03 represented the state as four explicit product branches and materialized
+the 22 X and 21 ZZ expectation products from pairwise local overlaps. In one
+shared, network-disabled container, five updates measured:
+
+```text
+e02 MPS:                 3.8043357890 s
+e03 explicit branches: 16.0631762450 s
+candidate / baseline:   4.2223339726
+max history delta:      3.5762786865e-7
+max parameter delta:    4.6938657761e-7
+```
+
+Decision: `invalid-performance`
+
+The representation is exact at complex64 scale, but explicit Hamiltonian-term
+products make the cold reverse-mode/XLA graph over four times slower.
+
+### Experiment `e04-branch-transfer-scan`
+
+Branch: `codex/orbitbreakers/task-10/branch-transfer`
+
+Candidate commit: `a712df9`
+
+Candidate SHA-256:
+`79e866a12ddb00f438c36e51fa459ee13bfee62147cf326241f9ce8e8ff7b99e`
+
+Sanitized evidence:
+[`profiles/e04-five-step-screen.json`](profiles/e04-five-step-screen.json)
+
+E04 retained the four branches but accumulated norm, all X insertions, all
+adjacent ZZ insertions, and the previous Z insertion in one exact 4x4 transfer
+scan. It reduced the five-step screen to `13.3214582620 s`, but remained
+`3.5016515368x` slower than the fresh e02 screen. Its history stayed within
+`4.7683715820e-7` of e02.
+
+Decision: `invalid-performance`
+
+Both experiments were stopped before the expensive full sparse-ground-state
+evaluator because they falsified the predeclared early performance condition.
+No accepted solution bytes or benchmark claim changed.
