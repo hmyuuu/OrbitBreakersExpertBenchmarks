@@ -4,6 +4,10 @@
 entrypoint. This directory supplies the experiment ledger templates; it does
 not bypass the startup gates.
 
+For a compact, reusable campaign checklist with resource overrides, factor
+ablation, charts, and PR packaging, see
+[`EXPERT_OPTIMIZATION_WORKFLOW.md`](EXPERT_OPTIMIZATION_WORKFLOW.md).
+
 ## Gate the research loop and promotion separately
 
 Before editing `src/solutions/` or a TensorCircuit-NG checkout, require:
