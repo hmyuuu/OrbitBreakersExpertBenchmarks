@@ -6,7 +6,7 @@
   "created_at": "2026-07-29T15:04:30Z",
   "generator_commit": "0819ed34dd3f1eaa8f77587c2a40d95a420ea829",
   "environment_image_digest": null,
-  "selected_task_id": "01",
+  "selected_task_id": "05",
   "coverage_requirements": {
     "canonical_case": 1,
     "reduced_smoke_case_when_supported": 1,

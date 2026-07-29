@@ -617,3 +617,144 @@ Append corrections below; never rewrite prior evidence.
   paths above identify their locations when those events were recorded.
   Distilled reusable conclusions are now maintained separately in
   `research/task-05/INSIGHTS.md`.
+
+## Continuation campaign: latest TensorCircuit, six-CPU host
+
+- `2026-07-29T06:15:04Z`: started a Task 05-only continuation from accepted
+  `origin/main` commit
+  `5af98f27b9404c513df8eee0f4568b1512edee19` on branch
+  `codex/orbitbreakers/task-05/extreme-native`. Live inspection of all six
+  open `sxzgroup/ORBIT-Q` pull requests (#2 through #7) found infrastructure,
+  agent-result, verifier-policy, and Challenge 07 work, but no Task 05
+  improvement, optimization, performance, or runtime PR.
+
+- `2026-07-29T06:15:04Z`: the continuation uses the existing local image
+  `orbitbreakers-expert-benchmarks:tensorcircuit-py311`, image ID
+  `sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833`,
+  containing TensorCircuit-NG `1.8.0.dev20260726`. The same-machine protocol
+  requests six CPUs and 7 GiB because the active backend is capped below the
+  historical eight-CPU profile. Absolute runtime is not compared across the
+  two hardware profiles.
+
+- `2026-07-29T06:15:04Z`: pre-candidate setup rebound the already validated
+  public manifest case from Task 11 to Task 05 and added per-run `--cpus` and
+  `--memory` overrides to the benchmark CLI. This keeps `bench.toml`
+  unchanged and makes the resource-constrained workflow reproducible. No
+  task problem, evaluator, reference, candidate, environment lock, or public
+  workload case changed.
+
+- `2026-07-29T06:15:04Z`: the first isolated hypothesis is exact layer-level
+  fusion of each disjoint `RX -> RX -> RZZ` sequence into one differentiable
+  TensorCircuit two-qubit gate, with endpoint RX gates retained on odd layers.
+  A separate higher-upside hypothesis will test an exact no-truncation MPS
+  representation whose maximum bond dimension is bounded by the five
+  brickwork applications per bond. These mechanisms will not be combined
+  until each has independent semantic and performance evidence.
+
+## Experiment `e02-exact-noqr-mps`
+
+Task/branch: `task-05` /
+`codex/orbitbreakers/task-05/e02-exact-noqr-mps`.
+
+### Hypothesis
+
+The state has a much smaller exact representation than its dense
+`2^18` vector. Every RX filter is one-site and does not increase MPS rank.
+Each `exp(b Z.Z)` filter has exact operator-Schmidt rank two:
+
+`exp(b Z.Z) = cosh(b) I.I + sinh(b) Z.Z`.
+
+A bond participates only in its parity's five layers, so every exact MPS bond
+dimension is bounded by `2^5 = 32`. Applying this local bond-2 MPO contraction
+without the generic `MPSCircuit.apply_MPO` QR/RQ canonicalization should avoid
+the timeout observed by historical Round 4 while preserving the full state,
+all ten normalizations, gradients, and 600 updates. The TFIM is evaluated as
+an exact TensorCircuit backend bond-3 MPO contraction.
+
+This experiment replaces the dense trajectory and Hamiltonian contraction as
+one isolated representation mechanism. It is independent of the fused dense
+gate experiment and starts from accepted parent `0cb46e3`.
+
+### Frozen evaluation protocol
+
+Public workload `orbitq-workloads-v20260728.3`; image ID
+`sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833`;
+six CPUs; 7 GiB; 300-second timeout. The candidate must pass reconstructed
+state, norm, initial energy, gradient, one-update, full evaluator, and static
+checks before timing. Promotion requires six alternating matched pairs
+against the immutable expert; the independent MPS factor contribution will
+also be reported against the accepted dense parent. Frozen at
+`2026-07-29T06:27:03Z`: candidate SHA-256
+`f741e6cc75b8ed1e47bbedafc557d231d54db60fb064011650fc9c7da36c9ef6`;
+equivalence-harness SHA-256
+`c46604a554ad6107f28d724a22f3cfaa07f9cd047d4cb5d054a05bd0f17fdc91`;
+pre-commit diff SHA-256
+`5184e31df8c257667116db6aacc7eecab918994e6524893e08c56761eef6f877`.
+
+Review correction: the candidate module docstring was restored byte-for-byte
+from the immutable expert source. The current source SHA-256 is
+`e1a0d8a13020687f0afc89867e114683c052200c955a3515c80397a6a580b24e`.
+Executable statements and benchmark results are unchanged; the frozen
+measurement artifact retains the SHA-256 recorded above.
+
+### Continuation results and decisions
+
+- `2026-07-29T06:27:37.838917Z`: latest-image immutable-reference baseline
+  completed 6/6 passing runs in shared session
+  `ccb7f91a95654f8ca3dacad09b1d2fc3a25286aa35ec043657a0cfc2113c046c`.
+  Runtimes were `97.277727`, `97.722246`, `98.529488`, `99.783288`,
+  `98.037636`, and `100.264691` seconds. Six-run mean
+  `98.602512667 s`, standard error `0.483439480 s`; first-five mean
+  `98.270077 s`. Raw report SHA-256
+  `98f867e0ce8f6f701a271ce1ceb0f966b2374c987bde0c2e8a994d26c3a70bfe`.
+  The Task 05 promotion gate passed.
+
+- `2026-07-29T06:35:53Z`: e02 exact-MPS equivalence passed. Dense versus
+  reconstructed-state maximum error `2.79397e-08`; norm error
+  `4.17233e-07`; initial energy-density error `1.79052e-04`; gradient error
+  `1.19507e-05`; conditioned nonzero-gradient one-Adam-update error
+  `3.72529e-09`; maximum exact bond dimension 32. One analytically zero
+  gradient coordinate was excluded only from the conditioned Adam parameter
+  metric; it remains included in state, energy, and full-gradient checks.
+
+- `2026-07-29T06:52:25.185319Z`: e02 final comparison completed 12/12
+  passing cells and six eligible alternating pairs in shared session
+  `647123a15bd9eb489fb764cd5d48bfc60150aec029dcbb4908170e7ff72f0459`.
+  Immutable expert mean `97.083712 s`; exact-MPS mean `6.8984085 s`;
+  paired speedup `14.075569632x ± 0.155535830x`; 95% Student-t interval
+  `[13.675752052x, 14.475387211x]`; paired reduction `92.891124882%`;
+  six of six candidate wins. First-five expert/candidate means
+  `96.3557272/6.8841558 s` and first-five paired speedup `14.000342779x`.
+  Raw report SHA-256
+  `220bf9b519cc69e7996a78855308fa1e1b70b82a51d7861561cca8b5a01678c5`.
+  Decision `keep` and promote e02.
+
+- `2026-07-29T06:57:36.086471Z`: e03 absorbed RX into both rank-2 RZZ MPO
+  branches and passed equivalence, but all six direct pairs regressed.
+  e02 mean `7.008928 s`; fused-MPS mean `8.3105185 s`; paired speedup
+  `0.843725047x`, 95% interval `[0.822186096x, 0.865263999x]`.
+  Decision `discard`. Raw report SHA-256
+  `645adcee4dd4f625dab6b9b8e5845f4f1f038c8f0e1a89666ef77d372783eff5`.
+
+- `2026-07-29T07:12:35.022063Z`: e01 dense layer fusion completed 12/12
+  passing cells against the accepted dense parent. Parent mean
+  `68.3585177 s`; fused mean `66.9657893 s`; paired speedup
+  `1.022847338x`, 95% interval `[0.983443265x, 1.062251411x]`.
+  The interval crosses 1 and one pair regressed. Decision `discard`; no
+  independent speedup claim. Raw report SHA-256
+  `275e09b4c8e34c3094d81fd3beb7df18142171955091356603b1f914fe699b91`.
+
+- `2026-07-29T07:13:00Z`: a final direct exact-MPS-versus-accepted-dense-parent
+  six-pair run was requested, but Docker approval disconnected before the
+  command started and explicitly prohibited automatic retry. No result is
+  inferred from unmatched sessions. This missing factor is disclosed in the
+  report; the valid overall MPS-versus-immutable comparison remains complete.
+
+- `2026-07-29T07:16:39Z`: sanitized ablation summary and three factor figures
+  generated under `research/task-05/results-20260729`. Summary SHA-256
+  `0857a251ae53eff41a05760d020e962cc5dc0a290da4cdd464bbce05a67884dc`.
+  Equivalence summary SHA-256
+  `1f2675bd841e63658ee45b1ac3b995c6376637bb6fa363cd7e416992a344a706`.
+  The continuation report was updated from the measured evidence; recompute
+  its content hash after final formatting rather than using an earlier draft
+  hash.

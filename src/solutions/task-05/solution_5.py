@@ -5,28 +5,14 @@ The cooling filters are implemented as ordinary RX/RZZ gates with imaginary
 angles. The solution returns only NumPy values consumed by evaluate_5.py.
 """
 
-import jax
 import numpy as np
 import optax
-import cotengra as ctg
 
 import tensorcircuit as tc
 
+
 K = tc.set_backend("jax")
 tc.set_dtype("complex64")
-PATH_OPTIMIZER = ctg.ReusableHyperOptimizer(
-    methods=["greedy"],
-    minimize="combo",
-    max_time=1,
-    max_repeats=1,
-    parallel=False,
-    progbar=False,
-)
-tc.set_contractor(
-    "custom",
-    optimizer=PATH_OPTIMIZER,
-    preprocessing=True,
-)
 
 
 def initial_parameters(config):
@@ -38,100 +24,157 @@ def initial_parameters(config):
     }
 
 
-def initial_state(config):
-    circuit = tc.Circuit(config["n_qubits"])
-    for i in range(config["n_qubits"]):
-        circuit.h(i)
-    return circuit.state()
+def _initial_mps(n_qubits):
+    plus = np.full((1, 2, 1), 1.0 / np.sqrt(2.0), dtype=np.complex64)
+    tensors = [K.convert_to_tensor(plus) for _ in range(n_qubits)]
+    return tc.MPSCircuit(
+        n_qubits,
+        tensors=tensors,
+        center_position=0,
+    ).get_tensors()
 
 
-def apply_filter_layer(state, a, b, bonds, config):
-    circuit = tc.Circuit(config["n_qubits"], inputs=state)
-    for i in range(config["n_qubits"]):
-        circuit.rx(i, theta=2.0j * a)
-    for i in bonds:
-        circuit.rzz(i, i + 1, theta=2.0j * b)
-    state = circuit.state()
-    return state / K.norm(state)
+def _apply_one_site(tensor, gate):
+    return K.einsum("ab,ibj->iaj", gate, tensor)
 
 
-def cooling_trajectory(params, input_state, config):
-    even = list(range(0, config["n_qubits"] - 1, 2))
-    odd = list(range(1, config["n_qubits"] - 1, 2))
-
-    def block_step(state, p):
-        state = apply_filter_layer(state, p["a"][0], p["b"][0], even, config)
-        state = apply_filter_layer(state, p["a"][1], p["b"][1], odd, config)
-        return state, None
-
-    final_state, _ = jax.lax.scan(block_step, input_state, params)
-    return final_state
+def _apply_local_mpo(tensor, operator):
+    """Local contraction kernel from MPSCircuit.apply_MPO, without QR/RQ."""
+    contracted = K.einsum("iabj,kbl->ikajl", operator, tensor)
+    ni, nk, d, nj, nl = K.shape_tuple(contracted)
+    return K.reshape(contracted, (ni * nk, d, nj * nl))
 
 
-def build_tfim_mvp(config):
-    structures = []
-    weights = []
-
-    for i in range(config["n_qubits"] - 1):
-        term = [0] * config["n_qubits"]
-        term[i] = 3
-        term[i + 1] = 3
-        structures.append(term)
-        weights.append(-1.0)
-
-    for i in range(config["n_qubits"]):
-        term = [0] * config["n_qubits"]
-        term[i] = 1
-        structures.append(term)
-        weights.append(-config["transverse_field"])
-
-    return tc.quantum.PauliStringSum2MVP(structures, weights)
-
-
-def tfim_energy(state, hamiltonian_mvp):
-    h_state = hamiltonian_mvp(state)
-    return K.real(K.tensordot(K.conj(state), h_state, 1))
+def _apply_rzz(tensors, site, strength):
+    """Apply exp(strength Z.Z) exactly as a two-site bond-2 MPO."""
+    identity = K.eye(2, dtype=tc.dtypestr)
+    pauli_z = K.convert_to_tensor(
+        np.diag([1.0, -1.0]).astype(np.complex64)
+    )
+    positive = K.exp(strength)
+    negative = K.exp(-strength)
+    cosh = 0.5 * (positive + negative)
+    sinh = 0.5 * (positive - negative)
+    left = K.reshape(K.stack([identity, pauli_z], axis=-1), (1, 2, 2, 2))
+    right = K.reshape(
+        K.stack([cosh * identity, sinh * pauli_z], axis=0),
+        (2, 2, 2, 1),
+    )
+    tensors = list(tensors)
+    tensors[site] = _apply_local_mpo(tensors[site], left)
+    tensors[site + 1] = _apply_local_mpo(tensors[site + 1], right)
+    return tensors
 
 
-def energy_density(params, input_state, hamiltonian_mvp, config):
-    final_state = cooling_trajectory(params, input_state, config)
-    return tfim_energy(final_state, hamiltonian_mvp) / config["n_qubits"]
+def _mps_norm(tensors):
+    environment = K.ones((1, 1), dtype=tc.dtypestr)
+    for tensor in tensors:
+        environment = K.einsum(
+            "ij,iar,jas->rs",
+            environment,
+            K.conj(tensor),
+            tensor,
+        )
+    return K.sqrt(K.real(environment[0, 0]))
+
+
+def _apply_filter_layer(tensors, a, b, bonds):
+    rx = tc.gates.rx(theta=2.0j * a).tensor
+    tensors = [_apply_one_site(tensor, rx) for tensor in tensors]
+    for site in bonds:
+        tensors = _apply_rzz(tensors, site, b)
+    norm = _mps_norm(tensors)
+    tensors = list(tensors)
+    tensors[0] = tensors[0] / norm
+    return tensors
+
+
+def cooling_tensors(params, config):
+    n_qubits = int(config["n_qubits"])
+    even = range(0, n_qubits - 1, 2)
+    odd = range(1, n_qubits - 1, 2)
+    tensors = _initial_mps(n_qubits)
+    for block in range(config["n_layers"] // 2):
+        tensors = _apply_filter_layer(
+            tensors,
+            params["a"][block, 0],
+            params["b"][block, 0],
+            even,
+        )
+        tensors = _apply_filter_layer(
+            tensors,
+            params["a"][block, 1],
+            params["b"][block, 1],
+            odd,
+        )
+    return tensors
+
+
+def _tfim_mpo(n_qubits, transverse_field):
+    identity = np.eye(2, dtype=np.complex64)
+    pauli_x = np.array([[0.0, 1.0], [1.0, 0.0]], dtype=np.complex64)
+    pauli_z = np.diag([1.0, -1.0]).astype(np.complex64)
+    bulk = np.zeros((3, 3, 2, 2), dtype=np.complex64)
+    bulk[0, 0] = identity
+    bulk[1, 0] = pauli_z
+    bulk[2, 0] = -transverse_field * pauli_x
+    bulk[2, 1] = -pauli_z
+    bulk[2, 2] = identity
+    arrays = [bulk[2:3], *([bulk] * (n_qubits - 2)), bulk[:, 0:1]]
+    return [
+        K.convert_to_tensor(np.transpose(array, (0, 2, 3, 1)))
+        for array in arrays
+    ]
+
+
+def _mpo_expectation(tensors, mpo):
+    environment = K.ones((1, 1, 1), dtype=tc.dtypestr)
+    for tensor, operator in zip(tensors, mpo):
+        environment = K.einsum(
+            "xik,xay,iabj,kbl->yjl",
+            environment,
+            K.conj(tensor),
+            operator,
+            tensor,
+        )
+    return K.real(environment[0, 0, 0])
+
+
+def energy_density(params, tfim_mpo, config):
+    tensors = cooling_tensors(params, config)
+    return _mpo_expectation(tensors, tfim_mpo) / config["n_qubits"]
 
 
 def run_solution(config):
     params = initial_parameters(config)
-    input_state = initial_state(config)
-    hamiltonian_mvp = build_tfim_mvp(config)
+    tfim_mpo = _tfim_mpo(
+        int(config["n_qubits"]),
+        float(config["transverse_field"]),
+    )
     optimizer = optax.adam(config["learning_rate"])
     opt_state = optimizer.init(params)
 
-    def loss_fn(p):
-        return energy_density(p, input_state, hamiltonian_mvp, config)
+    def train_step(carry, _):
+        current, state = carry
+        value, grads = K.value_and_grad(energy_density)(
+            current,
+            tfim_mpo,
+            config,
+        )
+        updates, state = optimizer.update(grads, state, current)
+        return (optax.apply_updates(current, updates), state), value
 
-    def train_step(p, state):
-        energy, grads = K.value_and_grad(loss_fn)(p)
-        updates, state = optimizer.update(grads, state, p)
-        p = optax.apply_updates(p, updates)
-        return p, state, energy
-
-    def train_loop(p, state):
-        def scan_step(carry, _):
-            p, state = carry
-            p, state, energy = train_step(p, state)
-            return (p, state), energy
-
-        return jax.lax.scan(
-            scan_step,
-            (p, state),
-            xs=None,
-            length=config["max_steps"],
+    @K.jit
+    def optimize(current, state):
+        return K.jaxy_scan(
+            train_step,
+            (current, state),
+            K.arange(config["max_steps"]),
         )
 
-    train_loop = K.jit(train_loop)
-    (params, opt_state), energy_density_history = train_loop(params, opt_state)
-
+    (params, _), energy_history = optimize(params, opt_state)
     return {
         "final_a": K.numpy(params["a"]),
         "final_b": K.numpy(params["b"]),
-        "energy_density_history": K.numpy(energy_density_history),
+        "energy_density_history": K.numpy(energy_history),
     }
