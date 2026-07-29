@@ -24,6 +24,13 @@ buffer and OOMed; at the host's maximum VM memory it remained CPU-active until
 the 300-second timeout. The expert algorithm is therefore runnable but not
 repeatably benchmarkable on this 16-GiB host.
 
+The definitive high-memory follow-up used a 64-GiB AMD EPYC 7742 Slurm
+allocation with every evaluator restricted to the same six CPU IDs. All 10
+canonical cells passed. Expert mean was 126.675 seconds and candidate mean was
+123.188 seconds (2.75% lower), but the candidate won only 3/5 pairs and the
+mean paired-speedup 95% interval `[0.818, 1.273]` includes 1.0. This confirms
+expert feasibility, not a runtime promotion.
+
 At 2048 shots the candidate mean is 7.47% lower, but it wins only 4/6 pairs
 and the paired-speedup 95% interval `[0.888, 1.290]` includes 1.0. No confirmed
 runtime-speedup claim is made.
@@ -103,11 +110,11 @@ runtime-speedup claim is made.
 
 ## Evidence limits
 
-Canonical evidence has five interleaved expert failures and five candidate
-passes, but no eligible speedup pairs. The reduced six-pair comparison is
-descriptive because it fails the frozen confidence/win-count rule. Results
-apply only to this fixed Docker image, six-CPU/7-GiB allocation, circuit and
-evaluator; no cross-hardware, global-SOTA or scaling claim is established.
-The separate high-memory follow-up has one eligible pair, one 13-GiB OOM, and
-one maximum-memory timeout; it proves expert feasibility but is not a runtime
-promotion dataset.
+The fixed 7-GiB canonical evidence has five interleaved expert failures and
+five candidate passes, so it supports only OOM-to-PASS. The independent
+64-GiB canonical evidence has five eligible pairs and 10/10 passes, but its
+3/5 wins and paired interval including 1.0 fail runtime promotion. The reduced
+six-pair comparison is also descriptive because it fails the frozen
+confidence/win-count rule. Absolute runtimes are not combined between the
+Apple M2 and AMD EPYC hosts; no cross-hardware, global-SOTA or scaling claim
+is established.

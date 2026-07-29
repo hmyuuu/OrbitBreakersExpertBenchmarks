@@ -495,8 +495,51 @@ The temporary swap was disabled and deleted, all test containers were
 removed, and Colima was restored to the original 8-GiB configuration.
 
 Decision: `no canonical promotion`. The expert is algorithmically runnable,
-but this host cannot produce five reproducible eligible pairs. Use at least
-24 GiB physical RAM for the definitive alternating-order five-pair run.
+but this host cannot produce five reproducible eligible pairs. The independent
+64-GiB alternating-order run below fulfills the recommended follow-up.
 
 Tracked record:
 `profiles/high-memory-feasibility-follow-up.json`.
+
+### 64-GiB Slurm definitive five-pair session
+
+Date: 2026-07-30 local / 2026-07-29 UTC.
+
+The requested canonical comparison was completed on Slurm job `23014910`,
+node `a01r04n07` (AMD EPYC 7742, x86_64). The partition's 3931-MiB-per-CPU
+policy required reserving 17 CPUs for a 64-GiB allocation; the benchmark
+controller and all evaluator children were affinity-limited to the same six
+CPU IDs. Apptainer 1.3.4 ran a pre-expanded Python 3.11.15 sandbox with the
+locked TensorCircuit/JAX environment. Each cell was a fresh process with a
+300-second cap and no network access.
+
+```text
+pair 1 reference -> candidate: 133.779068 -> 104.469589 s, 1.280555x
+pair 2 candidate -> reference: 117.351760 -> 124.285933 s, 0.944208x
+pair 3 reference -> candidate: 116.306970 -> 143.334082 s, 0.811440x
+pair 4 candidate -> reference: 132.744516 -> 114.131608 s, 1.163083x
+pair 5 reference -> candidate: 133.194228 -> 129.717456 s, 1.026803x
+
+valid cells: 10/10 PASS
+reference mean_sec: 126.675308
+candidate mean_sec: 123.187734
+ratio_of_means_speedup: 1.028311
+ratio_of_means_improvement: 2.7532%
+mean_pairwise_speedup: 1.045218
+paired_speedup_stderr: 0.081997
+paired_speedup_95pct_t_ci: [0.817558, 1.272878]
+candidate pair wins: 3/5
+Slurm MaxRSS: 26051648 KiB (24.8448 GiB)
+```
+
+Raw report SHA-256:
+`c6f281479979d34e8293a3ad0bde749fad8140cc095daeb8bb0661921102f2b8`.
+
+Tracked sanitized record:
+`profiles/final-canonical-8192-high-memory-five-pairs.json`.
+
+Decision: `expert feasibility confirmed; runtime speedup not promoted`. The
+expert and candidate both pass 5/5 with sufficient memory. The candidate mean
+is descriptively 2.75% lower, but only 3/5 pair wins and a confidence interval
+including 1.0 do not support a confirmed runtime claim. Absolute times are not
+combined with the Apple M2 sessions.

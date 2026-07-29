@@ -75,5 +75,13 @@
   "eligible_runtime_pairs": 1,
   "promotion_rule_passed": false,
   "conclusion": "The immutable expert algorithm can complete the canonical workload, but this 16 GiB host cannot produce five reproducible eligible pairs. The original 7 GiB result is allocation-scoped OOM-to-PASS evidence, not an algorithmic impossibility claim.",
-  "recommended_runner": "At least 24 GiB physical RAM, six fixed CPUs, the same image and source hashes, and five alternating-order pairs."
+  "subsequent_definitive_run": {
+    "status": "completed",
+    "profile": "final-canonical-8192-high-memory-five-pairs.json",
+    "allocation": "64 GiB Slurm allocation with six-CPU benchmark affinity",
+    "eligible_runtime_pairs": 5,
+    "reference_passing_runs": 5,
+    "candidate_passing_runs": 5,
+    "promotion_rule_passed": false
+  }
 }

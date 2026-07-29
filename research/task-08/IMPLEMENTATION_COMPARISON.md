@@ -21,6 +21,14 @@ On the fixed six-CPU, 7-GiB Docker allocation:
 - therefore the primary established result is **OOM to reproducible PASS**,
   not a numerical speedup.
 
+An independent 64-GiB x86_64 Slurm session then completed the requested five
+canonical alternating-order pairs: all 10 cells passed, with expert
+126.675308 s mean and candidate 123.187734 s mean. The 2.7532% descriptive
+mean reduction is not a confirmed speedup: the candidate won only 3/5 pairs,
+and mean pairwise speedup was 1.0452x with 95% Student-t interval
+`[0.8176, 1.2729]`. This run definitively shows that the public expert is
+algorithmically runnable when enough memory is available.
+
 The evaluator-supported 2048-shot scale probe provides a runtime comparison:
 all 12 cells passed, with reference 32.246056 s mean and candidate
 29.838621 s mean (7.4658% lower; ratio of means 1.0807x). The candidate won
@@ -38,6 +46,7 @@ is called the campaign best, not global SOTA.
 | Campaign best | `src/solutions/task-08/solution_8.py` | `7696f4d742d07da92a06cf5bdd4634f26ca5fe9251471163a90a4b6da280b45d` |
 | Evaluator | `tasks/task-08/evaluator/evaluate_8.py` | `bffda6b012b07fd1cb8d5a1ec8a763bba4f1b967e5adc0d2b704e6ae99de9c41` |
 | Docker image | `orbitbreakers-expert-benchmarks:tensorcircuit-py311` | `sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833` |
+| High-memory Python SIF | Python 3.11.15, locked x86_64 dependencies | `17dcff888e341955e53682a44ebd8b6894ed38ecc6fc95e8ee5b9c20fd35989a` |
 
 ## Why the expert fails in 7 GiB
 
@@ -149,17 +158,57 @@ raised to the Apple Virtualization Framework maximum of 16 GiB; Docker saw
 the expert avoided OOM but remained CPU-active at roughly 14.39 GiB resident
 memory until the fixed 300-second evaluator timeout.
 
-This establishes two points:
+The Apple-host attempts establish two points:
 
 1. the public expert code can run the canonical workload when OMECo/XLA finds
    a sufficiently small path and enough memory is available;
-2. this machine cannot supply five reproducible eligible expert/candidate
-   pairs, so no canonical mean or confirmed speedup is reported.
+2. that 16-GiB machine cannot supply five reproducible eligible
+   expert/candidate pairs.
 
 The tracked evidence is
-`profiles/high-memory-feasibility-follow-up.json`. A definitive five-pair
-comparison should use at least 24 GiB physical RAM, six fixed CPUs, the same
-image and source hashes, and the same alternating order.
+`profiles/high-memory-feasibility-follow-up.json`.
+
+### 64-GiB definitive five-pair session
+
+The requested comparison was completed independently on one AMD EPYC 7742
+x86_64 Slurm node. The allocation reserved 17 CPUs because the partition caps
+requested memory at 3931 MiB per CPU; before any cell ran, the controller and
+all evaluator children were affinity-limited to the same six CPU IDs. The job
+received 64 GiB and recorded 24.845 GiB maximum RSS. Every cell used a fresh
+Apptainer/evaluator process, the 300-second cap, the unchanged 8192-shot
+workload, and the same source, evaluator, sitecustomize and requirements-lock
+hashes.
+
+| Pair | Order | Expert | Candidate | Speedup |
+| ---: | --- | ---: | ---: | ---: |
+| 1 | reference -> candidate | 133.779068 s | 104.469589 s | 1.2806x |
+| 2 | candidate -> reference | 117.351760 s | 124.285933 s | 0.9442x |
+| 3 | reference -> candidate | 116.306970 s | 143.334082 s | 0.8114x |
+| 4 | candidate -> reference | 132.744516 s | 114.131608 s | 1.1631x |
+| 5 | reference -> candidate | 133.194228 s | 129.717456 s | 1.0268x |
+
+| Metric | Expert | Candidate |
+| --- | ---: | ---: |
+| Passing cells | 5/5 | 5/5 |
+| Mean | 126.675308 s | 123.187734 s |
+| Median | 132.744516 s | 124.285933 s |
+| Sample standard deviation | 9.003138 s | 14.850093 s |
+| Standard error | 4.026326 s | 6.641163 s |
+
+The ratio-of-means speedup is 1.0283x (candidate mean 2.7532% lower).
+Candidate pair wins are 3/5; mean pairwise speedup is 1.0452x with standard
+error 0.0820x and 95% Student-t interval `[0.8176, 1.2729]`. The interval
+includes 1.0, so the result does **not** promote a numerical runtime speedup.
+It does close the feasibility question: with adequate memory, the immutable
+expert passes 5/5 canonical attempts.
+
+The raw report is
+`results/canonical-8192-five-pairs/results.json`
+(`sha256:c6f281479979d34e8293a3ad0bde749fad8140cc095daeb8bb0661921102f2b8`);
+the tracked sanitized record is
+`profiles/final-canonical-8192-high-memory-five-pairs.json`. Absolute times
+from the x86_64 node are not combined with the Apple M2 sessions; only
+within-session comparisons are interpreted.
 
 ## 2048-shot six-pair runtime comparison
 
@@ -233,16 +282,16 @@ falsifiable expectation.
 ## Limits and PR recommendation
 
 - Canonical runtime speedup is unmeasurable in the fixed 7-GiB allocation.
-- A 13-GiB feasibility probe produced one valid 1.1995x pair, but the next
-  expert attempt OOMed and the maximum-memory attempt timed out. It cannot be
-  promoted or averaged as a canonical benchmark.
+- The independent 64-GiB canonical session supplies five valid pairs, but its
+  3/5 wins and paired 95% interval `[0.8176, 1.2729]` do not establish a
+  numerical speedup.
 - The reduced comparison trends positive but fails the frozen statistical
   rule; do not advertise 1.08x as confirmed.
 - OMECo path search produces visible process-to-process variance.
-- Evidence covers one Apple M2 host, one six-CPU/7-GiB Docker allocation, one
-  image and the fixed Task 08 circuit.
+- Evidence covers one Apple M2 Docker host and one AMD EPYC 7742 Slurm node;
+  absolute runtimes are not compared across those machines.
 
 The PR should be titled around bounded-memory canonical sampling, for example:
 “Task 08: chunk TensorCircuit perfect sampling to make 8192 shots fit 7 GiB.”
 Its headline should be “reference 0/5 vs candidate 5/5 PASS,” with the reduced
-7.47% mean result explicitly labeled non-significant.
+7.47% and high-memory 2.75% mean results explicitly labeled non-significant.
