@@ -33,24 +33,32 @@ def initial_parameters(config):
     }
 
 
-def pair_map(odd, even, xx, zz, odd_rx, even_rx, even_left):
-    rxx = K.reshape(tc.gates.rxx_gate(theta=xx).tensor, [4, 4])
-    rzz = K.reshape(tc.gates.rzz_gate(theta=zz).tensor, [4, 4])
+def pair_map(odd, even, xx, zz, odd_rx, even_rx, _even_left):
     ro = tc.gates.rx_gate(theta=odd_rx).tensor
     re = tc.gates.rx_gate(theta=even_rx).tensor
-    if even_left:
-        state = K.kron(even, odd)
-        rotations = K.kron(re, ro)
-    else:
-        state = K.kron(odd, even)
-        rotations = K.kron(ro, re)
-    state = K.tensordot(
-        rotations,
-        K.tensordot(rzz, K.tensordot(rxx, state, 1), 1),
-        1,
+    cxx, sxx = K.cos(xx / 2.0), K.sin(xx / 2.0)
+    czz, szz = K.cos(zz / 2.0), K.sin(zz / 2.0)
+    coefficients = (
+        cxx * czz,
+        -1j * sxx * czz,
+        sxx * szz,
+        -1j * cxx * szz,
     )
-    state = K.reshape(state, [2, 2])
-    selected = state[0, :] if even_left else state[:, 0]
+    operators = (
+        tc.gates.i().tensor,
+        tc.gates.x().tensor,
+        tc.gates.y().tensor,
+        tc.gates.z().tensor,
+    )
+    selected = K.zeros([2], dtype="complex64")
+    for coefficient, operator in zip(coefficients, operators):
+        even_branch = K.tensordot(
+            re, K.tensordot(operator, even, 1), 1
+        )[0]
+        odd_branch = K.tensordot(
+            ro, K.tensordot(operator, odd, 1), 1
+        )
+        selected = selected + coefficient * even_branch * odd_branch
     probability = K.real(K.sum(K.conj(selected) * selected))
     return selected / K.sqrt(probability + 1e-12), probability
 
