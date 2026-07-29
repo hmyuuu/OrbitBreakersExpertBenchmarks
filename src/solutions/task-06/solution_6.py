@@ -101,7 +101,6 @@ def forward(params, psi0, Hxy_mvp, Hfield_mvp, Htarget_mvp, config):
             ode_backend="diffrax",
             rtol=rtol,
             atol=atol,
-            dt0=None,
             max_steps=config["ode_max_steps"],
         )[-1]
 
