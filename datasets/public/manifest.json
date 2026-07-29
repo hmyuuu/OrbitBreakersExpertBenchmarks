@@ -2,9 +2,9 @@
   "schema_version": 1,
   "dataset_id": "orbitbreakers-public-dev",
   "status": "ready",
-  "version": "orbitq-workloads-v20260729.4",
-  "created_at": "2026-07-29T03:35:00Z",
-  "generator_commit": "5af98f27b9404c513df8eee0f4568b1512edee19",
+  "version": "orbitq-workloads-v20260729.7",
+  "created_at": "2026-07-29T07:56:11Z",
+  "generator_commit": "dc84f6a38d44cad8c0fd46f788ecbe135f43440d",
   "environment_image_digest": "sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833",
   "selected_task_id": "08",
   "coverage_requirements": {
@@ -13,6 +13,11 @@
     "scale_probe_when_supported": 1
   },
   "unsupported_optional_coverage": [
+    {
+      "task_id": "04",
+      "reduced_smoke_case": "The contract fixes exactly 120 Adam updates and four probe circuits.",
+      "scale_probe": "The contract fixes 12 qubits and two brickwork sublayers."
+    },
     {
       "task_id": "05",
       "reduced_smoke_case": "The contract fixes exactly 600 Adam updates.",
@@ -27,9 +32,22 @@
       "task_id": "11",
       "reduced_smoke_case": "The contract fixes exactly 500 Adam updates and seed 2041.",
       "scale_probe": "The contract fixes 12 spin-1 sites and five brickwork layers."
+    },
+    {
+      "task_id": "06",
+      "scale_probe": "Only the fixed 14-qubit, four-block configuration is eligible for promotion; max_steps is exposed solely for public profiling."
     }
   ],
   "cases": [
+    {
+      "task_id": "04",
+      "case_id": "task-04-canonical-fixed-v1",
+      "path": "task-04/canonical.json",
+      "sha256": "df0ed7974b4f8ea41b4f1923a876c8b60c11c1e295aaae97cfb01d0edc2cc628",
+      "provenance": "Canonical public configuration from tasks/task-04/problem.md and tasks/task-04/evaluator/evaluate_4.py at commit dc84f6a38d44cad8c0fd46f788ecbe135f43440d.",
+      "expert_validation_status": "PASS",
+      "expert_validation_report_sha256": "be8696214fa5c170398cd7a57bb3df56a476e658ebca5c99f8ec7a487735ff16"
+    },
     {
       "task_id": "05",
       "case_id": "task-05-canonical-fixed-v1",
@@ -58,6 +76,15 @@
       "expert_validation_report_sha256": "b4ce3d311a0d4ba74ec094b8330824d07135a82f5a23c44aece9a3e2d25f7d91"
     },
     {
+      "task_id": "06",
+      "case_id": "task-06-canonical-fixed-v1",
+      "path": "task-06/canonical.json",
+      "sha256": "94f3bcce9ebc05772e95e4ec1953050b282e8e93dcde9721dfa616ce9571cee3",
+      "provenance": "Canonical public configuration from tasks/task-06/problem.md and tasks/task-06/evaluator/evaluate_6.py at commit 5af98f27b9404c513df8eee0f4568b1512edee19.",
+      "expert_validation_status": "PASS",
+      "expert_validation_report_sha256": "bdb7b985d6a0fa6bd6e7044816f9764e90b285fa9be0e6f07b79aa2587e9ff35"
+    },
+    {
       "task_id": "08",
       "case_id": "task-08-canonical-fixed-v1",
       "path": "task-08/canonical.json",
@@ -77,5 +104,5 @@
       "expert_validation_runtime_sec": 48.113225
     }
   ],
-  "environment_note": "Task 08 was validated in Docker image sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833 with six CPUs and 7 GiB. The canonical immutable expert reproducibly exhausted memory while requesting 17,998,348,288 bytes, so its semantics were independently validated by 44 exact TensorCircuit light-cone expectation contractions; the public 2048-shot scale probe passed. Earlier task cases retain their original records."
+  "environment_note": "Tasks 04, 06, and 08 were validated in Docker image sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833 with six CPUs and 7 GiB. Task 04 used six immutable-reference runs. The Task 08 canonical immutable expert reproducibly exhausted memory while requesting 17,998,348,288 bytes, so its semantics were independently validated by 44 exact TensorCircuit light-cone expectation contractions; the public 2048-shot scale probe passed. Earlier task cases retain their original records."
 }

@@ -854,6 +854,33 @@ class CliTests(unittest.TestCase):
             self.assertIn("--solution", command)
             self.assertIn("solution_1", command)
 
+    def test_docker_dry_run_accepts_resource_overrides(self) -> None:
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            create_benchmark(root)
+            stdout = io.StringIO()
+            with contextlib.redirect_stdout(stdout):
+                returncode = main(
+                    [
+                        "run",
+                        "01",
+                        "--engine",
+                        "docker",
+                        "--cpus",
+                        "6",
+                        "--memory",
+                        "7g",
+                        "--dry-run",
+                    ],
+                    root=root,
+                )
+
+            self.assertEqual(returncode, 0)
+            payload = json.loads(stdout.getvalue())
+            command = payload["plans"][0]["container_start_command"]
+            self.assertEqual(command[command.index("--cpus") + 1], "6.0")
+            self.assertEqual(command[command.index("--memory") + 1], "7g")
+
     def test_local_run_writes_results_summary_and_logs(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

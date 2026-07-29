@@ -297,3 +297,21 @@ coefficient vector, (4) `K.jaxy_scan` + `K.jit` training/finalize. Helpers,
 naming (`spin1_even`/`spin1_odd`), initialization, and module docstring match
 the reference. Candidate SHA-256 `d5faedc2859705be1b5a259f11ae78886dfeee9f5563eade841bedd88359e5dc`. Static policy line_count=198.
 Smoke: 1/1 PASS at 113.573 s.
+
+## Post-merge component ablation
+
+Date: 2026-07-29
+
+`profile_factor_ablation.py` measured three independently removable factors
+inside the merged candidate on the 6-CPU/7-GiB Docker backend:
+
+- fixed batched Pade entanglers execute `1.695x` faster than the batched
+  adaptive-`K.expm` alternative at `4.68e-6` maximum gate error;
+- the exact diagonal onsite vector executes `81.21x` faster than twelve
+  framework expectations for that isolated term, with zero value error;
+- ten identical candidate updates take `1.839 s` in one scan versus
+  `2.130 s` as repeated compiled-step dispatches; histories are bitwise equal.
+
+These component ratios are not multiplied or relabeled as canonical
+end-to-end speedups. The report now distinguishes dominant dense-state/onsite
+bandwidth savings from the smaller scan contribution.
