@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "dataset_version": "orbitq-workloads-v20260729.6",
+  "tier": "public-development",
+  "task_id": "06",
+  "case_id": "task-06-canonical-fixed-v1",
+  "description": "Canonical fixed Task 06 digital-analog VQE with four differentiable ODE blocks.",
+  "input_config": {
+    "n_qubits": 14,
+    "n_blocks": 4,
+    "t_min": 0.05,
+    "t_max": 0.5,
+    "ode_rtol": 1e-06,
+    "ode_atol": 1e-06,
+    "ode_max_steps": 16,
+    "max_steps": 100,
+    "learning_rate": 0.12,
+    "maximum_energy_density_gap": 1.0
+  },
+  "seed": 2026,
+  "randomness": "fixed NumPy seed 2026 for float32 digital-rotation initialization",
+  "expected_result_contract": {
+    "final_analog_times": {
+      "shape": [
+        4
+      ],
+      "meaning": "Post-update bounded analog evolution times."
+    },
+    "final_analog_couplings": {
+      "shape": [
+        4
+      ],
+      "meaning": "Post-update bounded XY couplings."
+    },
+    "final_analog_detunings": {
+      "shape": [
+        4
+      ],
+      "meaning": "Post-update bounded staggered-Z detunings."
+    },
+    "energy_density_history": {
+      "shape": [
+        100
+      ],
+      "meaning": "Pre-update energy density for each of exactly 100 Adam updates."
+    }
+  },
+  "functional_thresholds": {
+    "energy_density_must_improve": true,
+    "ground_energy_lower_bound_tolerance": 1e-06,
+    "maximum_final_ground_energy_density_gap": 1.0
+  },
+  "variation_support": {
+    "reduced_smoke_case": true,
+    "scale_probe": false,
+    "reason": "The evaluator exposes max_steps for public diagnostic runs, but only the 100-update canonical case is eligible for promotion."
+  },
+  "source_provenance": {
+    "repository_commit": "5af98f27b9404c513df8eee0f4568b1512edee19",
+    "problem_path": "tasks/task-06/problem.md",
+    "problem_sha256": "e3e8a8044c322027327b6e694dbb476f67dbc09465ea80dd4f20aebf8c64c8a7",
+    "evaluator_path": "tasks/task-06/evaluator/evaluate_6.py",
+    "evaluator_sha256": "0d2dfc7f30087896fb599925f9110190a3a61358263688dbb09cc36115a23998",
+    "expert_path": "references/task-06/solution_6.py",
+    "expert_sha256": "0e7fec8d11135241eb3f3501f3651f3f337e08c636407b3da8a2858c2b3d85d1"
+  },
+  "expert_validation": {
+    "status": "PASS",
+    "validated_at_utc": "2026-07-29T01:29:10.211307Z",
+    "engine": "docker",
+    "environment_image_id": "sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833",
+    "environment_lock_sha256": "cd5ac5cb2102ea7b40bd46dc81320cc59e0ce0671ab88c597f81d82b384a824b",
+    "host_fingerprint_sha256": "8188765e4acb94ead1ba5de9e79cb6cb2be366ecfa06948a06df2ef871880aab",
+    "evaluator_runtime_sec": 43.9766,
+    "initial_energy_density": -0.5182266235,
+    "final_energy_density": -1.5754342079,
+    "exact_ground_energy_density": -1.6025561094,
+    "report_sha256": "bdb7b985d6a0fa6bd6e7044816f9764e90b285fa9be0e6f07b79aa2587e9ff35",
+    "stdout_sha256": "46ecdcb6d91fea140065df6933b0baf5767f445028b51460ac596a6dc2259148"
+  }
+}
