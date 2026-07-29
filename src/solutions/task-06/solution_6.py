@@ -98,7 +98,7 @@ def forward(params, psi0, Hxy_mvp, Hfield_mvp, Htarget_mvp, config):
             psi,
             times,
             mode="raw",
-            ode_backend="diffrax",
+            ode_backend="jaxode",
             rtol=rtol,
             atol=atol,
             max_steps=config["ode_max_steps"],
