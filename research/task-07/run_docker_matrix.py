@@ -275,6 +275,28 @@ def main() -> None:
                     "stderr_sha256": sha256(stderr_path),
                 }
                 rows.append(row)
+                (output / "checkpoint.json").write_text(
+                    json.dumps(
+                        {
+                            "schema_version": 1,
+                            "task_id": "07",
+                            "configuration": {
+                                "repeat": args.repeat,
+                                "max_steps": args.max_steps,
+                                "cpus": args.cpus,
+                                "memory": args.memory,
+                            },
+                            "host": host,
+                            "image": image,
+                            "snapshot": snapshot,
+                            "staging_snapshot_sha256": snapshot_sha256,
+                            "results": rows,
+                        },
+                        indent=2,
+                    )
+                    + "\n",
+                    encoding="utf-8",
+                )
                 print(
                     f"cell {cell:02d}/{len(plan)} pair={pair} role={role} "
                     f"runtime={runtime} passed={passed}",
@@ -349,8 +371,8 @@ def main() -> None:
             "cpus": args.cpus,
             "memory": args.memory,
             "pair_order": "odd reference->candidate; even candidate->reference",
-            "fresh_evaluator_process_per_cell": true,
-            "single_container": true,
+            "fresh_evaluator_process_per_cell": True,
+            "single_container": True,
         },
         "host": host,
         "image": image,

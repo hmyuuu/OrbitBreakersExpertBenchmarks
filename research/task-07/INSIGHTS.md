@@ -9,9 +9,10 @@ Evidence ledger: [`LOG.md`](LOG.md)
 ## Current best
 
 Experiment `e04a` combines one native data-Hamiltonian evaluation, exact
-measured-ancilla feedback reduction, and OMECo 1x1 path search. Its canonical
-screen passes in 24.362414 seconds versus the expert's 135.815605 seconds
-(5.5757x). This is provisional one-run evidence, not the final paired claim.
+measured-ancilla feedback reduction, and OMECo 1x1 path search. Six final
+counterbalanced Docker pairs all pass and all win: candidate mean
+26.196276 seconds versus expert mean 116.264691 seconds; mean paired speedup
+4.478752x (95% Student-t CI 3.890959x-5.066545x).
 
 ## Preserved semantics
 
@@ -97,8 +98,9 @@ screen passes in 24.362414 seconds versus the expert's 135.815605 seconds
 
 ## Evidence limits
 
-- The canonical baseline is currently a single bootstrap run; promotion will
-  collect six matched pairs against the frozen winner.
 - No matched external implementation exists, so “SOTA” can mean only the
   campaign-best implementation for this repository workload.
 - No scaling or cross-hardware claim is supported.
+- Long-session thermal/system noise widened candidate runs to
+  24.222-31.684 seconds; no value was filtered, and the confidence interval
+  remains well above 1.0.

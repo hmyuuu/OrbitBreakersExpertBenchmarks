@@ -486,3 +486,68 @@ python -u research/task-07/run_docker_matrix.py \
 It stages immutable source snapshots, uses one no-network container and fresh
 evaluator processes, alternates pair order, and applies the survey's frozen
 Student-t promotion rule.
+
+## Final paired result
+
+Date: 2026-07-29.
+
+Candidate SHA-256:
+`0cd9676dc904660597a2f7dd6981fdac596295e4eae99510a3f4f21671859592`.
+
+Staging snapshot SHA-256:
+`e5faae4102a95cde78ecefe41be5d9532832e9f82df89c25bab3b308d0460b44`.
+
+Container: `orbit-task07-matrix-34ea5ae79e`
+(ID prefix `b8199b0e1e6a`), six CPUs, 7 GiB, no network.
+
+Sanitized paired report:
+`profiles/final-canonical-six-pairs.json`
+(`sha256:6e03db1f37e8bbe0b38247f017d9259177a2858d54289fa2a5615542b499b54a`).
+
+Fail-closed reference report:
+`profiles/final-reference-six.json`
+(`sha256:743f493120dd89e6c75a309499c28d819ae00aee09d57e7feb374b35c0310224`).
+
+```text
+terminal_status: SUCCESS x 12
+valid cells: 12/12
+passing pairs: 6/6
+candidate wins: 6/6
+
+reference runtimes:
+106.038165, 119.427967, 123.188182,
+107.532991, 110.084619, 131.316223
+
+candidate runtimes:
+24.481295, 24.221592, 24.716431,
+24.421997, 31.684172, 27.652166
+
+reference mean / median / stderr:
+116.264691 / 114.756293 / 4.096777 s
+
+candidate mean / median / stderr:
+26.196276 / 24.598863 / 1.216760 s
+
+ratio-of-means speedup: 4.438215x
+ratio-of-means improvement: 77.4684%
+mean paired speedup: 4.478752x
+paired speedup stderr: 0.228662x
+95% Student-t CI: [3.890959x, 5.066545x]
+```
+
+Decision: `promote`. Every cell passes, mean and median are lower, all six
+pairs win, and the frozen confidence lower bound is above 1.0.
+
+### Final report serialization failure and recovery
+
+After cell 12 passed and the shared container stopped, the runner raised a
+`NameError` while constructing the final JSON because two Python booleans
+were written as lowercase `true`. All 24 raw stdout/stderr logs already
+existed; stderr logs were empty and every stdout contained `Overall: PASS`.
+No benchmark cell was rerun or filtered. The sanitized reports above were
+reconstructed from all raw logs, with every stdout hash retained.
+
+The runner is corrected to use `True` and now writes a checkpoint after each
+cell. `research/check_gates.py --task 07 --baseline-report
+research/task-07/profiles/final-reference-six.json` returns
+`promotion_ready: true`.
