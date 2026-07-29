@@ -54,13 +54,17 @@ Do not replace the current Hamiltonian actions with TensorCircuit/JAX BCOO
 unchanged. Numerical equivalence passed, but isolated steady runtime regressed
 by more than 3x.
 
+Diffrax `dt0=None` was neutral on the canonical screen (`0.12%` faster than
+e01, far below noise) and produced the same displayed optimization result.
+Keep the explicit framework default unless new step-count evidence explains a
+reason to revisit it.
+
 ## Open hypotheses
 
-1. Diffrax automatic initial-step selection with `dt0=None`.
-2. TensorCircuit's `jaxode` backend under unchanged tolerances and step bound.
-3. Whole-training `K.jaxy_scan`.
-4. Diffrax solver sweep under unchanged tolerances.
-5. Parameter-tree simplification only if later profiling supports it.
+1. TensorCircuit's `jaxode` backend under unchanged tolerances and step bound.
+2. Whole-training `K.jaxy_scan`.
+3. Diffrax solver sweep under unchanged tolerances.
+4. Parameter-tree simplification only if later profiling supports it.
 
 ## Evidence limits
 

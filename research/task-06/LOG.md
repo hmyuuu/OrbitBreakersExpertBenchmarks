@@ -180,3 +180,33 @@ Reports:
 Decision: `keep provisionally`. The canonical screen is about 5.8% below the
 immutable mean and the numerical audits pass. Continue from e01 to isolate
 Diffrax automatic initial-step selection.
+
+## Experiment `e02`: Diffrax automatic initial step
+
+Candidate commit: `a76876b`; restore commit: `670364d`.
+
+Candidate SHA-256:
+`b48f232bf75461326bec78a0bfd830f7b634c9ef7b3acbdeffaaec97bc412582`.
+
+The only change from e01 was `dt0=None`, asking the same TensorCircuit Diffrax
+path to choose its initial step automatically while preserving solver,
+tolerances, and maximum steps.
+
+```text
+max_steps=10:  e01 10.912746 s, e02 10.402433 s, e02 PASS
+max_steps=100: e01 42.412637 s, e02 42.361953 s, e02 PASS
+canonical delta: 0.050684 s (0.12%)
+```
+
+The canonical energies and returned analog parameters were byte-for-display
+identical to e01. Reports:
+
+- `profiles/e02-dt0-auto-10.json`
+  (`sha256:c0d534a50c3b0e2e36b979166309913858a004fdb552111b36d85576de079dbe`);
+- `profiles/e02-dt0-auto-100.json`
+  (`sha256:d9f17e8f27e26f6c85d33c03ae7377d7b961902b6b6f877c12ab094c823962d6`).
+
+Decision: `discard`. The `0.12%` single-run canonical difference is far below
+normal run noise and supplies no evidence that the automatic choice improves
+the accepted e01 path. Restore the simpler expert default before the next
+experiment.
