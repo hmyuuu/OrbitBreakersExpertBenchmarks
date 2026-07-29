@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+from dataclasses import replace
 from pathlib import Path
 from typing import Sequence
 
@@ -91,6 +92,21 @@ def _parser() -> argparse.ArgumentParser:
         default="docker",
     )
     run_parser.add_argument("--timeout", type=float)
+    run_parser.add_argument(
+        "--cpus",
+        type=float,
+        help=(
+            "Override the selected Docker environment CPU limit for this run "
+            "without modifying bench.toml."
+        ),
+    )
+    run_parser.add_argument(
+        "--memory",
+        help=(
+            "Override the selected Docker environment memory limit for this "
+            "run (for example, 7g) without modifying bench.toml."
+        ),
+    )
     run_parser.add_argument("--output", type=Path)
     run_parser.add_argument("--no-build", action="store_true")
     run_parser.add_argument("--dry-run", action="store_true")
@@ -247,6 +263,25 @@ def _handle_run(
     config = load_bench_config(root)
     tasks = discover_tasks(root, config)
     selected = _select_tasks(tasks, args.task)
+    if args.cpus is not None and args.cpus <= 0:
+        raise BenchmarkError("--cpus must be positive")
+    if args.memory is not None and not args.memory.strip():
+        raise BenchmarkError("--memory must not be empty")
+    if args.cpus is not None or args.memory is not None:
+        selected_environments = {task.environment for task in selected}
+        environments = dict(config.environments)
+        for name in selected_environments:
+            environment = environments[name]
+            environments[name] = replace(
+                environment,
+                cpus=args.cpus if args.cpus is not None else environment.cpus,
+                memory=(
+                    args.memory
+                    if args.memory is not None
+                    else environment.memory
+                ),
+            )
+        config = replace(config, environments=environments)
     repeat_count = (
         args.repeat if args.repeat is not None else config.default_repeats
     )
