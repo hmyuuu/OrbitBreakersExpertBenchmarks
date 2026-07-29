@@ -279,4 +279,26 @@ e02's 33.546170 seconds.
 
 ### Result
 
-Pending. Append all results.
+Candidate hypothesis commit: `8b977faa5a9eea4e4ead88e24f4193cbfbc66aa0`.
+
+Candidate SHA-256:
+`767c82d6c0be9af2ee526d130afba3f6eb95d81d42efcbb7f62665a9753a3b2c`.
+
+Candidate diff SHA-256:
+`5bffe6df6108a72656dfd56cdc9d4a39aeaaa0037e3545e3d4bb1a754d4229d3`.
+
+Sanitized record: `profiles/e03-training-scan-screen.json`.
+
+```text
+max_steps=50:  e02 31.299628 s, scan 34.916768 s, scan/e02 1.11556
+max_steps=100: e02 33.546170 s, scan 36.747307 s, scan/e02 1.09542
+```
+
+Both scan runs passed every evaluator criterion. The canonical initial,
+final-history, and final-trajectory-mean energies differ from e02 by
+`6.68e-6`, `1.80e-3`, and `1.71e-3`, all within the frozen `5e-3`
+physical threshold.
+
+Decision: `discard`. Staging the already optimized value/gradient/Adam body
+inside a scan adds more control-flow compile cost than 100 cached-JIT Python
+dispatches. Continue from accepted e02 without scan.

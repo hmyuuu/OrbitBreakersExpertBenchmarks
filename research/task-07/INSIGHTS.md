@@ -57,6 +57,12 @@ provisional one-run evidence, not the final paired claim.
   passed. Preserve that failure, but use physical post-update outputs as the
   predeclared one-step semantic criterion in later experiments.
 
+## What did not work
+
+- Whole-training `K.jaxy_scan` is correct but slower after e02: 36.747 versus
+  33.546 seconds for 100 steps and 34.917 versus 31.300 seconds for 50.
+  Control-flow compilation outweighs only 100 cached-JIT host dispatches.
+
 ## High-confidence exact identities
 
 - Final ancillas factor from the data state because the last operation that
