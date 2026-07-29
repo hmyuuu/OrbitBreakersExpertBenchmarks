@@ -8,8 +8,10 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-None. The immutable reference baseline passes six times, but no candidate has
-yet passed the paired promotion rule.
+Whole-training TensorCircuit `K.jaxy_scan`, source SHA-256
+`6e44df512170e071655eee7697f7a0c084704dd34c266f441b2755cb1f29bc1a`,
+is the accepted parent. Its six-pair mean speedup is `1.035580x`, 95%
+Student-t interval `[1.010063x, 1.061098x]`, with `6/6` wins.
 
 ## Preserved semantics
 
@@ -41,7 +43,9 @@ Profile: [`profiles/reference-profile.json`](profiles/reference-profile.json).
 
 ## What worked
 
-No candidate result yet.
+- Whole-training `K.jaxy_scan` preserved the four 12-step histories
+  bit-for-bit and reduced canonical mean runtime from `4.724217` to
+  `4.563051 s` in its six-pair session.
 
 ## What did not work
 
@@ -49,14 +53,13 @@ No candidate result yet.
 
 ## Open hypotheses
 
-1. whole-training `K.jaxy_scan`;
-2. exact Frobenius-purity Renyi-2 evaluation;
-3. TensorCircuit-native sparse XXZ action;
-4. exact `RY -> RZ` and `RXX -> RYY -> RZZ` gate fusion;
-5. final leave-one-factor-out checks for every retained mechanism.
+1. exact Frobenius-purity Renyi-2 evaluation on the scan parent;
+2. TensorCircuit-native sparse XXZ action on the accepted parent;
+3. final leave-one-factor-out checks for every retained mechanism.
 
 ## Evidence limits
 
-Evidence currently covers only the canonical public Task 02 configuration,
-one latest TensorCircuit-NG image, and one 6-CPU/7-GiB same-host profile. It
-does not establish a candidate improvement, global SOTA, or scaling result.
+Evidence covers only the canonical public Task 02 configuration, one latest
+TensorCircuit-NG image, and one 6-CPU/7-GiB same-host profile. It establishes
+a small paired improvement over the bundled expert, not global SOTA or
+scaling.

@@ -127,3 +127,16 @@ Candidate diff SHA-256:
 
 Pre-evaluation correctness rule: all four 12-step pre-update histories must
 match the immutable expert within `2e-4` and retain identical shapes.
+
+The 12-step audit passed with bit-identical values and shapes for all four
+returned histories. Audit report SHA-256:
+`8864dd25031e00e1df188f705824738925e3679e4e46e06ae7078c5ccb6a1493`.
+
+Six alternating canonical pairs all passed. Reference/candidate means were
+`4.724217/4.563051 s`; candidate wins `6/6`; mean paired speedup
+`1.035580x`, 95% Student-t interval `[1.010063x, 1.061098x]`. Raw report
+SHA-256:
+`549e267378bc1eca2ea2b839810af4c46780ac8bdc7800eacdfc15385bc1e33b`.
+
+Decision: `keep`. Whole-training `K.jaxy_scan` is the first accepted parent
+and removes about 3.41% of end-to-end runtime in this session.
