@@ -184,6 +184,44 @@ Profilers and sanitized outputs:
 - [`profile_candidate.py`](profile_candidate.py) /
   [`profiles/candidate-profile.json`](profiles/candidate-profile.json)
 
+## Factor ablation
+
+The primary `4.8927x` result combines a structural representation change with
+two smaller execution choices. To avoid assigning the full gain to every item
+in that list, two removal ablations were measured after publication. Each row
+uses five counterbalanced pairs in one network-disabled 6-CPU/7-GiB container,
+a fresh unchanged evaluator process per cell, and the promoted candidate as
+the control. All 20 cells passed.
+
+| Removed factor | Promoted mean | Ablation mean | Paired ablation / promoted | Promoted wins | Interpretation |
+|---|---:|---:|---:|---:|---|
+| Whole-training `K.jaxy_scan` | 3.809923 s | 3.752754 s | 0.9857x, 95% t-CI `[0.9394, 1.0320]` | 2/5 | No positive contribution is resolved; the Python-dispatch loop is slightly faster on mean. |
+| Fused `RX -> RZ -> RY` application | 3.856303 s | 4.051055 s | 1.0515x, 95% t-CI `[0.9753, 1.1277]` | 5/5 | Directionally useful but small: about 4.8% lower mean runtime, not a separately significant headline result. |
+
+The conclusion is therefore narrower than the original strategy list:
+
+- the whole-training scan is **not** responsible for the reported speedup;
+- local rotation fusion is a small secondary factor;
+- the dominant factor is the exact bounded-rank MPS/MPO representation that
+  removes the expert's generic circuit-bra/MPO/circuit-ket path search and
+  cold compilation graph. Even the slower unfused ablation remains about
+  `18.931296 / 4.051055 = 4.67x` faster than the primary expert mean.
+
+The structural core groups the bond-2 CMZ application, bond-3 TFIM
+expectation, and low-rank MPS state. Those pieces are representation-coupled:
+removing the MPS representation also removes the fixed local MPO contraction
+being measured. The report therefore does **not** invent independent
+percentages for those inseparable subcomponents. QR/RQ removal is likewise a
+correctness requirement in this float32 optimizer trajectory, not a clean
+performance-only factor: the corresponding framework-canonicalized candidate
+failed the unchanged evaluator.
+
+Reproduction and sanitized measurements:
+
+- [`run_factor_ablation.py`](run_factor_ablation.py)
+- [`profiles/ablation-no-scan-five-pair.json`](profiles/ablation-no-scan-five-pair.json)
+- [`profiles/ablation-unfused-rotations-five-pair.json`](profiles/ablation-unfused-rotations-five-pair.json)
+
 ## Environment and reproducibility
 
 The final paired campaign used the latest TensorCircuit nightly image already

@@ -91,11 +91,26 @@ every functional check.
 
 ## Open hypotheses
 
-1. A scan-only ablation on the immutable expert objective would quantify how
-   much of the gain comes from host dispatch rather than representation.
-2. Persistent compilation caching could help repeated applications, but the
+1. Persistent compilation caching could help repeated applications, but the
    evaluator intentionally measures cold fresh processes, so it is outside the
    present comparison contract.
+
+## Post-publication factor ablation
+
+Five-pair removal ablations show that the whole-training scan is neutral on
+this cold-compile-dominated workload: removing it changed the mean from
+`3.809923 s` to `3.752754 s`, with only 2/5 promoted-candidate wins and a
+paired-ratio 95% interval crossing one. It must not be credited with the
+headline speedup.
+
+Removing local `RX -> RZ -> RY` fusion increased the mean from `3.856303 s`
+to `4.051055 s`; the fused implementation won 5/5 pairs, but the paired-ratio
+interval still crossed one. Treat fusion as a small secondary improvement.
+
+The performance claim should therefore attribute the dominant gain to the
+exact bounded-rank MPS/MPO representation and its much smaller cold
+lowering/compilation graph. The coupled CMZ-MPS and TFIM-MPO pieces were not
+assigned fictional independent percentages.
 
 ## Evidence limits
 

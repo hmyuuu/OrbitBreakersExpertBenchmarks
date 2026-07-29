@@ -465,3 +465,46 @@ Decision: `invalid-performance`
 Both experiments were stopped before the expensive full sparse-ground-state
 evaluator because they falsified the predeclared early performance condition.
 No accepted solution bytes or benchmark claim changed.
+
+## Post-publication factor ablation
+
+Date: 2026-07-29
+
+The promoted e02 candidate bundled an exact bounded-rank MPS/MPO
+representation, local rotation fusion, and a whole-training scan. Two
+source-derived removal ablations isolate the execution-level factors while
+leaving the structural quantum representation unchanged. The derivation
+script asserts the exact source blocks before producing a temporary candidate.
+
+Both comparisons used five counterbalanced pairs, fresh evaluator processes,
+one network-disabled container, 6 CPUs, 7 GiB, and the same nightly image as
+the primary campaign. All 20 cells passed.
+
+```text
+remove scan:
+  promoted mean: 3.809923 s
+  ablation mean: 3.752754 s
+  paired ablation/promoted mean: 0.985715x
+  95% t-CI: [0.939408, 1.032023]
+  promoted wins: 2/5
+
+remove local rotation fusion:
+  promoted mean: 3.856303 s
+  ablation mean: 4.051055 s
+  paired ablation/promoted mean: 1.051484x
+  95% t-CI: [0.975263, 1.127705]
+  promoted wins: 5/5
+```
+
+Decision: retain rotation fusion as a small, directionally useful change.
+Retain the scan for implementation compactness, but assign it no measured
+speedup contribution. Attribute the dominant end-to-end gain to the coupled
+low-rank MPS/CMZ/TFIM representation. Do not assign separate percentages to
+representation-coupled subcomponents or treat QR/RQ removal as a
+performance-only factor, because the QR/RQ trajectory fails correctness.
+
+Artifacts:
+
+- `run_factor_ablation.py`;
+- `profiles/ablation-no-scan-five-pair.json`;
+- `profiles/ablation-unfused-rotations-five-pair.json`.
