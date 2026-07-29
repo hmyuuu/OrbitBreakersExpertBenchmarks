@@ -617,3 +617,36 @@ Append corrections below; never rewrite prior evidence.
   paths above identify their locations when those events were recorded.
   Distilled reusable conclusions are now maintained separately in
   `research/task-05/INSIGHTS.md`.
+
+## Continuation campaign: latest TensorCircuit, six-CPU host
+
+- `2026-07-29T06:15:04Z`: started a Task 05-only continuation from accepted
+  `origin/main` commit
+  `5af98f27b9404c513df8eee0f4568b1512edee19` on branch
+  `codex/orbitbreakers/task-05/extreme-native`. Live inspection of all six
+  open `sxzgroup/ORBIT-Q` pull requests (#2 through #7) found infrastructure,
+  agent-result, verifier-policy, and Challenge 07 work, but no Task 05
+  improvement, optimization, performance, or runtime PR.
+
+- `2026-07-29T06:15:04Z`: the continuation uses the existing local image
+  `orbitbreakers-expert-benchmarks:tensorcircuit-py311`, image ID
+  `sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833`,
+  containing TensorCircuit-NG `1.8.0.dev20260726`. The same-machine protocol
+  requests six CPUs and 7 GiB because the active backend is capped below the
+  historical eight-CPU profile. Absolute runtime is not compared across the
+  two hardware profiles.
+
+- `2026-07-29T06:15:04Z`: pre-candidate setup rebound the already validated
+  public manifest case from Task 11 to Task 05 and added per-run `--cpus` and
+  `--memory` overrides to the benchmark CLI. This keeps `bench.toml`
+  unchanged and makes the resource-constrained workflow reproducible. No
+  task problem, evaluator, reference, candidate, environment lock, or public
+  workload case changed.
+
+- `2026-07-29T06:15:04Z`: the first isolated hypothesis is exact layer-level
+  fusion of each disjoint `RX -> RX -> RZZ` sequence into one differentiable
+  TensorCircuit two-qubit gate, with endpoint RX gates retained on odd layers.
+  A separate higher-upside hypothesis will test an exact no-truncation MPS
+  representation whose maximum bond dimension is bounded by the five
+  brickwork applications per bond. These mechanisms will not be combined
+  until each has independent semantic and performance evidence.
