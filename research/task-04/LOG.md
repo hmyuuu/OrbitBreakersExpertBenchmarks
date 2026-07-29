@@ -112,6 +112,75 @@ Timeout: `300 seconds`
 
 Decision: pending.
 
+## Result for `e02-probe-vmap`
+
+Candidate commit:
+`83df63e`.
+
+Candidate SHA-256:
+`6247d16ca78364925ada690b32b350eadf3ed4c87760922e7704885514f82ec1`.
+
+Exact-equivalence report:
+`research/task-04/profiles/e02-equivalence.json`
+(`sha256:6a4005fbfa954b165908c46fe04ac9f800442d0aa2874c29a6f47bf94beee01b`).
+Target, observables, loss, gradient, and one Adam update passed; maximum
+absolute error was `1.79e-7`. The canonical evaluator passed.
+
+Candidate profile:
+`research/task-04/profiles/e02-profile.json`
+(`sha256:e99f3bd67d408493859a15082496e7e9827e82b8071bf8ac2a8084f9adb23207`).
+
+```text
+metric                         reference     probe-vmap
+target generation (s)          2.629306      2.323040
+lowering (s)                   3.067534      0.615647
+XLA compilation (s)           10.712149      2.014091
+StableHLO lines                   21720          4855
+steady step mean (s)           0.001257      0.008035
+projected 120 steps (s)        0.150788      0.964238
+```
+
+The factor trades a slower batched steady kernel for much smaller lowering and
+compilation, which is favorable for the end-to-end timed contract.
+
+Command:
+
+```bash
+./bench run 04 --solution optimized --compare-to reference --repeat 6 \
+  --engine docker --cpus 6 --memory 7g --timeout 300 --no-build \
+  --output results/task-04-e02-paired
+```
+
+Immutable report:
+`results/task-04-e02-paired/results.json`
+(`sha256:61fa6c4f787d3802b321da01a24ea89ce343c42509136d84a807755c4a28f350`).
+
+```text
+terminal_status: SUCCESS x 12
+valid: 12/12
+timed_out: 0
+passing_pairs: 6
+reference_mean_runtime_sec: 15.029802
+reference_runtime_stderr_sec: 0.215846
+reference_median_runtime_sec: 14.840418
+candidate_mean_runtime_sec: 6.962292
+candidate_runtime_stderr_sec: 0.203499
+candidate_median_runtime_sec: 6.761579
+improvement_pct: 53.676757
+paired_speedup_mean: 2.165207
+paired_speedup_median: 2.192234
+paired_speedup_stderr: 0.050131
+paired_speedup_ci_low: 2.036340
+paired_speedup_ci_high: 2.294074
+pair_wins: 6/6
+first_five_reference_mean_sec: 15.069380
+first_five_candidate_mean_sec: 7.061034
+first_five_paired_speedup_mean: 2.139665
+```
+
+Decision: `keep`. All frozen promotion criteria pass. Probe VMAP is the
+accepted parent for the next single-factor experiment.
+
 ## Immutable reference profile
 
 Date: 2026-07-29

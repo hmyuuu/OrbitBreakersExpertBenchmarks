@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import statistics
@@ -52,10 +53,20 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path)
     parser.add_argument("--steady-repeats", type=int, default=8)
+    parser.add_argument(
+        "--solution",
+        choices=("reference", "optimized"),
+        default="reference",
+    )
     args = parser.parse_args()
 
+    solution_path = (
+        ROOT / "references" / "task-04" / "solution_4.py"
+        if args.solution == "reference"
+        else ROOT / "src" / "solutions" / "task-04" / "solution_4.py"
+    )
     solution = load_module(
-        ROOT / "references" / "task-04" / "solution_4.py",
+        solution_path,
         "task04_reference_profile",
     )
     evaluator = load_module(
@@ -67,16 +78,28 @@ def main() -> None:
 
     true_p01 = K.convert_to_tensor(config["true_p01"])
     true_p10 = K.convert_to_tensor(config["true_p10"])
-    target, target_seconds = synchronized_seconds(
-        lambda: solution.observable_table(true_p01, true_p10, config)
-    )
+    if hasattr(solution, "probe_states"):
+        initial_states = solution.probe_states(config)
+        target_function = lambda: solution.observable_table(  # noqa: E731
+            true_p01, true_p10, initial_states, config
+        )
+    else:
+        initial_states = None
+        target_function = lambda: solution.observable_table(  # noqa: E731
+            true_p01, true_p10, config
+        )
+    target, target_seconds = synchronized_seconds(target_function)
 
     params = solution.initial_parameters(config)
     optimizer = optax.adam(config["learning_rate"])
     opt_state = optimizer.init(params)
 
     def loss_fn(p):
-        return solution.loss_and_observables(p, target, config)
+        if initial_states is None:
+            return solution.loss_and_observables(p, target, config)
+        return solution.loss_and_observables(
+            p, target, initial_states, config
+        )
 
     value_and_grad = K.value_and_grad(loss_fn, has_aux=True)
 
@@ -115,10 +138,9 @@ def main() -> None:
     payload = {
         "schema_version": 1,
         "task_id": "04",
-        "reference_path": "references/task-04/solution_4.py",
-        "reference_sha256": (
-            "04e37b73e7246599ed3eb8f65e38bb7e084db7aab511d7af3b20baa0867b21ae"
-        ),
+        "solution": args.solution,
+        "solution_path": str(solution_path.relative_to(ROOT)),
+        "solution_sha256": hashlib.sha256(solution_path.read_bytes()).hexdigest(),
         "configuration": config,
         "structural_counts": {
             "probes_per_table": 4,
