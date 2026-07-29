@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Profile the immutable Task 01 expert without changing its computation."""
+"""Profile the final Task 01 candidate without changing its computation."""
 
 from __future__ import annotations
 
@@ -29,7 +29,8 @@ def load_module(path: Path, name: str):
 def synchronized(function):
     start = time.perf_counter()
     value = function()
-    for leaf in value if isinstance(value, tuple) else (value,):
+    leaves = value if isinstance(value, tuple) else (value,)
+    for leaf in leaves:
         if hasattr(leaf, "block_until_ready"):
             leaf.block_until_ready()
     return value, time.perf_counter() - start
@@ -51,11 +52,11 @@ def main() -> None:
     parser.add_argument("--steady-repeats", type=int, default=5)
     args = parser.parse_args()
 
-    source_path = ROOT / "references" / "task-01" / "solution_1.py"
-    solution = load_module(source_path, "task01_reference_profile")
+    source_path = ROOT / "src" / "solutions" / "task-01" / "solution_1.py"
+    solution = load_module(source_path, "task01_candidate_profile")
     evaluator = load_module(
         ROOT / "tasks" / "task-01" / "evaluator" / "evaluate_1.py",
-        "task01_evaluator_profile",
+        "task01_candidate_evaluator_profile",
     )
     config = dict(evaluator.DEFAULT_CONFIG)
     dmrg_start = time.perf_counter()
@@ -66,15 +67,13 @@ def main() -> None:
 
     K = solution.K
     mps_input = solution.tc.quantum.quimb2qop(dmrg_state)
+    mpo = solution.tfim_mpo(config)
     params = solution.initial_parameters(config)
-    patterns, weights = solution.tfim_measurement_data(config)
     optimizer = optax.adam(config["learning_rate"])
     opt_state = optimizer.init(params)
 
     def energy_fn(p):
-        return solution.circuit_energy(
-            p, mps_input, config, patterns, weights
-        )
+        return solution.circuit_energy(p, mps_input, config, mpo)
 
     value_and_grad = K.value_and_grad(energy_fn)
 
@@ -95,9 +94,7 @@ def main() -> None:
 
     steady_seconds = []
     for _ in range(args.steady_repeats):
-        result, elapsed = synchronized(
-            lambda: executable(params, opt_state)
-        )
+        result, elapsed = synchronized(lambda: executable(params, opt_state))
         params, opt_state = result[0], result[1]
         steady_seconds.append(elapsed)
 
@@ -112,15 +109,12 @@ def main() -> None:
         "task_id": "01",
         "solution_path": str(source_path.relative_to(ROOT)),
         "solution_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest(),
-        "configuration": {
-            key: value
-            for key, value in evaluator.DEFAULT_CONFIG.items()
-        },
+        "configuration": dict(evaluator.DEFAULT_CONFIG),
         "structural_counts": {
             "parameters": solution.parameter_count(config),
-            "one_qubit_gate_nodes": 3 * 32 * 4,
-            "two_qubit_gate_nodes": 3 * (16 + 15 + 16 + 15),
-            "pauli_measurement_terms": 63,
+            "fused_two_qubit_gate_nodes": 62,
+            "fused_boundary_one_qubit_gate_nodes": 4,
+            "tfim_mpo_bond_dimension": 3,
             "training_steps": 500,
         },
         "evaluator_side_dmrg_seconds_excluded_from_runtime": dmrg_seconds,
