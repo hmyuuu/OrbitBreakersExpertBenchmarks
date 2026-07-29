@@ -22,16 +22,22 @@ yet passed the paired promotion rule.
 
 ## Confirmed bottlenecks
 
-- The termwise Hamiltonian MVP traces 45 independent mask/flip/accumulate
-  paths.
-- The generic Renyi-2 implementation computes a dense 64-by-64 matrix product
-  even though Hermiticity permits an elementwise Frobenius norm.
-- The circuit contains 243 gate applications per loss, although commuting
-  local sequences admit exact gate fusion.
-- The host dispatches one compiled optimizer update 500 times.
+- One update lowers in `0.803158 s`, compiles in `1.929769 s`, and contains
+  15,479 StableHLO lines. The 500 steady updates project to `1.321653 s`, so
+  both cold graph staging and steady execution are material.
+- The separately compiled trajectory is about 93.5% of the forward loss
+  runtime (`0.000889/0.000951 s`), making exact gate-graph reduction the
+  highest-priority factor.
+- The host dispatches one compiled optimizer update 500 times. A whole-training
+  scan can remove that boundary, although it cannot eliminate the steady
+  quantum kernel itself.
+- The termwise Hamiltonian MVP traces 45 independent paths, but its separately
+  measured forward action is only `0.000176 s`. Sparse conversion is therefore
+  a secondary compile-size hypothesis, not the primary steady bottleneck.
+- One generic Renyi-2 call is `0.000132 s`; its Frobenius-purity rewrite is
+  algebraically exact but expected to be a smaller factor than gate fusion.
 
-These are source-supported hypotheses until the component profiler and
-single-factor paired benchmarks attribute runtime.
+Profile: [`profiles/reference-profile.json`](profiles/reference-profile.json).
 
 ## What worked
 

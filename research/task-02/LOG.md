@@ -87,6 +87,19 @@ improvement is claimed without matched candidate pairs.
   pass. Added an immutable-reference profiler to separate lowering,
   compilation, trajectory, entropy, Hamiltonian action, and steady optimizer
   execution before selecting candidate factors.
+- `2026-07-29T13:35Z`: immutable-reference profile completed. Report
+  `research/task-02/profiles/reference-profile.json`, SHA-256
+  `b7d190ea225ca5586d813759b89fea0cba05c045ca41e72e8f687a8769241d40`;
+  profiler SHA-256
+  `538a86104c32925586606394f50be069800c18b054bae45a6ebb786ac0e76a8b`.
+  One update lowers in `0.803158 s`, compiles in `1.929769 s`, contains
+  15,479 StableHLO lines, and executes in `0.002643 s` mean over 12 steady
+  calls. The projected 500-update kernel time is `1.321653 s`. The forward
+  trajectory accounts for about 93.5% of the separately measured loss
+  execution (`0.000889/0.000951 s`); a Hamiltonian action is only
+  `0.000176 s`, and one generic entropy is `0.000132 s`. Decision: prioritize
+  graph reduction and host-loop removal, while treating sparse Hamiltonian and
+  purity rewrites as secondary measured factors.
 
 ## Append-only corrections
 
