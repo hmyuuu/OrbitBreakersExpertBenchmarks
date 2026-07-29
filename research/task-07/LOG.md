@@ -252,3 +252,31 @@ initial `-6.8462653160`, final history `-10.0280771255`, improvement
 Decision: `keep`. The exact feedback reduction removes a major trace,
 path-search, contraction, and gradient burden. Proceed from e02 to isolate
 whole-training scan.
+
+## Experiment `e03`: whole-training TensorCircuit scan
+
+Branch: `codex/orbitbreakers/task-07/e03-training-scan`.
+
+Fresh hypothesis worktree:
+`/Users/qqy/Desktop/2026Project/ORBIT-Q-worktrees/orbitbreakers/task-07/e03-training-scan`.
+
+Parent commit: `74d632d` (accepted e02 implementation and evidence).
+
+### Hypothesis
+
+Carrying parameters and the Optax state through `K.jaxy_scan` for exactly 100
+iterations and emitting each pre-update value preserves the sequential Adam
+trajectory while eliminating 100 Python-to-JAX dispatches. The expected gain
+is small because e02's step is already cheap relative to compilation.
+
+### Pre-run frozen checks
+
+The public 50-step and canonical 100-step evaluators must both pass. Initial,
+final-history, and post-update trajectory-mean energies must remain within
+`5e-3` of accepted e02, allowing normal complex64 optimizer divergence but
+not a changed objective. Retain only if the canonical screen is faster than
+e02's 33.546170 seconds.
+
+### Result
+
+Pending. Append all results.
