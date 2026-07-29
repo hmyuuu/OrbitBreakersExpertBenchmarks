@@ -65,13 +65,17 @@ but regressed relative to the accepted VMAP parent: e02 `6.645754 ±
 0.010315x`, with only 2/6 wins. This confirms the profile's prediction that
 host dispatch is not the useful bottleneck after probe batching.
 
+TensorCircuit's default expectation reuse is unsafe for the canonical
+differentiated batch at the frozen 7 GiB limit. It is exact on the reduced
+case, but the 12-qubit smoke attempts a 9,263,654,532-byte allocation and
+fails before timing. Explicit `reuse=False` must remain in the accepted
+implementation.
+
 ## Open hypotheses
 
-1. Scalar `reuse=False` versus reusable full-density `reuse=True`
-   expectations on the accepted batched parent.
-2. Exact composite two-qubit noisy superoperators and reusable contraction
+1. Exact composite two-qubit noisy superoperators and reusable contraction
    paths.
-3. Exact MPO/purification formulations through TensorCircuit-native classes if
+2. Exact MPO/purification formulations through TensorCircuit-native classes if
    simpler delayed contraction is insufficient.
 
 ## Evidence limits

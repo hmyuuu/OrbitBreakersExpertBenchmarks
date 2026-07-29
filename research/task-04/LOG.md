@@ -112,6 +112,47 @@ Timeout: `300 seconds`
 
 Decision: pending.
 
+## Result for `e04-expectation-reuse`
+
+Candidate commit:
+`2978b6e`.
+
+Candidate SHA-256:
+`67d7a61416c1d6e502e9ec27d5e1de6ae2ce2dca43e5f12bc8ba4e0be21574de`.
+
+The enhanced four-qubit, three-step exact-equivalence report is
+`research/task-04/profiles/e04-equivalence.json`
+(`sha256:112e13d7f9e948acc3437fa4ec4e81b41dc74cf0d19cdb3e8d559f3137802336`).
+All target, value/gradient/update, full-history, and final-output fields passed
+the `2e-6` threshold; maximum error was `2.38e-7`.
+
+The canonical 12-qubit smoke command was:
+
+```bash
+./bench run 04 --solution optimized --repeat 1 --engine docker \
+  --cpus 6 --memory 7g --timeout 300 --no-build \
+  --output results/task-04-e04-smoke
+```
+
+It failed before emitting a runtime with:
+
+```text
+jax.errors.JaxRuntimeError: INTERNAL: Buffer Definition Event:
+Out of memory allocating 9263654532 bytes.
+```
+
+The immutable smoke report is
+`results/task-04-e04-smoke/results.json`
+(`sha256:4afa3a74a8d9169e74b460d2cc8a967022e4ea7c9780a40d9ae7dadcd40284e3`);
+its captured stderr has SHA-256
+`1270ec2a64c2cafa6a0e43fb8ab9985d1efdbeebb1d246be6991cb9f4f6fc0b6`.
+
+Decision: `discard`. Although `reuse=True` contracts the final density tensor
+once, placing that cached tensor inside the differentiated batched workload
+causes a 9.26 GB allocation, beyond the frozen 7 GiB memory limit. No repeated
+timing is scientifically meaningful after this functional/resource gate
+failure.
+
 ## Result for `e03-training-scan`
 
 Candidate commit:
