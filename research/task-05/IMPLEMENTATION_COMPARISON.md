@@ -1,184 +1,217 @@
-# Task 05 Autoresearch Campaign Report
+# Task 05 exact-MPS optimization report
 
-## Scope and claim
+## Outcome
 
-This campaign optimized only ORBIT-Q Task 05, the custom non-unitary gate
-cooling workload. It compares the immutable human-expert reference with the
-fastest candidate validated during eight isolated autoresearch rounds.
+The continued Task 05 campaign replaces the dense `2^18` cooling trajectory
+with an exact, untruncated TensorCircuit-NG MPS whose maximum bond dimension
+is 32. It retains ten non-unitary layers, normalization after every layer,
+gradient flow through every normalization, and all 600 Adam updates.
 
-No matched external implementation publishes runtime for this exact workload,
-evaluator, image, and CPU allocation. The optimized source is therefore called
-the **campaign-best implementation**, not a global SOTA implementation.
+On the latest local TensorCircuit-NG image, fixed to 6 CPUs and 7 GiB, all 12
+cells in six alternating matched pairs passed:
 
-The campaign establishes a statistically valid runtime improvement. It does
-not establish the requested 10x target.
-
-| Role | Artifact | Commit or hash |
-|---|---|---|
-| Immutable expert | [`references/task-05/solution_5.py`](../../references/task-05/solution_5.py) | SHA-256 `ccafe626865ee39b651adaeead86b8bf6f541e3f1426da4842da92b6a0ee015f` |
-| Campaign best | [`src/solutions/task-05/solution_5.py`](../../src/solutions/task-05/solution_5.py) | SHA-256 `6245d59510412fd0ffcc083f3a9653e7d245edc5ae827b56dc4fc39894691307` |
-| Candidate hypothesis | Round `r06f1c7` | Commit `b90448438efa611855c75832d4b0e7568e3d3225` |
-| Promoted campaign commit | Reusable contractor | Commit `34ccc6f` |
-| Promotion evidence | Six paired runs | Commit `f674179` |
-
-## Campaign-best result
-
-Round 6 made two execution changes:
-
-1. It compiled all 600 Adam updates as one `jax.lax.scan`.
-2. It selected a deterministic reusable Cotengra greedy contraction path with
-   TensorCircuit preprocessing.
-
-All 12 evaluator cells passed. The candidate won all six matched pairs.
-
-| Metric | Immutable expert | Campaign best |
+| Metric | Immutable expert | Exact MPS |
 |---|---:|---:|
 | Passing runs | 6/6 | 6/6 |
-| Mean runtime | 121.443233 s | 83.153831 s |
-| Median runtime | 121.020838 s | 83.118839 s |
-| Runtime standard error | 1.349948 s | 0.754486 s |
-| Runtime range | 116.682191–125.822734 s | 80.736110–85.237266 s |
-| Mean paired speedup | — | 1.461524x |
-| Paired-speedup standard error | — | 0.026588x |
-| 95% Student-t interval | — | 1.393178x–1.529871x |
+| Mean runtime | 97.083712 s | 6.898409 s |
+| Median runtime | 99.526263 s | 6.977020 s |
+| Runtime standard error | 2.183903 s | 0.146705 s |
+| Mean paired speedup | — | **14.075570x** |
+| 95% Student-t interval | — | **13.675752x–14.475387x** |
+| Mean paired reduction | — | **92.891125%** |
 
-The ratio-of-means runtime reduction is 31.53%. The frozen paired-improvement
-mean is 31.46% with standard error 1.25 percentage points.
+The candidate won all six pairs. The first five pairs, for compatibility with
+the requested five-run average, give 96.355727 s expert versus 6.884156 s MPS
+and a 14.000343x mean paired speedup. The six-pair result is authoritative.
 
-The immutable promotion report SHA-256 is
-`77678d2fa07f5af69b9f7bc0ba14cec45ced4023d72cbc43c8bb31a4f4f9437d`.
-The complete evidence is recorded in [`LOG.md`](LOG.md), with distilled
-cross-round lessons in [`INSIGHTS.md`](INSIGHTS.md).
+![Six-pair overall speedup](results-20260729/figures/overall-exact-mps.svg)
 
-### Matched timings
+The immutable sanitized evidence is
+[`results-20260729/ablation-summary.json`](results-20260729/ablation-summary.json),
+generated from raw report SHA-256
+`220bf9b519cc69e7996a78855308fa1e1b70b82a51d7861561cca8b5a01678c5`.
+The current optimized source SHA-256 is
+`e1a0d8a13020687f0afc89867e114683c052200c955a3515c80397a6a580b24e`.
+The benchmarked byte-for-byte artifact retains SHA-256
+`f741e6cc75b8ed1e47bbedafc557d231d54db60fb064011650fc9c7da36c9ef6`;
+the only difference is restoration of the immutable expert module docstring.
 
-| Pair | Order | Reference | Candidate | Speedup |
-|---:|---|---:|---:|---:|
-| 1 | reference → candidate | 116.682191 s | 85.237266 s | 1.368911x |
-| 2 | candidate → reference | 120.113583 s | 81.947418 s | 1.465740x |
-| 3 | reference → candidate | 121.928093 s | 81.930702 s | 1.488186x |
-| 4 | candidate → reference | 125.822734 s | 80.736110 s | 1.558444x |
-| 5 | reference → candidate | 124.300085 s | 84.290260 s | 1.474667x |
-| 6 | candidate → reference | 119.812712 s | 84.781232 s | 1.413199x |
+This is a same-workload, same-host expert optimization result. No global SOTA
+claim is made because no external implementation was measured in the same
+environment.
+
+## Why an exact MPS exists
+
+The human expert evolves a dense complex64 vector. Task 05's circuit has a
+stronger exact structure:
+
+- `exp(a X)` is a one-site operator and cannot increase MPS bond dimension.
+- Each two-site filter has operator-Schmidt rank two:
+
+  `exp(b Z.Z) = cosh(b) I.I + sinh(b) Z.Z`.
+
+- A bond is used only by its parity's five brickwork layers.
+
+Therefore every state bond has the exact upper bound
+
+`1 -> 2 -> 4 -> 8 -> 16 -> 32`.
+
+There is no singular-value cutoff, tolerance, compression, or approximate
+truncation. The candidate computes the same full state in a different exact
+representation.
 
 ## Implementation
 
-### Whole-training compilation
+### TensorCircuit-owned MPS state
 
-The expert JIT-compiles one update and dispatches it from Python 600 times.
-The campaign-best implementation compiles the same sequential optimizer
-process as one scan:
+The `|+>^18` product tensors initialize `tc.MPSCircuit`. RX filters use
+`tc.gates.rx`; conversion, contraction, differentiation, JIT, and scan use
+TensorCircuit's active backend `K`.
 
-```python
-def train_loop(p, state):
-    def scan_step(carry, _):
-        p, state = carry
-        p, state, energy = train_step(p, state)
-        return (p, state), energy
+### No-QR rank-two MPO update
 
-    return jax.lax.scan(
-        scan_step,
-        (p, state),
-        xs=None,
-        length=config["max_steps"],
-    )
-```
-
-This preserves every dependent Adam update and returns all 600 pre-update
-energies without a Python list or 600 host dispatches.
-
-### Reusable TensorCircuit contraction path
-
-The campaign-best source configures a deterministic one-trial Cotengra greedy
-optimizer:
+The historical generic `MPSCircuit.apply_MPO` experiment timed out because it
+canonicalized each exact update with QR/RQ. The rank bound is already known,
+so canonicalization is unnecessary. The promoted implementation uses the
+local contraction kernel from that TensorCircuit method:
 
 ```python
-PATH_OPTIMIZER = ctg.ReusableHyperOptimizer(
-    methods=["greedy"],
-    minimize="combo",
-    max_time=1,
-    max_repeats=1,
-    parallel=False,
-    progbar=False,
-)
-tc.set_contractor(
-    "custom",
-    optimizer=PATH_OPTIMIZER,
-    preprocessing=True,
-)
+contracted = K.einsum("iabj,kbl->ikajl", operator, tensor)
+result = K.reshape(contracted, (ni * nk, d, nj * nl))
 ```
 
-The path is reusable for repeated circuit topologies in one evaluator process.
-The bounded path search is included in `run_solution` timing. TensorCircuit
-preprocessing merges compatible one-qubit work before contraction.
+The two local MPO tensors encode the `I.I` and `Z.Z` branches exactly. This is
+the decisive difference from the timed-out historical MPS round.
 
-## Preserved scientific work
+### Every normalization is retained
 
-The reference and campaign-best sources both:
+After each of the ten layers, a left-to-right TensorCircuit backend
+double-layer contraction computes the exact MPS norm. Dividing the first MPS
+tensor by that norm rescales the entire represented state and keeps the
+normalization inside the differentiable graph.
 
-- construct the initial `|+>^18` state with TensorCircuit-NG;
-- apply ten non-unitary RX/RZZ cooling layers on the same brickwork bonds;
-- normalize after every layer and differentiate through each normalization;
-- evaluate the same 35-term TensorCircuit TFIM Hamiltonian MVP;
-- optimize all 20 strengths with exactly 600 Adam updates at learning rate
-  `0.02`;
-- return `final_a`, `final_b`, and every pre-update energy as NumPy data;
-- use complex64 TensorCircuit/JAX semantics in the pinned image.
+### Direct TFIM MPO and whole-training scan
 
-The optimization changes execution strategy without reducing the required
-scientific work.
+The open-boundary TFIM is a deterministic bond-3 MPO. Its expectation is
+contracted left-to-right against the final MPS. The complete 600-step Adam
+loop uses `K.jaxy_scan`, so the final source imports no raw JAX module and
+does not dispatch 600 training steps from Python.
 
-## Eight-round result table
+The final implementation has 144 effective non-comment Python lines, below
+the 200-line policy limit.
 
-| Round | Hypothesis | Outcome |
-|---:|---|---|
-| 1 | Whole-training `lax.scan` | Keep; 1.0980x, 95% CI 1.0525x–1.1436x |
-| 2 | TensorCircuit `K.jaxy_scan` wrapper | Discard; lower CI 0.9862x |
-| 3 | OMECo contractor plus scan | Keep; 1.5047x, candidate mean 94.5122 s |
-| 4 | Exact `MPSCircuit` | Timeout on first canonical candidate cell |
-| 5 | `plain-experimental` contractor | Discard; 77.34–243.87 s candidate range |
-| 6 | Deterministic reusable greedy path | Keep; campaign-best 83.1538 s mean |
-| 7 | Algebraic contraction primitives | Discard; 91.0539 s mean |
-| 8 | Single-array parameter layout | Discard; 91.9906 s mean |
+## Correctness evidence
 
-Raw logs, TSV rows, and immutable JSON reports are retained under the external
-campaign archive named in `LOG.md`.
+[`check_exact_mps_equivalence.py`](check_exact_mps_equivalence.py) compares
+the candidate with the immutable dense expert at the public initial
+parameters. Its sanitized outputs are retained in
+[`results-20260729/equivalence-summary.json`](results-20260729/equivalence-summary.json):
 
-## Profiling interpretation
+| Check | Maximum error or value |
+|---|---:|
+| Reconstructed 18-qubit state | `2.79397e-08` |
+| State norm | `4.17233e-07` |
+| Initial energy density | `1.79052e-04` |
+| Gradient | `1.19507e-05` |
+| One Adam update, non-degenerate components | `3.72529e-09` |
+| Maximum exact MPS bond dimension | `32` |
 
-The immutable expert profile measured about 1.187 GB of XLA-estimated memory
-traffic per gradient/update. A component split attributed 95.33% of separate
-forward-component time to the ten-layer normalized trajectory and 4.67% to
-Hamiltonian evaluation.
+The state comparison is stricter than the observable comparison. The slightly
+larger complex64 energy difference comes from evaluating the same state with
+a bond-3 MPO reduction order instead of the dense Pauli-sum order.
 
-The promoted reusable contractor reduces the candidate mean below OMECo and
-also removes OMECo's high variance. The evidence supports contraction-path
-reuse and preprocessing as the main improvement; parameter-tree and wrapper
-changes address secondary overhead.
+One expert gradient component, the first uniform RX strength on `|+>^18`, is
+analytically zero because that RX filter contributes only a scalar removed by
+the first normalization. Adam's first-step normalization amplifies tiny
+complex64 noise at this degenerate component, so the harness reports both the
+raw difference and a conditioned comparison over nonzero-gradient
+components. All physical state, energy, gradient, and full-evaluator checks
+remain explicit.
 
-## Final-rerun status
+The six candidate evaluator runs were deterministic:
 
-A fresh final paired rerun was attempted after the user requested wrap-up.
-The host slowed materially: Pair 1 passed at 197.383894 s reference and
-108.605428 s candidate; Pair 2's candidate passed at 143.108553 s, but its
-immutable reference timed out at 300 seconds. The runner stopped the shared
-container, and no later cells ran.
+- initial energy density: `-1.1718612909`;
+- final energy density: `-1.3267861605`;
+- exact sparse ground energy density: approximately `-1.326898`;
+- history length: 600;
+- all shape, improvement, lower-bound, and upper-bound checks: PASS.
 
-That rerun is invalid for a speedup claim and is retained rather than filtered
-or retried. Its report SHA-256 is
-`89397cd1c7f791ea0ceee5f9013f1269dab99b1cd6c9377c71c1b61f6c9a4d8f`.
-The complete, eligible Round 6 promotion session above remains the campaign's
-runtime evidence.
+## Factor ablation
 
-## Limits and next work
+The continuation measured each new factor independently where a direct
+same-container comparison was available.
 
-The campaign stopped after eight rounds at the user's request, rather than the
-originally planned twenty. It did not reach 10x. In the eligible Round 6
-session, a 10x result would require a candidate mean near 12.14 seconds; the
-measured campaign-best mean is 83.15 seconds.
+| Factor | Reference mean | Candidate mean | Paired speedup | 95% t-CI | Decision |
+|---|---:|---:|---:|---:|---|
+| Exact no-QR MPS, overall vs immutable expert | 97.0837 s | 6.8984 s | 14.0756x | 13.6758x–14.4754x | Keep |
+| Dense RX/RZZ layer fusion vs accepted dense parent | 68.3585 s | 66.9658 s | 1.0228x | 0.9834x–1.0623x | Discard; inconclusive |
+| Absorb RX into MPS rank-2 MPO vs e02 MPS | 7.0089 s | 8.3105 s | 0.8437x | 0.8222x–0.8653x | Discard; regression |
 
-The highest-value remaining route is layer-level kernel fusion: each even
-layer could combine two RX gates and one RZZ gate into one two-qubit
-TensorCircuit gate per disjoint bond, while odd layers additionally apply RX
-to the two endpoints. Any continuation must retain every normalization and its
-gradient, then repeat the same six-pair promotion protocol.
+### Dense layer fusion
+
+Combining each disjoint `RX -> RX -> RZZ` sequence into one TensorCircuit
+two-site gate is numerically valid, but its six-pair confidence interval
+crosses 1. Fewer graph nodes did not reliably improve the Cotengra contraction
+path.
+
+![Dense layer-fusion ablation](results-20260729/figures/factor-dense-layer-fusion.svg)
+
+### RX absorption into the MPS MPO
+
+Algebraically absorbing RX into both RZZ MPO branches is also exact, but it
+duplicates local matrix work across the two branches and regressed every
+pair. The unfused e02 MPS remains the promoted source.
+
+![MPS local-fusion ablation](results-20260729/figures/factor-mps-local-fusion.svg)
+
+### Attribution limit
+
+A final direct six-pair exact-MPS-versus-accepted-dense-parent run was
+requested. Its Docker approval service disconnected before execution and
+explicitly prohibited an automatic retry. No value is inferred for that
+missing comparison.
+
+The earlier campaign already isolated whole-training scan at 1.0980x on its
+older pinned environment and measured the accepted scan-plus-reusable-greedy
+candidate at 1.4615x versus the immutable expert. Those historical results are
+useful context, not a substitute for a current direct MPS-versus-parent pair.
+The safe conclusion is that the current complete candidate is 14.0756x faster
+than the immutable expert, while the exact share attributable only to MPS
+cannot be numerically separated in this session.
+
+## Reproduction
+
+The campaign used image
+`orbitbreakers-expert-benchmarks:tensorcircuit-py311`, image ID
+`sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833`,
+with TensorCircuit-NG `1.8.0.dev20260726`. Host fingerprint:
+`c627504db97dc65b8d998afb4b9cdf73cfc3eff2ce2ac589b4a7a4aa0c7fdc48`.
+
+```bash
+python3 research/task-05/check_exact_mps_equivalence.py
+
+./bench run 05 \
+  --solution optimized \
+  --compare-to reference \
+  --repeat 6 \
+  --engine docker \
+  --cpus 6 \
+  --memory 7g \
+  --timeout 300 \
+  --no-build \
+  --output results/task-05-final
+```
+
+The reusable end-to-end procedure is documented in
+[`autoresearch/EXPERT_OPTIMIZATION_WORKFLOW.md`](../../autoresearch/EXPERT_OPTIMIZATION_WORKFLOW.md).
+
+## Limits
+
+- Evidence covers the one fixed public Task 05 workload and one host.
+- Absolute runtimes are not compared with the earlier 8-CPU campaign.
+- The exact MPS rank bound depends on the published ten-layer brickwork
+  structure; larger-depth variants need a new scaling study.
+- Complex64 contraction order changes tiny floating-point details while
+  preserving exact algebra and all evaluator criteria.
+- The missing direct MPS-versus-accepted-parent pair is disclosed rather than
+  reconstructed from unmatched sessions.
