@@ -55,16 +55,14 @@ def asymmetric_bitflip_kraus(p01, p10):
     return [k0, k1, k2]
 
 
-def apply_channel(circuit, kraus, qubits):
-    for q in qubits:
-        circuit.apply_general_kraus(kraus, q)
-
-
 def apply_noisy_entangler_layer(circuit, kraus, config):
+    paired_kraus = [
+        K.kron(left, right) for left in kraus for right in kraus
+    ]
     for start in (0, 1):
         for i in range(start, config["n_qubits"] - 1, 2):
             circuit.rxx(i, i + 1, theta=config["entangler_angle"])
-            apply_channel(circuit, kraus, (i, i + 1))
+            circuit.apply_general_kraus(paired_kraus, i, i + 1)
 
 
 def prepare_initial_state(circuit, probe_index, config):
