@@ -8,12 +8,12 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-Experiment `e05-paired-kraus`, source SHA-256
-`564d4b8803eb6197428a5efc961543a582cc6ca2ef4cc3e884ba5388d31a90ea`.
-Against the accepted probe-VMAP parent, six paired Docker runs give
-`1.053233x ± 0.016604x`, 95% CI `[1.010551x, 1.095914x]`, 6/6 wins and
-12/12 cells PASS. The retained cumulative factors are probe VMAP followed by
-exact pairing of adjacent Kraus nodes.
+Experiment `e06-fused-rxx-kraus`, source SHA-256
+`251f283d208ebb5316c8347ff71ea6da66aca5fd11b42f25032db32ada83ef0c`.
+Against the accepted paired-Kraus parent, six paired Docker runs give
+`1.104347x ± 0.021593x`, 95% CI `[1.048841x, 1.159853x]`, 6/6 wins and
+12/12 cells PASS. The retained cumulative factors are probe VMAP, exact
+pairing of adjacent Kraus nodes, and absorption of RXX into those nodes.
 
 ## Preserved semantics
 
@@ -57,6 +57,12 @@ Relative to probe VMAP alone, target construction falls from `2.323` to
 `1.790 s`, lowering from `0.616` to `0.547 s`, and StableHLO from 4,855 to
 4,602 lines. The paired benchmark attributes a further `1.053233x` speedup.
 
+Absorbing each fixed RXX matrix into the nine product Kraus matrices removes
+all 11 explicit RXX nodes per probe. Relative to paired Kraus alone, StableHLO
+falls from 4,602 to 3,283 lines, lowering from `0.547` to `0.396 s`, and
+compilation from `2.138` to `1.639 s`. Its independent paired speedup is
+`1.104347x`.
+
 ## What did not work
 
 The first baseline command session was interrupted after two passing cells and
@@ -82,10 +88,10 @@ implementation.
 
 ## Open hypotheses
 
-1. Fuse each fixed RXX with its following paired Kraus channel into one exact
-   TensorCircuit two-qubit channel.
-2. Exact MPO/purification formulations through TensorCircuit-native classes if
+1. Exact MPO/purification formulations through TensorCircuit-native classes if
    simpler delayed contraction is insufficient.
+2. Measurement batching only if it preserves the low-memory scalar
+   contractions that `reuse=False` provides.
 
 ## Evidence limits
 

@@ -70,7 +70,11 @@ def main() -> None:
         "task04_reference_profile",
     )
     solution_source = solution_path.read_text(encoding="utf-8")
-    paired_channel = "paired_kraus = [" in solution_source
+    paired_channel = any(
+        marker in solution_source
+        for marker in ("paired_kraus = [", "noisy_kraus = [")
+    )
+    fused_entangler = "noisy_kraus = [" in solution_source
     evaluator = load_module(
         ROOT / "tasks" / "task-04" / "evaluator" / "evaluate_4.py",
         "task04_evaluator_profile",
@@ -149,6 +153,8 @@ def main() -> None:
             "channel_nodes_per_probe": 11 if paired_channel else 22,
             "channel_nodes_per_table": 44 if paired_channel else 88,
             "kraus_branches_per_node": 9 if paired_channel else 3,
+            "rxx_nodes_per_probe": 0 if fused_entangler else 11,
+            "rxx_nodes_per_table": 0 if fused_entangler else 44,
             "observables_per_probe": 13,
             "observables_per_table": 52,
             "training_steps": 120,
