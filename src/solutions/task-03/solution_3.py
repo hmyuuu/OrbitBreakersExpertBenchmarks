@@ -138,21 +138,19 @@ def run_solution(config):
     optimizer = optax.adam(config["learning_rate"])
     opt_state = optimizer.init(params)
 
-    def train_step(carry, _):
-        p, state = carry
+    def train_step(p, state):
         (loss, aux), grads = K.value_and_grad(observables, has_aux=True)(p, config)
         updates, state = optimizer.update(grads, state, p)
         p = optax.apply_updates(p, updates)
+        return p, state, loss, aux
+
+    train_step = K.jit(train_step)
+    rows = []
+    for _ in range(config["max_steps"]):
+        params, opt_state, loss, aux = train_step(params, opt_state)
         energy, success, mean_log = aux
-        return (p, state), K.stack([energy, success, mean_log, loss])
-
-    def train(p, state):
-        return K.jaxy_scan(
-            train_step, (p, state), K.arange(config["max_steps"])
-        )
-
-    (_, _), history = K.jit(train)(params, opt_state)
-    history = K.numpy(history)
+        rows.append(K.stack([energy, success, mean_log, loss]))
+    history = K.numpy(K.stack(rows))
     return {
         "energy_density_history": history[:, 0],
         "success_probability_history": history[:, 1],
