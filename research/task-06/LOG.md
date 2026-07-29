@@ -69,3 +69,77 @@ baseline suitable for paired screening.
 Append later corrections here; do not rewrite any result after it informs a
 candidate.
 
+## Profiling event: immutable compiled update
+
+Recorded at `2026-07-29T01:41Z`.
+
+Profiler: `profile_reference.py`
+(`sha256:ba1a9072b8b76b439429ef7cbfb9325c4f525c531dedcc9153813d17f4f183fd`).
+Report: `profiles/reference-profile.json`
+(`sha256:b96624021fde8f5a5c374c1e60d1e0aa5c24c1e15d624a520f35d7c0dc243a4e`).
+
+Lowering and compilation took `2.851043 s` and `3.194721 s`. Eight early
+post-compile optimizer updates averaged `0.280501 s` and projected
+`28.050100 s` for 100 executions. XLA reported about `23.52 million` FLOPs,
+`101.16 MB` bytes accessed, and `18.78 MB` temporary storage per update.
+The canonical evaluator mean is `45.037164 s`, so both compilation and
+steady differentiated ODE execution are material; Python-only cleanup cannot
+produce a large gain.
+
+## Profiling event: Hamiltonian action
+
+Recorded at `2026-07-29T01:42Z`.
+
+Profiler: `profile_hamiltonian_actions.py`
+(`sha256:fcc5914a4bb1feb50bd3b1ca2bbc89c3b706a17ce701e8dbafba29c1058b0e46`).
+Report: `profiles/hamiltonian-action-profile.json`
+(`sha256:6d864f1d3ff26ec1625edacb39347ed8ba3575d1a081d4f67aedd9c314584472`).
+
+The TensorCircuit COO operators agreed with the expert analog action to
+`8.72e-9` maximum absolute error and with the target action to `1.91e-6`.
+However, native BCOO multiplication was slower on this CPU/JAX stack:
+
+```text
+analog termwise MVP: 0.249930 ms
+analog sparse BCOO:  0.851897 ms
+termwise/sparse:     0.293381x
+
+target termwise MVP: 0.344365 ms
+target sparse BCOO:  1.209447 ms
+termwise/sparse:     0.284729x
+```
+
+Decision: `discard before candidate integration`. The installed 1.8
+`PauliStringSum2MVP` implementation is already reshape/slice/broadcast based
+and XLA fuses these short local Pauli sums effectively. A full sparse rewrite
+has no source-independent reason to reverse a 3.4-3.5x isolated steady
+regression. Do not repeat BCOO unchanged.
+
+## Profiling event: exact digital Euler fusion
+
+Recorded at `2026-07-29T01:44Z`.
+
+Profiler: `profile_digital_fusion.py`
+(`sha256:681c4c55ba4550db5ca2dd0729ea7c4f0495252d375102aca48cd6c2369e1d39`).
+Report: `profiles/digital-fusion-profile.json`
+(`sha256:48185620664abf2da8857ed17d12a148b0ed7c8f685b5ba124c2a3b3df52c113`).
+
+Replacing each `RZ -> RY -> RZ` triple by the exactly phased TensorCircuit
+`U` gate produced maximum state, energy, and gradient errors
+`8.94e-8`, `9.54e-7`, and `9.65e-7`. The isolated energy-gradient steady
+speedup was only `1.0042x`, but compile-plus-first-execution fell from
+`2.5819 s` to `2.2421 s`. Decision: `test end to end`; this is a compile-cost
+hypothesis, not a steady-execution claim.
+
+## Frozen follow-up ODE hypotheses
+
+Source inspection after the initial survey exposed two additional
+TensorCircuit-native controls that preserve a true adaptive ODE:
+
+1. pass `dt0=None` so Diffrax chooses its initial step instead of forcing
+   `0.01` for every smooth time-independent block;
+2. compare TensorCircuit's `ode_backend="jaxode"` with the current Diffrax
+   path, preserving `rtol`, `atol`, and `max_steps`.
+
+Each is isolated after the digital-fusion screen. A candidate must pass a
+canonical 100-update evaluator; lower-step runs are diagnostics only.

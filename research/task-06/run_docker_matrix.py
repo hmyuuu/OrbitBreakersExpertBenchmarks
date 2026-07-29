@@ -102,6 +102,11 @@ def parse_args() -> argparse.Namespace:
         help="Run only the immutable expert; useful for the six-run baseline gate.",
     )
     parser.add_argument(
+        "--candidate-only",
+        action="store_true",
+        help="Run only the editable candidate for reduced or canonical screening.",
+    )
+    parser.add_argument(
         "--image",
         default="orbitbreakers-expert-benchmarks:tensorcircuit-py311",
     )
@@ -113,6 +118,8 @@ def main() -> None:
     args = parse_args()
     if args.repeat <= 0 or args.max_steps <= 0:
         raise SystemExit("repeat and max-steps must be positive")
+    if args.reference_only and args.candidate_only:
+        raise SystemExit("reference-only and candidate-only are mutually exclusive")
     timeout = min(args.timeout, 300.0)
     output = args.output.expanduser().resolve()
     logs = output / "logs"
@@ -194,6 +201,8 @@ def main() -> None:
         for pair in range(1, args.repeat + 1):
             if args.reference_only:
                 roles = ("reference",)
+            elif args.candidate_only:
+                roles = ("candidate",)
             else:
                 roles = (
                     ("reference", "candidate")
@@ -362,10 +371,11 @@ def main() -> None:
             ci_low = float(speedup_stats["mean"]) - radius
             ci_high = float(speedup_stats["mean"]) + radius
     ref_stats, cand_stats = stats(reference), stats(candidate)
-    expected_cells = args.repeat if args.reference_only else 2 * args.repeat
+    single_role = args.reference_only or args.candidate_only
+    expected_cells = args.repeat if single_role else 2 * args.repeat
     all_passed = len(rows) == expected_cells and all(row["passed"] for row in rows)
     promotion = (
-        not args.reference_only
+        not single_role
         and all_passed
         and len(speedups) == args.repeat
         and float(cand_stats["mean"]) < float(ref_stats["mean"])
@@ -427,6 +437,9 @@ def main() -> None:
                 and len(reference) == args.repeat
                 and args.repeat >= 6
             ),
+            "candidate_screen_rule_passed": (
+                args.candidate_only and all_passed and len(candidate) == args.repeat
+            ),
         },
     }
     (output / "results.json").write_text(
@@ -435,6 +448,9 @@ def main() -> None:
     print(json.dumps(report["summary"], indent=2), flush=True)
     if args.reference_only:
         if not report["summary"]["reference_baseline_rule_passed"]:
+            raise SystemExit(1)
+    elif args.candidate_only:
+        if not report["summary"]["candidate_screen_rule_passed"]:
             raise SystemExit(1)
     elif not promotion:
         raise SystemExit(1)
