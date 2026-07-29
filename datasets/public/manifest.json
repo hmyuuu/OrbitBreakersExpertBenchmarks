@@ -3,10 +3,10 @@
   "dataset_id": "orbitbreakers-public-dev",
   "status": "ready",
   "version": "orbitq-workloads-v20260729.7",
-  "created_at": "2026-07-29T07:56:11Z",
-  "generator_commit": "dc84f6a38d44cad8c0fd46f788ecbe135f43440d",
+  "created_at": "2026-07-29T13:31:00Z",
+  "generator_commit": "d13e2591574cc1480507b00bcb33b0c6a48e6b99",
   "environment_image_digest": null,
-  "selected_task_id": "10",
+  "selected_task_id": "02",
   "coverage_requirements": {
     "canonical_case": 1,
     "reduced_smoke_case_when_supported": 1,
@@ -38,9 +38,8 @@
       "scale_probe": "Only the fixed 14-qubit, four-block configuration is eligible for promotion; max_steps is exposed solely for public profiling."
     },
     {
-      "task_id": "10",
-      "reduced_smoke_case": "Reduced update or layer counts are profiling aids, not the canonical campaign workload.",
-      "scale_probe": "The performance claim is frozen to 22 qubits, two layers, and 200 updates."
+      "task_id": "02",
+      "scale_probe": "Only the fixed 12-qubit, six-sublayer configuration is eligible for promotion; max_steps is exposed solely for public profiling."
     }
   ],
   "cases": [
@@ -90,13 +89,14 @@
       "expert_validation_report_sha256": "bdb7b985d6a0fa6bd6e7044816f9764e90b285fa9be0e6f07b79aa2587e9ff35"
     },
     {
-      "task_id": "10",
-      "case_id": "task-10-canonical-fixed-v1",
-      "path": "task-10/canonical.json",
-      "sha256": "c978b7b0c45affa8c1842c0f26d19131a24c5ec8b7253a5e531ad48b7faa8340",
-      "provenance": "Canonical public configuration from tasks/task-10/problem.md and tasks/task-10/evaluator/evaluate_10.py at commit 7be259106c9dae899e5ea8f82c2251ca285640a4.",
-      "expert_validation_status": "PASS"
+      "task_id": "02",
+      "case_id": "task-02-canonical-fixed-v1",
+      "path": "task-02/canonical.json",
+      "sha256": "0f5a1bfeb5bea3baa1b741a503b9d98cad1557e2d267d044c6bf4f731d5f50e5",
+      "provenance": "Canonical public configuration from tasks/task-02/problem.md and tasks/task-02/evaluator/evaluate_2.py at commit d13e2591574cc1480507b00bcb33b0c6a48e6b99.",
+      "expert_validation_status": "PASS",
+      "expert_validation_report_sha256": "7d450e074cc5a4cabca72e9f6cd5787e2f5226c42c69cf6c3016ec53465b9912"
     }
   ],
-  "environment_note": "Tasks 04, 06, and 10 were validated in image sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833 with 6 CPUs and 7 GiB. Task 04 used six immutable-reference runs. Task 10 workload semantics were validated with the immutable expert in the newer ORBIT-Q TensorCircuit-NG image. Task 11 was validated with ./bench --engine local in a virtual environment installed exactly from envs/tensorcircuit-py311/requirements.lock. Existing Task 05 and Task 12 validation records are retained unchanged."
+  "environment_note": "Tasks 02, 04, and 06 were validated in image sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833 with 6 CPUs, 7 GiB, no network, and TensorCircuit-NG 1.8.0.dev20260726. Tasks 02 and 04 used six immutable-reference runs; earlier task cases retain their original validation records."
 }
