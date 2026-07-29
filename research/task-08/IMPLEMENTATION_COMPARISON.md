@@ -182,6 +182,13 @@ rank-2 rewrite were measured separately and rejected. The reduced 2048-shot
 six-pair result remains statistically inconclusive and is not used to assign a
 runtime-speedup percentage to chunking.
 
+![Task 08 factor-ablation plots](figures/factor-ablation.svg)
+
+The left panel reports the canonical outcome rather than inventing a runtime
+for the OOM expert. The other panels visualize every full-workload screen and
+the separate rank-2 diagnostic. Regenerate with
+[`plot_factor_ablation.py`](plot_factor_ablation.py).
+
 The evidence does not justify changing measurement order: row-major removes
 complete grid rows and already exposes a width-seven frontier. With the
 dominant OOM fixed and no source-supported superior order, an output-order
