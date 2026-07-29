@@ -2,17 +2,22 @@
   "schema_version": 1,
   "dataset_id": "orbitbreakers-public-dev",
   "status": "ready",
-  "version": "orbitq-workloads-v20260729.7",
-  "created_at": "2026-07-29T13:31:00Z",
-  "generator_commit": "d13e2591574cc1480507b00bcb33b0c6a48e6b99",
+  "version": "orbitq-workloads-v20260729.8",
+  "created_at": "2026-07-29T15:04:30Z",
+  "generator_commit": "0819ed34dd3f1eaa8f77587c2a40d95a420ea829",
   "environment_image_digest": null,
-  "selected_task_id": "02",
+  "selected_task_id": "01",
   "coverage_requirements": {
     "canonical_case": 1,
     "reduced_smoke_case_when_supported": 1,
     "scale_probe_when_supported": 1
   },
   "unsupported_optional_coverage": [
+    {
+      "task_id": "01",
+      "reduced_smoke_case": "The promotion contract fixes exactly 500 Adam updates and four variational layers.",
+      "scale_probe": "The promotion contract fixes 32 qubits and DMRG bond dimension eight; max_steps overrides are diagnostics only."
+    },
     {
       "task_id": "04",
       "reduced_smoke_case": "The contract fixes exactly 120 Adam updates and four probe circuits.",
@@ -43,6 +48,15 @@
     }
   ],
   "cases": [
+    {
+      "task_id": "01",
+      "case_id": "task-01-canonical-fixed-v1",
+      "path": "task-01/canonical.json",
+      "sha256": "e55ec6a88c639f11cf7f4633cab1eda1d35f8c384596d18292201fd44c3cc3a8",
+      "provenance": "Canonical public configuration from tasks/task-01/problem.md and tasks/task-01/evaluator/evaluate_1.py at commit 0819ed34dd3f1eaa8f77587c2a40d95a420ea829.",
+      "expert_validation_status": "PASS",
+      "expert_validation_report_sha256": "61aca162f2fd80634f253464e885d83ca16bbb7ffefaa99ade2e83b23412e8c2"
+    },
     {
       "task_id": "04",
       "case_id": "task-04-canonical-fixed-v1",
@@ -98,5 +112,5 @@
       "expert_validation_report_sha256": "7d450e074cc5a4cabca72e9f6cd5787e2f5226c42c69cf6c3016ec53465b9912"
     }
   ],
-  "environment_note": "Tasks 02, 04, and 06 were validated in image sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833 with 6 CPUs, 7 GiB, no network, and TensorCircuit-NG 1.8.0.dev20260726. Tasks 02 and 04 used six immutable-reference runs; earlier task cases retain their original validation records."
+  "environment_note": "Tasks 01, 02, 04, and 06 were validated in image sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833 with 6 CPUs, 7 GiB, no network, and TensorCircuit-NG 1.8.0.dev20260726. Tasks 01, 02, and 04 used six immutable-reference runs; earlier task cases retain their original validation records."
 }
