@@ -20,7 +20,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 RUNTIME_RE = re.compile(r"End-to-end solution time:\s*([0-9.]+)s")
-T_CRITICAL_95 = {5: 2.5705818366}
+T_CRITICAL_95 = {
+    4: 2.7764451052,
+    5: 2.5705818366,
+}
 
 
 def sha256(path: Path) -> str:

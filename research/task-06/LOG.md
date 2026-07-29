@@ -258,3 +258,45 @@ The canonical run passes all gates with initial/final history energy
 Decision: `keep`. This is the first large end-to-end gain and remains wholly
 inside TensorCircuit's supported continuous-time ODE API. Continue from e03
 to isolate whole-training scan.
+
+## Final five-pair comparison and attribution
+
+Recorded at `2026-07-29T05:13:09Z`.
+
+Five counterbalanced pairs were run in one no-network container, using a fresh
+evaluator process for every cell, six CPUs, 7 GiB memory, and the canonical
+100-update workload. All ten cells passed.
+
+```text
+reference: 41.389616, 41.389259, 41.441489, 41.582510, 41.326743 s
+candidate: 27.290641, 27.643293, 27.625098, 27.380896, 27.743136 s
+
+reference mean:       41.425923 s
+candidate mean:       27.536613 s
+ratio of means:        1.504394x
+mean paired speedup:   1.504463x
+paired standard error: 0.005659x
+95% paired t-interval: [1.488750x, 1.520175x]
+candidate wins:        5/5
+```
+
+Report: `profiles/e03-final-five-pair.json`.
+
+The runner returned a nonzero process status only because its legacy promotion
+booleans require a six-run known-baseline gate; that policy is inapplicable to
+this explicitly requested five-pair comparison. It does not indicate a
+functional failure.
+
+Attribution after reviewing all campaign evidence:
+
+- TensorCircuit `jaxode` is the dominant factor (`1.5285x` versus e01 in the
+  controlled one-change canonical screen).
+- Exact Euler fusion is a smaller compile-oriented factor; the isolated steady
+  improvement was only `1.0042x`.
+- Diffrax `dt0=None` was neutral (`0.12%`) and was removed.
+- TensorCircuit BCOO Hamiltonian actions were `3.4–3.5x` slower and were never
+  integrated.
+
+No independent percentage is assigned to whole-training scan because it is not
+part of the promoted implementation. The consolidated PR-facing report is
+`IMPLEMENTATION_COMPARISON.md`.

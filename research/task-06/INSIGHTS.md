@@ -8,9 +8,10 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-Experiment e03 is the current best. Its canonical single screen is
-`27.747994 s` versus the immutable expert's six-run mean `45.037164 s`
-(`1.623x`). The result is not yet eligible for a formal speedup claim.
+Experiment e03 is the current best. In the final five counterbalanced
+same-container pairs, the immutable expert averaged `41.425923 s` and e03
+averaged `27.536613 s`. The ratio of means is `1.50439x`; mean paired speedup
+is `1.50446x` with a 95% t-interval of `[1.48875x, 1.52018x]`.
 
 ## Preserved semantics
 
@@ -64,16 +65,28 @@ e01, far below noise) and produced the same displayed optimization result.
 Keep the explicit framework default unless new step-count evidence explains a
 reason to revisit it.
 
+## Factor attribution
+
+The native `jaxode` substitution is the dominant positive factor: its
+one-change canonical screen was `1.5285x` faster than the accepted
+digital-fusion candidate. Euler fusion is smaller and primarily lowers
+compile-plus-first-execution cost. Diffrax `dt0=None` was neutral, while BCOO
+Hamiltonian conversion was a clear regression. See
+[`IMPLEMENTATION_COMPARISON.md`](IMPLEMENTATION_COMPARISON.md) for the
+ablation table and final paired result.
+
 ## Open hypotheses
 
 1. Whole-training `K.jaxy_scan`.
-2. Whether `jaxode` makes the digital fusion redundant or still compositional.
+2. A direct five-pair removal test could quantify whether `jaxode` makes the
+   compile-oriented digital fusion redundant.
 3. Parameter-tree simplification only if later profiling supports it.
 4. Diffrax solver sweep is now low priority because the native `jaxode` path
    is materially faster.
 
 ## Evidence limits
 
-The baseline covers one fixed public workload, one image, and one host
+The benchmark covers one fixed public workload, one image, and one host
 resource profile. It establishes neither cross-hardware performance nor global
-SOTA. No candidate result exists yet.
+SOTA. Factor screens other than the final promoted comparison are diagnostic
+single runs or isolated microbenchmarks and are labeled accordingly.
