@@ -106,9 +106,12 @@ def forward(params, psi0, Hxy_mvp, Hfield_mvp, Htarget_mvp, config):
 
         circuit = tc.Circuit(config["n_qubits"], inputs=psi)
         for i in range(config["n_qubits"]):
-            circuit.rz(i, theta=rot_l[i, 0])
-            circuit.ry(i, theta=rot_l[i, 1])
-            circuit.rz(i, theta=rot_l[i, 2])
+            alpha, beta, gamma = rot_l[i]
+            phase = K.exp(-0.5j * K.cast(alpha + gamma, tc.dtypestr))
+            unitary = phase * tc.gates.u_gate(
+                theta=beta, phi=gamma, lbd=alpha
+            ).tensor
+            circuit.any(i, unitary=unitary)
         psi = circuit.state()
         return psi, None
 
