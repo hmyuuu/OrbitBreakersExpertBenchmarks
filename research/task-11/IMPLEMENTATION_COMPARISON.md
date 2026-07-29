@@ -166,6 +166,49 @@ bandwidth-bound contractions through the framework circuit path. A bare
 reshape-matmul floor probe shows only ~1.7x headroom below that path and is
 not shippable under the framework-fidelity rules.
 
+## Factor ablation addendum
+
+The original e01 benchmark changed four factors together. It establishes the
+combined `1.464x` result, but cannot assign that entire gain to each bullet.
+A post-merge component profiler now removes three factors independently while
+keeping the candidate math and TensorCircuit execution path fixed:
+
+| Factor | Control | Removal ablation | Measured contribution | Numerical check |
+|---|---:|---:|---:|---:|
+| Fixed batched Pade entanglers | 44.78 us execution | 75.91 us with batched adaptive `K.expm` | adaptive/fixed `1.695x`; lowering+compile ratio `1.416x` | max gate error `4.68e-6` |
+| Diagonal onsite vector | 0.228 ms execution | 18.513 ms for 12 framework expectations | expectations/vector `81.21x` for the isolated onsite term | absolute value error `0` |
+| Whole-training scan | 1.839 s for 10 candidate steps | 2.130 s for 10 dispatches of the identical compiled step | loop/scan `1.158x`; scan is 13.6% lower execution time | histories bitwise equal |
+
+These are component timings, not numbers to multiply together. The onsite
+term has the largest isolated ratio, but it is only one part of the energy
+evaluation. The scan is a real secondary improvement, not the source of the
+full 31.7% end-to-end reduction. The fixed Pade kernel reduces both compile
+work and gate construction.
+
+Gate fusion remains representation-coupled with the batched entanglers in the
+promoted layer: even-site rotations are absorbed into the same 9x9 gates.
+The directly observed structural change is 47 dense-state applications per
+layer to 11, while the existing whole-state profile changes build-state time
+from 80.98 ms to 73.78 ms with Pade also enabled. This report therefore does
+not invent a gate-fusion-only percentage. The defensible attribution is:
+
+1. fewer dense-state passes plus the diagonal onsite rewrite are the dominant
+   bandwidth savings;
+2. fixed batched Pade reduces gate-construction and compilation cost;
+3. whole-training scan contributes a smaller measured dispatch saving.
+
+Reproduction and sanitized output:
+
+- [`profile_factor_ablation.py`](profile_factor_ablation.py)
+- [`profiles/factor-ablation.json`](profiles/factor-ablation.json)
+
+![Task 11 component-ablation plots](figures/factor-ablation.svg)
+
+Each panel is one independently removable component. The onsite panel uses a
+logarithmic axis because its isolated ratio is much larger; the ratios are not
+multiplied into an end-to-end claim. Regenerate with
+[`plot_factor_ablation.py`](plot_factor_ablation.py).
+
 ## Final-rerun status
 
 The paired session recorded above is the final local-engine benchmark for
