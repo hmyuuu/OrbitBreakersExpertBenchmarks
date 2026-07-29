@@ -1,42 +1,18 @@
-"""
-Task Suite Problem 3: probability-aware post-selected cooling.
+"""Task 3: exact product-state contraction of the post-selected circuit."""
 
-The selected measurement branch is represented with Circuit.post_select. The
-solution returns only NumPy values consumed by evaluate_3.py.
-"""
-
-import jax
 import numpy as np
 import optax
-
 import tensorcircuit as tc
+
 
 K = tc.set_backend("jax")
 tc.set_dtype("complex64")
 
 
-def block_count(config):
-    return config["n_steps"] // 2
-
-
-def even_bonds(config):
-    return list(range(0, config["n_qubits"] - 1, 2))
-
-
-def odd_bonds(config):
-    return list(range(1, config["n_qubits"] - 1, 2))
-
-
-def measured_qubits(config):
-    return list(range(0, config["n_qubits"], 2))
-
-
 def initial_parameters(config):
     rng = np.random.default_rng(2027)
-    n_repeats = block_count(config)
-    n_qubits = config["n_qubits"]
-    n_even = len(even_bonds(config))
-    n_odd = len(odd_bonds(config))
+    repeats = config["n_steps"] // 2
+    n = config["n_qubits"]
 
     def normal(shape):
         return K.convert_to_tensor(
@@ -45,132 +21,136 @@ def initial_parameters(config):
 
     return {
         "even": {
-            "rx": normal((n_repeats, n_qubits)),
-            "xx": normal((n_repeats, n_even)),
-            "zz": normal((n_repeats, n_even)),
+            "rx": normal((repeats, n)),
+            "xx": normal((repeats, n // 2)),
+            "zz": normal((repeats, n // 2)),
         },
         "odd": {
-            "rx": normal((n_repeats, n_qubits)),
-            "xx": normal((n_repeats, n_odd)),
-            "zz": normal((n_repeats, n_odd)),
+            "rx": normal((repeats, n)),
+            "xx": normal((repeats, n // 2 - 1)),
+            "zz": normal((repeats, n // 2 - 1)),
         },
     }
 
 
-def build_tfim_mvp(config):
-    structures = []
-    weights = []
-
-    for i in range(config["n_qubits"] - 1):
-        term = [0] * config["n_qubits"]
-        term[i] = 3
-        term[i + 1] = 3
-        structures.append(term)
-        weights.append(-1.0)
-
-    for i in range(config["n_qubits"]):
-        term = [0] * config["n_qubits"]
-        term[i] = 1
-        structures.append(term)
-        weights.append(-config["transverse_field"])
-
-    return tc.quantum.PauliStringSum2MVP(structures, weights)
+def pair_map(odd, even, xx, zz, odd_rx, even_rx, even_left):
+    rxx = K.reshape(tc.gates.rxx_gate(theta=xx).tensor, [4, 4])
+    rzz = K.reshape(tc.gates.rzz_gate(theta=zz).tensor, [4, 4])
+    ro = tc.gates.rx_gate(theta=odd_rx).tensor
+    re = tc.gates.rx_gate(theta=even_rx).tensor
+    if even_left:
+        state = K.kron(even, odd)
+        rotations = K.kron(re, ro)
+    else:
+        state = K.kron(odd, even)
+        rotations = K.kron(ro, re)
+    state = K.matmul(rotations, K.matmul(rzz, K.matmul(rxx, state)))
+    state = K.reshape(state, [2, 2])
+    selected = state[0, :] if even_left else state[:, 0]
+    probability = K.real(K.sum(K.conj(selected) * selected))
+    return selected / K.sqrt(probability + 1e-12), probability
 
 
-def apply_unitary_step(state, step_params, bonds, config):
-    circuit = tc.Circuit(config["n_qubits"], inputs=state)
-    for bond_index, i in enumerate(bonds):
-        circuit.rxx(i, i + 1, theta=step_params["xx"][bond_index])
-        circuit.rzz(i, i + 1, theta=step_params["zz"][bond_index])
-    for i in range(config["n_qubits"]):
-        circuit.rx(i, theta=step_params["rx"][i])
-    return circuit.state()
-
-
-def inner_product(left, right):
-    return K.tensordot(K.conj(left), right, 1)
-
-
-def apply_postselected_measurements(state, config):
+def cooling_product(params, config):
+    n_survivors = config["n_qubits"] // 2
+    zero = K.convert_to_tensor(np.array([1.0, 0.0], dtype=np.complex64))
+    plus = tc.gates.h().tensor[:, 0]
+    states = [plus for _ in range(n_survivors)]
     log_probabilities = []
 
-    for q in measured_qubits(config):
-        circuit = tc.Circuit(config["n_qubits"], inputs=state)
-        circuit.post_select(q, keep=0)
-        state = circuit.state()
-        probability = K.real(inner_product(state, state))
-        state = state / K.sqrt(probability + 1e-12)
+    for block in range(config["n_steps"] // 2):
+        even_input = plus if block == 0 else zero
+        p = params["even"]
+        next_states = []
+        for k, odd in enumerate(states):
+            odd, probability = pair_map(
+                odd,
+                even_input,
+                p["xx"][block, k],
+                p["zz"][block, k],
+                p["rx"][block, 2 * k + 1],
+                p["rx"][block, 2 * k],
+                True,
+            )
+            next_states.append(odd)
+            log_probabilities.append(K.log(probability + 1e-12))
+        states = next_states
+
+        p = params["odd"]
+        even_only = K.matmul(
+            tc.gates.rx_gate(theta=p["rx"][block, 0]).tensor, zero
+        )
+        probability = K.real(K.conj(even_only[0]) * even_only[0])
         log_probabilities.append(K.log(probability + 1e-12))
+        next_states = []
+        for k, odd in enumerate(states[:-1]):
+            odd, probability = pair_map(
+                odd,
+                zero,
+                p["xx"][block, k],
+                p["zz"][block, k],
+                p["rx"][block, 2 * k + 1],
+                p["rx"][block, 2 * k + 2],
+                False,
+            )
+            next_states.append(odd)
+            log_probabilities.append(K.log(probability + 1e-12))
+        next_states.append(
+            K.matmul(
+                tc.gates.rx_gate(theta=p["rx"][block, -1]).tensor,
+                states[-1],
+            )
+        )
+        states = next_states
 
-    return state, K.stack(log_probabilities)
+    return K.stack(states), K.stack(log_probabilities)
 
 
-def cooling_trajectory(params, input_state, config):
-    even = even_bonds(config)
-    odd = odd_bonds(config)
-
-    def block_step(state, p):
-        state = apply_unitary_step(state, p["even"], even, config)
-        state, even_logps = apply_postselected_measurements(state, config)
-        state = apply_unitary_step(state, p["odd"], odd, config)
-        state, odd_logps = apply_postselected_measurements(state, config)
-        return state, K.concat([even_logps, odd_logps])
-
-    final_state, logps = jax.lax.scan(block_step, input_state, params)
-    return final_state, K.reshape(logps, [-1])
+def one_qubit_expectation(state, operator):
+    return K.real(
+        K.sum(K.conj(state) * K.matmul(operator.tensor, state))
+    )
 
 
-def tfim_energy(state, hamiltonian_mvp):
-    h_state = hamiltonian_mvp(state)
-    return K.real(inner_product(state, h_state))
-
-
-def observables(params, input_state, hamiltonian_mvp, config):
-    final_state, log_probabilities = cooling_trajectory(params, input_state, config)
-    energy_density = tfim_energy(final_state, hamiltonian_mvp) / config["n_qubits"]
+def observables(params, config):
+    states, log_probabilities = cooling_product(params, config)
+    xs = K.stack([one_qubit_expectation(state, tc.gates.x()) for state in states])
+    zs = K.stack([one_qubit_expectation(state, tc.gates.z()) for state in states])
+    zz_sum = 2.0 * K.sum(zs[:-1]) + zs[-1]
+    energy = -(zz_sum + config["transverse_field"] * K.sum(xs))
+    energy_density = energy / config["n_qubits"]
     mean_log_probability = K.mean(log_probabilities)
     success_probability = K.exp(K.sum(log_probabilities))
-    loss = energy_density - config["log_probability_weight"] * mean_log_probability
+    loss = (
+        energy_density
+        - config["log_probability_weight"] * mean_log_probability
+    )
     return loss, (energy_density, success_probability, mean_log_probability)
 
 
 def run_solution(config):
     params = initial_parameters(config)
-    circuit = tc.Circuit(config["n_qubits"])
-    for i in range(config["n_qubits"]):
-        circuit.h(i)
-    input_state = circuit.state()
-    hamiltonian_mvp = build_tfim_mvp(config)
     optimizer = optax.adam(config["learning_rate"])
     opt_state = optimizer.init(params)
 
-    def loss_fn(p):
-        return observables(p, input_state, hamiltonian_mvp, config)
-
-    def train_step(p, state):
-        (loss, aux), grads = K.value_and_grad(loss_fn, has_aux=True)(p)
+    def train_step(carry, _):
+        p, state = carry
+        (loss, aux), grads = K.value_and_grad(observables, has_aux=True)(p, config)
         updates, state = optimizer.update(grads, state, p)
         p = optax.apply_updates(p, updates)
-        return p, state, loss, aux
+        energy, success, mean_log = aux
+        return (p, state), K.stack([energy, success, mean_log, loss])
 
-    train_step = K.jit(train_step)
+    def train(p, state):
+        return K.jaxy_scan(
+            train_step, (p, state), K.arange(config["max_steps"])
+        )
 
-    energy_density_history = []
-    success_probability_history = []
-    mean_log_probability_history = []
-    loss_history = []
-
-    for _ in range(config["max_steps"]):
-        params, opt_state, loss, aux = train_step(params, opt_state)
-        energy_density, success_probability, mean_log_probability = aux
-        energy_density_history.append(energy_density)
-        success_probability_history.append(success_probability)
-        mean_log_probability_history.append(mean_log_probability)
-        loss_history.append(loss)
-
+    (_, _), history = K.jit(train)(params, opt_state)
+    history = K.numpy(history)
     return {
-        "energy_density_history": K.numpy(K.stack(energy_density_history)),
-        "success_probability_history": K.numpy(K.stack(success_probability_history)),
-        "mean_log_probability_history": K.numpy(K.stack(mean_log_probability_history)),
-        "loss_history": K.numpy(K.stack(loss_history)),
+        "energy_density_history": history[:, 0],
+        "success_probability_history": history[:, 1],
+        "mean_log_probability_history": history[:, 2],
+        "loss_history": history[:, 3],
     }
