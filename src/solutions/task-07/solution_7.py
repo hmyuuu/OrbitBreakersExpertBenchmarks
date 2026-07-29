@@ -13,7 +13,7 @@ import tensorcircuit as tc
 
 K = tc.set_backend("jax")
 tc.set_dtype("complex64")
-tc.set_contractor("omeco-32-32")
+tc.set_contractor("omeco-1-1")
 
 PARAMS_PER_LAYER = 48
 

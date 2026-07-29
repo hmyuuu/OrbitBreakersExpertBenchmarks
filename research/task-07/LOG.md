@@ -302,3 +302,24 @@ physical threshold.
 Decision: `discard`. Staging the already optimized value/gradient/Adam body
 inside a scan adds more control-flow compile cost than 100 cached-JIT Python
 dispatches. Continue from accepted e02 without scan.
+
+## Experiment `e04a`: OMECo 1x1 path-search budget
+
+Branch: `codex/orbitbreakers/task-07/e04-omeco-1x1`.
+
+Fresh hypothesis worktree:
+`/Users/qqy/Desktop/2026Project/ORBIT-Q-worktrees/orbitbreakers/task-07/e04-omeco-1x1`.
+
+Parent commit: `945430e` (e02 restored after the rejected scan).
+
+### Hypothesis and frozen rule
+
+For e02's simplified low-depth graph, `TreeSA(ntrials=1,niters=1)` can reduce
+timed path-search latency more than it increases compiled contraction work.
+Screen `max_steps=1`; retain for a full 50/100-step validation only if it is
+faster than e02's 29.918828-second one-step screen and the initial/post-update
+energies remain within `1e-4`.
+
+### Result
+
+Pending.
