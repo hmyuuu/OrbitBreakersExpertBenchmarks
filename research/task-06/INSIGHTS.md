@@ -8,9 +8,9 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-Experiment e01 is the provisional current best. Its canonical single screen
-is `42.412637 s` versus the immutable expert's six-run mean `45.037164 s`.
-The result is not yet eligible for a formal speedup claim.
+Experiment e03 is the current best. Its canonical single screen is
+`27.747994 s` versus the immutable expert's six-run mean `45.037164 s`
+(`1.623x`). The result is not yet eligible for a formal speedup claim.
 
 ## Preserved semantics
 
@@ -45,6 +45,11 @@ Exact fusion of every digital `RZ -> RY -> RZ` sequence into one
 phase-corrected TensorCircuit `U` gate passed state/energy/gradient audits and
 reduced the canonical single screen by about 5.8%.
 
+Switching the same TensorCircuit raw-mode continuous ODE from Diffrax to
+TensorCircuit's `jaxode` backend reduced the accepted canonical screen by a
+further 34.6%. Initial energy, gradient, one Adam update, the full 100-update
+functional contract, tolerances, and maximum-step bound all pass.
+
 ## What did not work
 
 The old bootstrap's raw-mode ODE API failure is obsolete in the current image
@@ -61,10 +66,11 @@ reason to revisit it.
 
 ## Open hypotheses
 
-1. TensorCircuit's `jaxode` backend under unchanged tolerances and step bound.
-2. Whole-training `K.jaxy_scan`.
-3. Diffrax solver sweep under unchanged tolerances.
-4. Parameter-tree simplification only if later profiling supports it.
+1. Whole-training `K.jaxy_scan`.
+2. Whether `jaxode` makes the digital fusion redundant or still compositional.
+3. Parameter-tree simplification only if later profiling supports it.
+4. Diffrax solver sweep is now low priority because the native `jaxode` path
+   is materially faster.
 
 ## Evidence limits
 

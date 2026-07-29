@@ -210,3 +210,51 @@ Decision: `discard`. The `0.12%` single-run canonical difference is far below
 normal run noise and supplies no evidence that the automatic choice improves
 the accepted e01 path. Restore the simpler expert default before the next
 experiment.
+
+## Experiment `e03`: TensorCircuit `jaxode`
+
+Candidate commit: `a603df8`.
+
+Candidate SHA-256:
+`158063c23d609b01c9cf057d2e8574e2b0bb101e781cf770584d8aef2473e2a1`.
+
+Pre-edit diff SHA-256:
+`c78de3e12645fd9af2fa96026017a0f30cb86b04533531b614e5a5fc704fa79b`.
+
+The candidate changes only TensorCircuit's ODE backend selector from
+`diffrax` to `jaxode`. It still calls `tc.timeevol.ode_evol_global` in raw
+mode with the identical vector field, two endpoint times, `rtol=atol=1e-6`,
+and `max_steps=16`. It does not introduce a Trotter approximation or direct
+matrix exponential.
+
+```text
+max_steps=10:  e01 10.912746 s, e03 6.866093 s, e03 PASS
+max_steps=100: reference mean 45.037164 s
+               e01 42.412637 s
+               e03 27.747994 s, e03 PASS
+canonical single-screen vs reference mean: 1.62297x
+canonical single-screen vs e01:            1.52850x
+```
+
+The frozen numerical audit passed:
+
+```text
+initial energy absolute error:     7.39e-6  <= 5e-5
+maximum gradient element error:    3.38e-5  <= 5e-4
+post-update parameter max error:   2.98e-8
+post-update energy absolute error: 4.77e-7  <= 2e-3
+```
+
+The canonical run passes all gates with initial/final history energy
+`-0.5182192326 / -1.5775290728`. Reports:
+
+- `profiles/e03-jaxode-10.json`
+  (`sha256:dd9b3d4ffbf1d146f271287520d3f9103c907131815f15fcf42b944deae70450`);
+- `profiles/e03-jaxode-100.json`
+  (`sha256:96777324be79271c79670acd126044e53e48f7a0550834ef6552a479a8b0bdde`);
+- `profiles/e03-jaxode-equivalence.json`
+  (`sha256:b258da71dcd109c3bcb55a11da180a48db446b3d6a7b3e0805ef095d7a00fcf1`).
+
+Decision: `keep`. This is the first large end-to-end gain and remains wholly
+inside TensorCircuit's supported continuous-time ODE API. Continue from e03
+to isolate whole-training scan.
