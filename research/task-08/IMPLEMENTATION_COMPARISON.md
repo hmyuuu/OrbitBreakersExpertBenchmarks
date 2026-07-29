@@ -39,7 +39,7 @@ is called the campaign best, not global SOTA.
 | Evaluator | `tasks/task-08/evaluator/evaluate_8.py` | `bffda6b012b07fd1cb8d5a1ec8a763bba4f1b967e5adc0d2b704e6ae99de9c41` |
 | Docker image | `orbitbreakers-expert-benchmarks:tensorcircuit-py311` | `sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833` |
 
-## Why the expert fails
+## Why the expert fails in 7 GiB
 
 The expert creates the entire float32 status matrix with shape `(8192, 49)`
 and calls:
@@ -126,6 +126,41 @@ The raw untracked matrix report is
 the tracked sanitized record is
 `profiles/final-canonical-8192-five-pairs.json`.
 
+## High-memory feasibility follow-up
+
+The preceding OOM statement is allocation-scoped, not an assertion that the
+expert algorithm is invalid. A follow-up on the same Apple M2 host increased
+Colima from 8 GiB to 14 GiB and gave the benchmark container 13 GiB. One
+canonical probe pair passed:
+
+| Role | Runtime | Result |
+| --- | ---: | --- |
+| Immutable expert | 75.260284 s | PASS |
+| 256-shot candidate | 62.744019 s | PASS |
+
+The single-pair ratio is 1.1995x, but one probe is not a five-pair benchmark
+and is not promoted as a speedup.
+
+The result was not reproducible within this 16-GiB physical host. The first
+expert cell of the subsequent formal matrix failed after 26.745 s while
+requesting an 18,018,189,312-byte (16.781-GiB) XLA buffer. Colima was then
+raised to the Apple Virtualization Framework maximum of 16 GiB; Docker saw
+16,733,048,832 bytes. With a 15-GiB container and a temporary 8-GiB swap file,
+the expert avoided OOM but remained CPU-active at roughly 14.39 GiB resident
+memory until the fixed 300-second evaluator timeout.
+
+This establishes two points:
+
+1. the public expert code can run the canonical workload when OMECo/XLA finds
+   a sufficiently small path and enough memory is available;
+2. this machine cannot supply five reproducible eligible expert/candidate
+   pairs, so no canonical mean or confirmed speedup is reported.
+
+The tracked evidence is
+`profiles/high-memory-feasibility-follow-up.json`. A definitive five-pair
+comparison should use at least 24 GiB physical RAM, six fixed CPUs, the same
+image and source hashes, and the same alternating order.
+
 ## 2048-shot six-pair runtime comparison
 
 | Pair | Order | Expert | Candidate | Speedup |
@@ -197,8 +232,10 @@ falsifiable expectation.
 
 ## Limits and PR recommendation
 
-- Canonical runtime speedup is unmeasurable because the expert has no valid
-  runtime in this allocation.
+- Canonical runtime speedup is unmeasurable in the fixed 7-GiB allocation.
+- A 13-GiB feasibility probe produced one valid 1.1995x pair, but the next
+  expert attempt OOMed and the maximum-memory attempt timed out. It cannot be
+  promoted or averaged as a canonical benchmark.
 - The reduced comparison trends positive but fails the frozen statistical
   rule; do not advertise 1.08x as confirmed.
 - OMECo path search produces visible process-to-process variance.

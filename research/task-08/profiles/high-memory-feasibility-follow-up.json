@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "task_id": "08",
+  "workload": "canonical n_samples=8192",
+  "purpose": "Clarify whether the immutable expert is algorithmically invalid or only allocation-sensitive",
+  "host": {
+    "cpu": "Apple M2",
+    "physical_memory_bytes": 17179869184,
+    "physical_memory_gib": 16,
+    "cpu_limit": 6
+  },
+  "provenance": {
+    "reference_sha256": "0b0df74257e8f55d717ca29bb36e2edbb803206e9b2966fa423fefca9f15c311",
+    "candidate_sha256": "7696f4d742d07da92a06cf5bdd4634f26ca5fe9251471163a90a4b6da280b45d",
+    "evaluator_sha256": "bffda6b012b07fd1cb8d5a1ec8a763bba4f1b967e5adc0d2b704e6ae99de9c41",
+    "sitecustomize_sha256": "02800060761f2b15abe9055aded49d2af3877ab93d7b0fae8af94b30bac30120",
+    "snapshot_sha256": "f86c4c80348483cd441f1c60d5cf3ff2fabad70049fdee12fe020a331571f3ab",
+    "image_id": "sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833"
+  },
+  "attempts": [
+    {
+      "label": "13 GiB one-pair feasibility probe",
+      "colima_memory_gib": 14,
+      "container_memory": "13g",
+      "temporary_swap_gib": 0,
+      "reference": {
+        "status": "PASS",
+        "runtime_sec": 75.260284,
+        "controller_wall_sec": 77.97719904198311
+      },
+      "candidate": {
+        "status": "PASS",
+        "runtime_sec": 62.744019,
+        "controller_wall_sec": 64.38195458397968
+      },
+      "single_pair_speedup": 1.1994814039566066,
+      "single_pair_improvement_pct": 16.630637482048297,
+      "eligible_for_promotion": false,
+      "reason": "A single probe establishes feasibility, not a repeatable runtime distribution."
+    },
+    {
+      "label": "13 GiB formal-repeat start",
+      "colima_memory_gib": 14,
+      "container_memory": "13g",
+      "temporary_swap_gib": 0,
+      "reference": {
+        "status": "RESOURCE_EXHAUSTED",
+        "runtime_sec": null,
+        "controller_wall_sec": 26.745,
+        "requested_buffer_bytes": 18018189312,
+        "requested_buffer_gib": 16.780746459960938
+      },
+      "candidate": null,
+      "eligible_for_promotion": false,
+      "reason": "The formal matrix was stopped after the first reference cell proved that 13 GiB was not reproducible."
+    },
+    {
+      "label": "maximum-VZ-memory probe",
+      "colima_requested_memory_gib": 16,
+      "docker_visible_memory_bytes": 16733048832,
+      "container_memory": "15g",
+      "temporary_swap_gib": 8,
+      "reference": {
+        "status": "TIMEOUT",
+        "runtime_sec": null,
+        "controller_wall_sec": 300.166,
+        "observed_container_memory_gib": 14.39,
+        "process_was_cpu_active_at_timeout": true
+      },
+      "candidate": null,
+      "eligible_for_promotion": false,
+      "reason": "The reference avoided OOM but did not return before the evaluator's fixed 300-second limit."
+    }
+  ],
+  "eligible_runtime_pairs": 1,
+  "promotion_rule_passed": false,
+  "conclusion": "The immutable expert algorithm can complete the canonical workload, but this 16 GiB host cannot produce five reproducible eligible pairs. The original 7 GiB result is allocation-scoped OOM-to-PASS evidence, not an algorithmic impossibility claim.",
+  "recommended_runner": "At least 24 GiB physical RAM, six fixed CPUs, the same image and source hashes, and five alternating-order pairs."
+}

@@ -439,3 +439,64 @@ bound above 1.0. Both conditions fail.
 
 Full interpretation and PR wording:
 [`IMPLEMENTATION_COMPARISON.md`](IMPLEMENTATION_COMPARISON.md).
+
+## High-memory expert-feasibility follow-up
+
+Date: 2026-07-30 local / 2026-07-29 UTC.
+
+Purpose: test whether the canonical expert failure is algorithmic or caused by
+the fixed 7-GiB allocation. Sources, evaluator, site customization, image, six
+CPU limit, 8192-shot workload, and 300-second timeout were unchanged.
+
+### 13-GiB one-pair probe
+
+Colima was raised from 8 GiB to 14 GiB and the container limit to 13 GiB.
+
+```text
+reference: 75.260284 s, PASS
+candidate: 62.744019 s, PASS
+single-pair ratio: 1.199481x
+```
+
+Decision: `feasibility only`. This proves that the immutable expert code can
+complete the canonical workload, but one pair cannot support a mean, interval,
+or promoted speedup.
+
+### 13-GiB formal-repeat start
+
+The first reference cell of the subsequent five-pair matrix failed after
+26.745 controller seconds:
+
+```text
+RESOURCE_EXHAUSTED
+requested_buffer_bytes: 18018189312
+requested_buffer_gib: 16.780746
+```
+
+Decision: `stop matrix`. A 13-GiB allocation does not make the expert
+reproducible; continuing would create ineligible pairs.
+
+### Maximum-host-memory probe
+
+The Apple M2 host has 16 GiB physical RAM. Apple Virtualization Framework
+rejected a 20-GiB VM as greater than `maximumAllowedMemorySize`. Colima was
+therefore set to its accepted 16-GiB maximum; Docker reported
+16,733,048,832 bytes. The container received 15 GiB plus a temporary 8-GiB
+swap file.
+
+```text
+reference: TIMEOUT
+controller_wall_sec: 300.166
+observed_container_memory_gib: 14.39
+process_state_at_timeout: CPU-active
+```
+
+The temporary swap was disabled and deleted, all test containers were
+removed, and Colima was restored to the original 8-GiB configuration.
+
+Decision: `no canonical promotion`. The expert is algorithmically runnable,
+but this host cannot produce five reproducible eligible pairs. Use at least
+24 GiB physical RAM for the definitive alternating-order five-pair run.
+
+Tracked record:
+`profiles/high-memory-feasibility-follow-up.json`.

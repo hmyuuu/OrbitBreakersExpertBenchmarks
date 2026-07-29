@@ -2,7 +2,7 @@
 
 Task: `task-08`
 
-Last consolidated: 2026-07-29
+Last consolidated: 2026-07-30
 
 Evidence ledger: [`LOG.md`](LOG.md)
 
@@ -16,6 +16,13 @@ OMECo 4x4 contractor with contiguous 256-shot Python chunks around one cached
 In the final canonical session, the immutable expert failed 5/5 attempts with
 OOM/exit 137 while the candidate passed 5/5 at 47.356 ± 2.626 seconds (mean ±
 standard error). This is an OOM-to-PASS result, not a numerical speedup.
+
+That failure is specific to the fixed 7-GiB allocation. A later 13-GiB
+feasibility probe ran the unchanged expert in 75.260 seconds and the candidate
+in 62.744 seconds. The next unchanged expert attempt requested a 16.781-GiB
+buffer and OOMed; at the host's maximum VM memory it remained CPU-active until
+the 300-second timeout. The expert algorithm is therefore runnable but not
+repeatably benchmarkable on this 16-GiB host.
 
 At 2048 shots the candidate mean is 7.47% lower, but it wins only 4/6 pairs
 and the paired-speedup 95% interval `[0.888, 1.290]` includes 1.0. No confirmed
@@ -34,8 +41,9 @@ runtime-speedup claim is made.
 
 ## Confirmed bottlenecks
 
-- The expert's monolithic `jit(vmap(perfect_sampling))` over 8192 shots asks
-  XLA for a 17,998,348,288-byte buffer and fails in a 7-GiB cgroup.
+- The expert's monolithic `jit(vmap(perfect_sampling))` over 8192 shots has
+  asked XLA for buffers as large as 18,018,189,312 bytes and fails in a
+  7-GiB cgroup.
 - The same implementation passes at 2048 shots in 48.113225 seconds, so mapped
   batch size is a primary memory multiplier.
 - `perfect_sampling` performs 49 sequential conditional double-layer
@@ -100,3 +108,6 @@ passes, but no eligible speedup pairs. The reduced six-pair comparison is
 descriptive because it fails the frozen confidence/win-count rule. Results
 apply only to this fixed Docker image, six-CPU/7-GiB allocation, circuit and
 evaluator; no cross-hardware, global-SOTA or scaling claim is established.
+The separate high-memory follow-up has one eligible pair, one 13-GiB OOM, and
+one maximum-memory timeout; it proves expert feasibility but is not a runtime
+promotion dataset.
