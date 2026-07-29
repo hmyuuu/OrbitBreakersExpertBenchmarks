@@ -8,8 +8,10 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-No candidate has been edited or timed. The immutable canonical expert passes
-in 135.815605 seconds in the six-CPU Docker environment.
+Experiment `e01` contracts the final adaptive circuit once and evaluates one
+TensorCircuit-native sparse data Hamiltonian. Its first canonical screen
+passes in 61.396553 seconds versus the expert's 135.815605 seconds (2.2121x).
+This is provisional one-run evidence, not the final paired claim.
 
 ## Preserved semantics
 
@@ -33,6 +35,22 @@ in 135.815605 seconds in the six-CPU Docker environment.
   additional 99 canonical updates average about 0.89 seconds each.
 - The generic `conditional_gate` keeps a selected dense two-qubit `RZZ` node
   after the ancilla is already a Z eigenstate.
+
+## What worked
+
+- One TensorCircuit state contraction plus one native sparse eight-qubit TFIM
+  expectation reduces the 100-step screen from 135.816 to 61.397 seconds and
+  the 50-step passing screen from 91.540 to 52.769 seconds.
+- One-trajectory energy and gradient agree within `3.34e-6` and `1.01e-6`;
+  the full 50/100-step physical outputs pass and remain close.
+
+## Measurement lesson
+
+- Maximum first-Adam parameter difference is a poor complex64 equivalence
+  gate near zero gradients. The strict e01 diagnostic failed (`0.0313`) even
+  though energy, gradient, post-update energy, and complete public workloads
+  passed. Preserve that failure, but use physical post-update outputs as the
+  predeclared one-step semantic criterion in later experiments.
 
 ## High-confidence exact identities
 

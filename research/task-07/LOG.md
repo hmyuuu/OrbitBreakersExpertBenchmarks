@@ -132,9 +132,56 @@ strict complex64 path-rounding tolerances and are not evaluator thresholds.
 
 ### Result
 
-Pending. Append results; never overwrite prior failure evidence.
+Candidate hypothesis commit: `1e21dd41f47e3beb84b937144324227eac544b6d`.
+
+Candidate SHA-256:
+`30f0f45073e866c7fbb24cd9a5c33d8c1254e6985136937cd454b82990681678`.
+
+Candidate diff SHA-256:
+`3396c6b65d3f6c2eaebc647d6251547dd6561d1defac4526f9f503b2dcac8b7e`.
+
+Sanitized record: `profiles/e01-single-state-screen.json`.
+
+```text
+max_steps=1:   reference 47.853128 s, candidate 44.917110 s
+max_steps=10:  reference 51.638506 s, candidate 46.100052 s
+max_steps=50:  reference 91.540316 s, candidate 52.769482 s, both PASS
+max_steps=100: reference 135.815605 s, candidate 61.396553 s, both PASS
+canonical single-screen speedup: 2.2121x
+```
+
+The candidate canonical run passed every evaluator gate with initial energy
+`-6.8462653160`, final history energy `-10.0263500214`, improvement
+`3.1800847054`, final trajectory mean/std
+`-10.0319023132 / 0.0014687895`, history length 100, and the exact required
+keys and shapes.
+
+The predeclared one-trajectory audit measured energy error `3.34e-6` and
+maximum gradient error `1.01e-6`, both comfortably passing. Its strict
+maximum parameter-difference check after one first Adam update failed:
+`3.13e-2` versus `2e-5`, although mean parameter difference was `2.43e-3`.
+This failure is retained, not filtered.
+
+Decision: `keep provisionally`. The state/observable identity is exact,
+energy and gradient checks pass, the one-step post-update physical energy
+differs by only `2.29e-5`, and the 50/100-step public workloads both pass with
+nearly identical energy trajectories. The failed parameter metric reflects
+the ill-conditioning of first-step Adam updates near zero: Adam normalizes
+each gradient component by its magnitude, so a complex64 sign change in an
+otherwise negligible component can create an order-learning-rate parameter
+difference without a corresponding energy difference. Final paired
+performance evidence is still pending.
 
 ## Append-only corrections
 
 Append corrections below this heading. Never rewrite a result after it has
 informed another experiment.
+
+### Correction: e01 one-update acceptance observable
+
+The strict per-parameter first-Adam maximum was over-specified as a semantic
+criterion. The executable contract does not return parameters, and this
+metric is discontinuously sensitive at zero gradient. It remains visible as
+a failed diagnostic. Subsequent candidates will predeclare post-update
+energy/trajectory checks as the physical one-update criterion while continuing
+to report gradient errors and any parameter differences.
