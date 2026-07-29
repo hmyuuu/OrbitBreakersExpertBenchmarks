@@ -495,20 +495,38 @@ The candidate therefore keeps the simpler string representation.
 
 ## Attribution limits and next checks
 
-The final timing measures cone extraction, coordinate packing, separation, and
-`lax.scan` together. We did not measure independent full-size ablations for
-packing, grouping, or scan, so the evidence does not assign a speedup to any
-one of those changes.
+The original final timing measures cone extraction, coordinate packing,
+separation, and scan together. It must not be quoted as though every bullet
+independently contributes `3.82x`. Available removal and follow-up screens now
+separate several factors:
+
+| Factor | Ablation evidence | Contribution conclusion |
+|---|---|---|
+| Explicit pre-construction causal cones | 3,897 gates become 74 and 80; final six-pair candidate is `3.82x` over the expert | Dominant structural factor, but its percentage is coupled to the compact TensorCircuit graph. |
+| Inner `enable_lightcone=True` | Removing it after explicit pruning exceeded 300 s | Independently necessary; explicit pruning and framework cancellation solve different costs. |
+| Pre-resolved gate methods | Six pairs: `9.395 s` vs `8.726 s`, mean paired ratio `0.9385x` | Negative contribution; rejected. |
+| One combined 154-coordinate loss | Three pairs: `7.722 s` vs `7.139 s`, `-8.16%`, 0/3 wins | Group separation is beneficial for this graph; combining losses is worse. |
+| Threaded submission of the two groups | Three pairs: `6.900 s` vs `7.447 s`, `+7.34%`, bitwise history | Promising follow-up, not part of this PR's measured candidate. |
+| Manual single-qubit run fusion | Six pairs: `1.0197x`, 95% t-CI `[0.9692, 1.0702]`, 3/6 wins | No resolved contribution; rejected. |
+
+The remaining unisolated pieces are active-coordinate packing and
+whole-training scan. Packing reduces optimizer arrays from 3,897 to 154
+coordinates, a `25.3x` storage/elementwise-work reduction, but no independent
+end-to-end percentage is claimed. The scan likewise remains bundled with the
+compact optimizer graph. This explicit limit is preferable to assigning the
+full `3.82x` to either one.
 
 The comparison covers the deterministic public Task 09 configuration on one
 host and one pinned image. A follow-up performance report should run at least
 six counterbalanced pairs and report the mean, median, standard error, pair
-wins, and paired-speedup confidence interval. Separate ablations could then
-measure:
+wins, and paired-speedup confidence interval. The two still-useful clean
+ablations are:
 
 - compact cones with full optimizer coordinates;
-- packed coordinates with a Python optimizer loop;
-- one combined 154-coordinate loss instead of two disjoint scans.
+- packed coordinates with a Python optimizer loop.
+
+Post-PR screen data are preserved in
+[`task-09/profiles/post-pr-factor-screens.json`](task-09/profiles/post-pr-factor-screens.json).
 
 ## Provenance
 
