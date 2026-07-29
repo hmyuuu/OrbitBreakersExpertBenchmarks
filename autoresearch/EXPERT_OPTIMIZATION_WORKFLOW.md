@@ -3,7 +3,7 @@
 This workflow turns one ORBIT-Q human-expert optimization campaign into a
 repeatable sequence with explicit gates, single-factor attribution, matched
 timing, and PR-ready evidence. `GOAL.md`, `program.md`, `AGENTS.md`, and
-[`README.md`](README.md) remain authoritative.
+[`README.md`](../README.md) remain authoritative.
 
 ## 1. Select and bind one task
 
@@ -70,7 +70,7 @@ Each hypothesis gets:
 For an exact execution rewrite, compare at least:
 
 1. the relevant state or observable on deterministic reduced inputs;
-2. initial energy;
+2. initial loss or energy;
 3. gradients;
 4. one optimizer update;
 5. a short history and final parameters when the contract permits it;
