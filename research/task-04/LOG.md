@@ -112,6 +112,77 @@ Timeout: `300 seconds`
 
 Decision: pending.
 
+## Result for `e05-paired-kraus`
+
+Candidate commit:
+`abab6d8`.
+
+Candidate SHA-256:
+`564d4b8803eb6197428a5efc961543a582cc6ca2ef4cc3e884ba5388d31a90ea`.
+
+The enhanced reduced exact-equivalence report is
+`research/task-04/profiles/e05-equivalence.json`
+(`sha256:6ff425a4b7a23366124365b2708cbc1cfe7983a729f9194044b455cdd5374c51`).
+The target, value/gradient/update, complete three-step loss history, final
+probabilities, and fitted expectations passed `2e-6`; maximum error was
+`1.19e-7`. The canonical evaluator passed.
+
+To isolate this factor, the accepted e02 source was the reference and the e05
+file was supplied as an explicit candidate:
+
+```bash
+./bench run 04 --candidate <e05>/src/solutions/task-04/solution_4.py \
+  --compare-to optimized --repeat 6 --engine docker \
+  --cpus 6 --memory 7g --timeout 300 --no-build \
+  --output results/task-04-e05-vs-e02-paired
+```
+
+Immutable report:
+`results/task-04-e05-vs-e02-paired/results.json`
+(`sha256:73831fb18718e4f9bc5e065eda7828a00f7af45449cedb113f39349e69a571f7`).
+
+```text
+terminal_status: SUCCESS x 12
+valid: 12/12
+reference (e02) mean_runtime_sec: 6.710460
+reference (e02) runtime_stderr_sec: 0.109958
+candidate (e05) mean_runtime_sec: 6.372412
+candidate (e05) runtime_stderr_sec: 0.060695
+paired_improvement_mean: 4.940270%
+paired_speedup_mean: 1.053233x
+paired_speedup_stderr: 0.016604x
+paired_speedup_95pct_ci: [1.010551x, 1.095914x]
+pair_wins: 6/6
+first_five_reference_mean_sec: 6.725060
+first_five_candidate_mean_sec: 6.361571
+first_five_paired_speedup_mean: 1.057318x
+```
+
+The tracked profile
+`research/task-04/profiles/e05-profile.json`
+shows that channel superoperator nodes fall from 22 to 11 per probe and
+StableHLO falls from 4,855 to 4,602 lines. Target-table time falls from
+`2.323 s` to `1.790 s`; lowering falls from `0.616 s` to `0.547 s`.
+Compilation and steady-update execution are not lower, so target/network
+construction is the attributable mechanism.
+
+Decision: `keep`. All frozen paired-promotion gates pass. This factor becomes
+the parent for subsequent single-factor experiments.
+
+## Append-only framework binding correction
+
+Runtime introspection in the measured image after e01 showed:
+
+```text
+tc.DMCircuit  = tensorcircuit.densitymatrix.DMCircuit2
+tc.DMCircuit2 = tensorcircuit.densitymatrix.DMCircuit2
+```
+
+Therefore e01 was a literal class-alias rename, not a switch from an eager
+legacy implementation. Its null result is expected. Current-image bottleneck
+claims use local superoperator TN nodes and measured compilation/profile data;
+legacy class-body observations are historical context only.
+
 ## Result for `e04-expectation-reuse`
 
 Candidate commit:

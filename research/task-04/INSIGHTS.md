@@ -8,11 +8,12 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-Experiment `e02-probe-vmap`, source SHA-256
-`6247d16ca78364925ada690b32b350eadf3ed4c87760922e7704885514f82ec1`.
-Six paired Docker runs: reference `15.029802 ± 0.215846 s`, candidate
-`6.962292 ± 0.203499 s`, paired speedup `2.165207 ± 0.050131x`, 95% CI
-`[2.036340x, 2.294074x]`, 6/6 wins and 12/12 cells PASS.
+Experiment `e05-paired-kraus`, source SHA-256
+`564d4b8803eb6197428a5efc961543a582cc6ca2ef4cc3e884ba5388d31a90ea`.
+Against the accepted probe-VMAP parent, six paired Docker runs give
+`1.053233x ± 0.016604x`, 95% CI `[1.010551x, 1.095914x]`, 6/6 wins and
+12/12 cells PASS. The retained cumulative factors are probe VMAP followed by
+exact pairing of adjacent Kraus nodes.
 
 ## Preserved semantics
 
@@ -30,8 +31,10 @@ Six paired Docker runs: reference `15.029802 ± 0.215846 s`, candidate
 
 ## Confirmed bottlenecks
 
-- `DMCircuit.apply_general_kraus` eagerly contracts the circuit before every
-  channel, materializes three full-density Kraus branches, and sums them.
+- In the measured TensorCircuit-NG build, `tc.DMCircuit` and
+  `tc.DMCircuit2` both resolve to
+  `tensorcircuit.densitymatrix.DMCircuit2`; each Kraus list becomes a local
+  superoperator TN node. Renaming the class cannot change runtime.
 - A 12-qubit complex64 density matrix occupies 128 MiB before gradient
   temporaries; one observable table invokes 88 one-qubit channels.
 - The exact canonical reference takes `14.671115 ± 0.123236 s` end to end.
@@ -48,16 +51,22 @@ StableHLO from 21,720 to 4,855 lines, lowering from `3.068` to `0.616 s`, and
 XLA compilation from `10.712` to `2.014 s`. This dominates the increase in
 steady per-update execution from `1.257` to `8.035 ms`.
 
+Replacing the two single-qubit channel nodes after each entangler with the
+exact nine-Kraus product channel halves channel nodes from 22 to 11 per probe.
+Relative to probe VMAP alone, target construction falls from `2.323` to
+`1.790 s`, lowering from `0.616` to `0.547 s`, and StableHLO from 4,855 to
+4,602 lines. The paired benchmark attributes a further `1.053233x` speedup.
+
 ## What did not work
 
 The first baseline command session was interrupted after two passing cells and
 did not produce a complete report. Those timings are excluded rather than
 spliced into the complete baseline.
 
-Changing only `tc.DMCircuit` to `tc.DMCircuit2` is semantically valid but not
-promotable: `1.0180x ± 0.0159x`, 95% CI `[0.9772x, 1.0588x]`, with only 4/6
-pair wins. The newer class must be combined with an explicit scalar-TN
-contraction/reuse strategy to change the compiled graph materially.
+Changing only `tc.DMCircuit` to `tc.DMCircuit2` is a byte-level source edit
+but a runtime no-op because both names are the same class in the measured
+image. Its inconclusive `1.0180x ± 0.0159x` result is timing noise, not an
+algorithmic factor.
 
 Putting all 120 Adam updates in one TensorCircuit `K.jaxy_scan` is also exact
 but regressed relative to the accepted VMAP parent: e02 `6.645754 ±
@@ -73,8 +82,8 @@ implementation.
 
 ## Open hypotheses
 
-1. Exact composite two-qubit noisy superoperators and reusable contraction
-   paths.
+1. Fuse each fixed RXX with its following paired Kraus channel into one exact
+   TensorCircuit two-qubit channel.
 2. Exact MPO/purification formulations through TensorCircuit-native classes if
    simpler delayed contraction is insufficient.
 
@@ -82,5 +91,5 @@ implementation.
 
 - Claims are limited to the canonical fixed Task 04 workload and current host.
 - No external matched runtime establishes global state of the art.
-- Source inspection identifies eager density materialization, but factor
-  magnitude awaits single-factor paired benchmarks.
+- Runtime binding and local-node behavior are specific to the measured
+  TensorCircuit-NG development image; older public class bodies differ.

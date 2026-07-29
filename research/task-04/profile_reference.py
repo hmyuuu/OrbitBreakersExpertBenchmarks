@@ -69,6 +69,8 @@ def main() -> None:
         solution_path,
         "task04_reference_profile",
     )
+    solution_source = solution_path.read_text(encoding="utf-8")
+    paired_channel = "paired_kraus = [" in solution_source
     evaluator = load_module(
         ROOT / "tasks" / "task-04" / "evaluator" / "evaluate_4.py",
         "task04_evaluator_profile",
@@ -144,9 +146,9 @@ def main() -> None:
         "configuration": config,
         "structural_counts": {
             "probes_per_table": 4,
-            "channels_per_probe": 22,
-            "channels_per_table": 88,
-            "kraus_branches_per_channel": 3,
+            "channel_nodes_per_probe": 11 if paired_channel else 22,
+            "channel_nodes_per_table": 44 if paired_channel else 88,
+            "kraus_branches_per_node": 9 if paired_channel else 3,
             "observables_per_probe": 13,
             "observables_per_table": 52,
             "training_steps": 120,

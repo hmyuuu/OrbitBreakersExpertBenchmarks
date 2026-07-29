@@ -245,3 +245,20 @@ authoritative.
   are mandatory before promotion.
 - Only the fixed canonical 12-qubit workload is claimable; no scaling claim is
   made without additional public workload support.
+
+## Post-freeze measured-image binding correction
+
+The predeclared first hypothesis above was based on the distinct legacy class
+bodies in `densitymatrix.py`. Runtime introspection after e01 established that
+the measured `1.8.0.dev20260726` package exports both public names as the same
+class:
+
+```text
+tc.DMCircuit  = tensorcircuit.densitymatrix.DMCircuit2
+tc.DMCircuit2 = tensorcircuit.densitymatrix.DMCircuit2
+```
+
+Thus the immutable expert already uses local Kraus-superoperator TN nodes in
+this image. The e01 rename is a no-op, and all final bottleneck/strategy claims
+are based on the measured 21,720-line traced graph, probe VMAP, and explicit
+local-node consolidation rather than eager legacy density materialization.
