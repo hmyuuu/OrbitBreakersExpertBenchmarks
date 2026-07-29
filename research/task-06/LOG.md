@@ -143,3 +143,40 @@ TensorCircuit-native controls that preserve a true adaptive ODE:
 
 Each is isolated after the digital-fusion screen. A candidate must pass a
 canonical 100-update evaluator; lower-step runs are diagnostics only.
+
+## Experiment `e01`: exact digital Euler fusion
+
+Candidate commit: `9484010`.
+
+Candidate SHA-256:
+`b240cf7d3db1e1ad2a820c2d375cf58514e30e53591ef081e9c5516e8f1abd90`.
+
+Pre-edit diff SHA-256:
+`cd45478134866b89de5b704476fd03d6f8f480a60f795b9a85f89cbb3b495085`.
+
+The candidate replaces each block's 42 `RZ/RY/RZ` circuit nodes with 14
+exactly phased TensorCircuit `U` nodes. It retains all three independent
+angles. The exact identity audit was already frozen in
+`profiles/digital-fusion-profile.json`.
+
+```text
+max_steps=10:  10.912746 s, PASS
+max_steps=100: 42.412637 s, PASS
+reference six-run mean: 45.037164 s
+single-screen ratio: 1.06188x
+```
+
+The canonical initial energy differs from the reference baseline by
+`3.58e-7`; final history energy differs by `1.17e-5`. All output shapes,
+bounds, history length, energy gates, and NumPy checks pass.
+
+Reports:
+
+- `profiles/e01-digital-fusion-10.json`
+  (`sha256:fc0b5cc821d73025443618bf771ff076ec621021ecbfe035c2ce47cb68f0d072`);
+- `profiles/e01-digital-fusion-100.json`
+  (`sha256:b926c0b8004e30fe62c6f65dfc80204c6cfdd849ffd11ec6066f87d1854d1f4a`).
+
+Decision: `keep provisionally`. The canonical screen is about 5.8% below the
+immutable mean and the numerical audits pass. Continue from e01 to isolate
+Diffrax automatic initial-step selection.

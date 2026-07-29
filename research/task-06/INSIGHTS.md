@@ -8,8 +8,9 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-No optimized candidate has been accepted yet. The immutable expert's six-run
-mean is `45.037164 s` under the frozen six-CPU Docker profile.
+Experiment e01 is the provisional current best. Its canonical single screen
+is `42.412637 s` versus the immutable expert's six-run mean `45.037164 s`.
+The result is not yet eligible for a formal speedup claim.
 
 ## Preserved semantics
 
@@ -40,7 +41,9 @@ changed by only `0.4%`.
 
 ## What worked
 
-None yet.
+Exact fusion of every digital `RZ -> RY -> RZ` sequence into one
+phase-corrected TensorCircuit `U` gate passed state/energy/gradient audits and
+reduced the canonical single screen by about 5.8%.
 
 ## What did not work
 
@@ -53,13 +56,11 @@ by more than 3x.
 
 ## Open hypotheses
 
-1. End-to-end exact fusion of each `RZ -> RY -> RZ` triple into one
-   differentiable TensorCircuit gate.
-2. Diffrax automatic initial-step selection with `dt0=None`.
-3. TensorCircuit's `jaxode` backend under unchanged tolerances and step bound.
-4. Whole-training `K.jaxy_scan`.
-5. Diffrax solver sweep under unchanged tolerances.
-6. Parameter-tree simplification only if later profiling supports it.
+1. Diffrax automatic initial-step selection with `dt0=None`.
+2. TensorCircuit's `jaxode` backend under unchanged tolerances and step bound.
+3. Whole-training `K.jaxy_scan`.
+4. Diffrax solver sweep under unchanged tolerances.
+5. Parameter-tree simplification only if later profiling supports it.
 
 ## Evidence limits
 
