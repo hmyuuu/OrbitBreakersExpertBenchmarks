@@ -650,3 +650,43 @@ Append corrections below; never rewrite prior evidence.
   representation whose maximum bond dimension is bounded by the five
   brickwork applications per bond. These mechanisms will not be combined
   until each has independent semantic and performance evidence.
+
+## Experiment `e02-exact-noqr-mps`
+
+Task/branch: `task-05` /
+`codex/orbitbreakers/task-05/e02-exact-noqr-mps`.
+
+### Hypothesis
+
+The state has a much smaller exact representation than its dense
+`2^18` vector. Every RX filter is one-site and does not increase MPS rank.
+Each `exp(b Z.Z)` filter has exact operator-Schmidt rank two:
+
+`exp(b Z.Z) = cosh(b) I.I + sinh(b) Z.Z`.
+
+A bond participates only in its parity's five layers, so every exact MPS bond
+dimension is bounded by `2^5 = 32`. Applying this local bond-2 MPO contraction
+without the generic `MPSCircuit.apply_MPO` QR/RQ canonicalization should avoid
+the timeout observed by historical Round 4 while preserving the full state,
+all ten normalizations, gradients, and 600 updates. The TFIM is evaluated as
+an exact TensorCircuit backend bond-3 MPO contraction.
+
+This experiment replaces the dense trajectory and Hamiltonian contraction as
+one isolated representation mechanism. It is independent of the fused dense
+gate experiment and starts from accepted parent `0cb46e3`.
+
+### Frozen evaluation protocol
+
+Public workload `orbitq-workloads-v20260728.3`; image ID
+`sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833`;
+six CPUs; 7 GiB; 300-second timeout. The candidate must pass reconstructed
+state, norm, initial energy, gradient, one-update, full evaluator, and static
+checks before timing. Promotion requires six alternating matched pairs
+against the immutable expert; the independent MPS factor contribution will
+also be reported against the accepted dense parent. Frozen at
+`2026-07-29T06:27:03Z`: candidate SHA-256
+`f741e6cc75b8ed1e47bbedafc557d231d54db60fb064011650fc9c7da36c9ef6`;
+equivalence-harness SHA-256
+`c46604a554ad6107f28d724a22f3cfaa07f9cd047d4cb5d054a05bd0f17fdc91`;
+pre-commit diff SHA-256
+`5184e31df8c257667116db6aacc7eecab918994e6524893e08c56761eef6f877`.
