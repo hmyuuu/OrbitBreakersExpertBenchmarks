@@ -1,4 +1,9 @@
-"""Task 3: exact product-state contraction of the post-selected circuit."""
+"""
+Task Suite Problem 3: probability-aware post-selected cooling.
+
+The selected measurement branch is represented with Circuit.post_select. The
+solution returns only NumPy values consumed by evaluate_3.py.
+"""
 
 import numpy as np
 import optax
