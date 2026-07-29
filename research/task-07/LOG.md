@@ -125,6 +125,11 @@ Reference/evaluator/image hashes: as recorded above.
 Pair order for final promotion: odd `reference -> candidate`, even
 `candidate -> reference`; six pairs; 300-second cap.
 
+The one-trajectory equivalence check is frozen before execution at absolute
+tolerances `5e-5` for energy, `5e-4` for the maximum gradient element, and
+`2e-5` for the maximum parameter difference after one Adam update. These are
+strict complex64 path-rounding tolerances and are not evaluator thresholds.
+
 ### Result
 
 Pending. Append results; never overwrite prior failure evidence.
