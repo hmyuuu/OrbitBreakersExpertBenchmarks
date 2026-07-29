@@ -516,6 +516,13 @@ end-to-end percentage is claimed. The scan likewise remains bundled with the
 compact optimizer graph. This explicit limit is preferable to assigning the
 full `3.82x` to either one.
 
+![Task 09 factor-ablation plots](task-09/figures/factor-ablation.svg)
+
+The figure separates structural graph reduction, measured removal/follow-up
+screens, and the inner light-cone timeout. Packing and scan intentionally have
+no invented bars because no clean independent timing exists. Regenerate with
+[`task-09/plot_factor_ablation.py`](task-09/plot_factor_ablation.py).
+
 The comparison covers the deterministic public Task 09 configuration on one
 host and one pinned image. A follow-up performance report should run at least
 six counterbalanced pairs and report the mean, median, standard error, pair
