@@ -662,3 +662,84 @@ and Hamiltonian expectation. It nevertheless removes the explicit
 intended to benchmark. The final report must present this openly as a
 challenge-design loophole and keep the conservative e04a implementation
 available if maintainers require literal `cond_measure` use.
+
+## Post-reduction experiment sweep
+
+All variants below start from the provisionally accepted e07 reduction and
+retain the 64-to-2 exact pattern map.
+
+### `e08`: whole-training `K.jaxy_scan`
+
+Candidate commit: `7c9476a`.
+Source SHA-256:
+`a6a9c882edabbf88bdb175d5cf7dd4b39bf09f923c373a939929380a616b7376`.
+
+Canonical screen: `3.205596 s`, PASS, versus the e07 exploratory
+`2.998158 s`. Final-history energy differs by `1.53e-5`.
+
+Decision: `discard`. Even after the dimensional collapse, staging the
+100-update control flow costs more than the cached Python dispatches it
+removes.
+
+### `e09`: fuse pre-CNOT `RY` and reduced `RZ`
+
+Candidate commit: `7d0fd29`.
+Source SHA-256:
+`96c0ca51d49fa334758e8c60985062250aae6f3f516b5c42aaed3eb26adbe754`.
+
+The exact product `RZ(z) RY(y)` was emitted as a differentiable
+TensorCircuit `any` gate. Canonical screen: `3.530851 s`, PASS.
+
+Decision: `discard`. TensorCircuit's contraction preprocessing already
+handles the neighboring one-qubit gates more cheaply than explicitly
+constructing the parameterized dense matrix.
+
+### `e10`-`e13`: contractor selection
+
+Single canonical screens:
+
+| Variant | Runtime (s) | Result |
+| --- | ---: | --- |
+| e10 `greedy` | 2.910894 | PASS |
+| e11 `plain-experimental`, default local steps 2 | 2.921477 | PASS |
+| e12 `plain-experimental`, local steps 1 | 3.100929 | PASS |
+| e13 `plain-experimental`, local steps 3 | 2.822912 | PASS |
+
+Because greedy, OMECo-1x1, and the default local contractor differed by only
+tenths of a second, e11 was selected through counterbalanced six-pair
+screens rather than a single timing. Sanitized record:
+`profiles/e11-contractor-six-pair-screen.json`.
+
+```text
+greedy mean:             2.947290 s
+plain-experimental mean: 2.823417 s
+plain wins:              6/6
+mean paired speedup:     1.044198x
+95% Student-t CI:        [1.002914x, 1.085481x]
+
+OMECo-1x1 mean:          2.949023 s
+plain-experimental mean: 2.839041 s
+plain wins:              5/6
+mean paired speedup:     1.039493x
+95% Student-t CI:        [0.993346x, 1.085640x]
+```
+
+An earlier attempt mounted a comparison worktree from `/private/tmp`; Docker
+turned the unavailable file mount into a directory and every greedy cell
+failed before evaluator execution. Those values are explicitly excluded and
+the complete six-pair screen was rerun from a Docker-visible workspace.
+
+Decision: `keep e11`. The exact reduced graph is small enough that
+TensorCircuit's native local contractor avoids global path-search overhead.
+Local-step values 1 and 3 do not provide sufficient repeat evidence to
+supplant the stable default of 2.
+
+## Frozen e11 candidate for new expert comparison
+
+Candidate source SHA-256:
+`0337bf428a7c4a820f12f7db1232620b2777677617dd4f1a657dfd5f53bbdb0e`.
+
+The final comparison will use six canonical matched pairs, alternating the
+immutable human expert and e11 in one no-network container with six CPUs,
+7 GiB, the same evaluator and latest repository TensorCircuit image. No
+candidate tuning follows this freeze.
