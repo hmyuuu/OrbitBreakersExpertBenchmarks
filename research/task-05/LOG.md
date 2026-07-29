@@ -690,3 +690,65 @@ equivalence-harness SHA-256
 `c46604a554ad6107f28d724a22f3cfaa07f9cd047d4cb5d054a05bd0f17fdc91`;
 pre-commit diff SHA-256
 `5184e31df8c257667116db6aacc7eecab918994e6524893e08c56761eef6f877`.
+
+### Continuation results and decisions
+
+- `2026-07-29T06:27:37.838917Z`: latest-image immutable-reference baseline
+  completed 6/6 passing runs in shared session
+  `ccb7f91a95654f8ca3dacad09b1d2fc3a25286aa35ec043657a0cfc2113c046c`.
+  Runtimes were `97.277727`, `97.722246`, `98.529488`, `99.783288`,
+  `98.037636`, and `100.264691` seconds. Six-run mean
+  `98.602512667 s`, standard error `0.483439480 s`; first-five mean
+  `98.270077 s`. Raw report SHA-256
+  `98f867e0ce8f6f701a271ce1ceb0f966b2374c987bde0c2e8a994d26c3a70bfe`.
+  The Task 05 promotion gate passed.
+
+- `2026-07-29T06:35:53Z`: e02 exact-MPS equivalence passed. Dense versus
+  reconstructed-state maximum error `2.79397e-08`; norm error
+  `4.17233e-07`; initial energy-density error `1.79052e-04`; gradient error
+  `1.19507e-05`; conditioned nonzero-gradient one-Adam-update error
+  `3.72529e-09`; maximum exact bond dimension 32. One analytically zero
+  gradient coordinate was excluded only from the conditioned Adam parameter
+  metric; it remains included in state, energy, and full-gradient checks.
+
+- `2026-07-29T06:52:25.185319Z`: e02 final comparison completed 12/12
+  passing cells and six eligible alternating pairs in shared session
+  `647123a15bd9eb489fb764cd5d48bfc60150aec029dcbb4908170e7ff72f0459`.
+  Immutable expert mean `97.083712 s`; exact-MPS mean `6.8984085 s`;
+  paired speedup `14.075569632x ± 0.155535830x`; 95% Student-t interval
+  `[13.675752052x, 14.475387211x]`; paired reduction `92.891124882%`;
+  six of six candidate wins. First-five expert/candidate means
+  `96.3557272/6.8841558 s` and first-five paired speedup `14.000342779x`.
+  Raw report SHA-256
+  `220bf9b519cc69e7996a78855308fa1e1b70b82a51d7861561cca8b5a01678c5`.
+  Decision `keep` and promote e02.
+
+- `2026-07-29T06:57:36.086471Z`: e03 absorbed RX into both rank-2 RZZ MPO
+  branches and passed equivalence, but all six direct pairs regressed.
+  e02 mean `7.008928 s`; fused-MPS mean `8.3105185 s`; paired speedup
+  `0.843725047x`, 95% interval `[0.822186096x, 0.865263999x]`.
+  Decision `discard`. Raw report SHA-256
+  `645adcee4dd4f625dab6b9b8e5845f4f1f038c8f0e1a89666ef77d372783eff5`.
+
+- `2026-07-29T07:12:35.022063Z`: e01 dense layer fusion completed 12/12
+  passing cells against the accepted dense parent. Parent mean
+  `68.3585177 s`; fused mean `66.9657893 s`; paired speedup
+  `1.022847338x`, 95% interval `[0.983443265x, 1.062251411x]`.
+  The interval crosses 1 and one pair regressed. Decision `discard`; no
+  independent speedup claim. Raw report SHA-256
+  `275e09b4c8e34c3094d81fd3beb7df18142171955091356603b1f914fe699b91`.
+
+- `2026-07-29T07:13:00Z`: a final direct exact-MPS-versus-accepted-dense-parent
+  six-pair run was requested, but Docker approval disconnected before the
+  command started and explicitly prohibited automatic retry. No result is
+  inferred from unmatched sessions. This missing factor is disclosed in the
+  report; the valid overall MPS-versus-immutable comparison remains complete.
+
+- `2026-07-29T07:16:39Z`: sanitized ablation summary and three factor figures
+  generated under `research/task-05/results-20260729`. Summary SHA-256
+  `0857a251ae53eff41a05760d020e962cc5dc0a290da4cdd464bbce05a67884dc`.
+  Equivalence summary SHA-256
+  `1f2675bd841e63658ee45b1ac3b995c6376637bb6fa363cd7e416992a344a706`.
+  The continuation report was updated from the measured evidence; recompute
+  its content hash after final formatting rather than using an earlier draft
+  hash.

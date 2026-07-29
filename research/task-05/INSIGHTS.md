@@ -1,114 +1,93 @@
-# Task 05 Research Insights
+# Task 05 research insights
 
 Task: `task-05`
 
-Last consolidated: `2026-07-28`
+Last consolidated: `2026-07-29`
 
 Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-Round 6 is the accepted campaign-best candidate:
+The accepted implementation is the exact no-QR MPS candidate:
 
-- candidate: [`src/solutions/task-05/solution_5.py`](../../src/solutions/task-05/solution_5.py);
-- source SHA-256:
-  `6245d59510412fd0ffcc083f3a9653e7d245edc5ae827b56dc4fc39894691307`;
-- mean candidate runtime: `83.153831 s`;
-- mean reference runtime: `121.443233 s`;
-- mean paired speedup: `1.461524x`;
-- 95% Student-t interval: `1.393178x–1.529871x`;
-- paired wins: `6/6`.
+- source: [`src/solutions/task-05/solution_5.py`](../../src/solutions/task-05/solution_5.py);
+- SHA-256:
+  `f741e6cc75b8ed1e47bbedafc557d231d54db60fb064011650fc9c7da36c9ef6`;
+- candidate mean: `6.898409 s`;
+- immutable expert mean in the matched session: `97.083712 s`;
+- mean paired speedup: `14.075570x`;
+- 95% Student-t interval: `13.675752x–14.475387x`;
+- candidate wins: `6/6`;
+- passing cells: `12/12`.
 
-The result is a valid improvement on the pinned public Task 05 workload. It is
-not a 10x result and is not described as a global SOTA result because no
-matched external implementation was measured in the same environment.
+This is a valid same-machine improvement on the public fixed Task 05
+workload, not a cross-machine absolute-runtime or global SOTA claim.
 
-## Preserved semantics
+## Decisive structure
 
-Every viable candidate must retain:
+- Every `exp(a X)` is one-site and leaves MPS ranks unchanged.
+- `exp(b Z.Z) = cosh(b) I.I + sinh(b) Z.Z` has exact operator-Schmidt rank 2.
+- Each brickwork bond is used five times, so the exact state bond dimension is
+  at most 32.
+- Generic QR/RQ canonicalization is unnecessary when this exact rank bound is
+  known. Applying TensorCircuit's local MPO-times-MPS kernel without QR/RQ
+  converts the historical MPS timeout into a `6.9 s` complete run.
+- Ten differentiable norm contractions, the bond-3 TFIM expectation, and all
+  600 Adam updates remain in the computation.
 
-- the TensorCircuit-NG `|+>^18` initial state;
-- ten non-unitary RX/RZZ cooling layers on the original brickwork bonds;
-- normalization after every layer and gradients through each normalization;
-- the same 35-term TFIM Hamiltonian MVP;
-- all 20 optimized strengths and exactly 600 sequential Adam updates at
-  learning rate `0.02`;
-- all pre-update energies and the original `final_a`/`final_b` output contract;
-- complex64 TensorCircuit/JAX semantics in the pinned image.
+## Correctness findings
 
-## Confirmed bottlenecks
+- Dense versus reconstructed state maximum error: `2.79397e-08`.
+- Norm error: `4.17233e-07`.
+- Initial energy-density error: `1.79052e-04`.
+- Gradient maximum error: `1.19507e-05`.
+- Non-degenerate one-update parameter error: `3.72529e-09`.
+- Maximum observed exact bond dimension: 32.
 
-- Python dispatch around 600 individually JIT-compiled optimizer steps was
-  measurable overhead. Compiling the full dependent loop with `jax.lax.scan`
-  improved the paired mean speedup to `1.098033x`.
-- The ten-layer normalized trajectory dominates the forward computation.
-  The tracked component profile attributes `95.33%` of separately measured
-  forward time to that trajectory and `4.67%` to Hamiltonian evaluation.
-- Tensor contraction-path selection materially affects both mean runtime and
-  variance. Reusing a bounded deterministic Cotengra greedy path with
-  TensorCircuit preprocessing produced the best complete paired result.
-- The immutable reference profile estimates roughly `1.187 GB` of XLA memory
-  traffic per gradient/update, so reducing secondary Python or parameter-tree
-  overhead alone is unlikely to approach the 10x target.
+The first uniform RX parameter has an analytically zero gradient on
+`|+>^18` after normalization. Do not use raw first-step Adam parameter
+difference at that one degenerate coordinate as an equivalence criterion;
+retain state, energy, full gradient, conditioned update, and full evaluator
+checks.
 
-Tracked profiles:
+## Measured factor decisions
 
-- [`profiles/reference-profile.json`](profiles/reference-profile.json)
-- [`profiles/component-profile.json`](profiles/component-profile.json)
+- **Keep: exact bounded-rank no-QR MPS.** The complete candidate achieves
+  `14.075570x` versus the immutable expert.
+- **Discard: dense two-site layer fusion.** Mean `1.022847x`, 95% interval
+  `0.983443x–1.062251x`; fewer nodes did not establish a gain.
+- **Discard: RX absorption into both MPS MPO branches.** Mean `0.843725x`,
+  95% interval `0.822186x–0.865264x`; it duplicated local matrix work and
+  regressed all six pairs.
+- **Historical keep: whole-training scan.** The earlier pinned campaign
+  isolated `1.098033x`.
+- **Historical keep: reusable greedy contractor on the dense graph.** It
+  helped the old dense candidate, but the final MPS no longer imports or uses
+  Cotengra.
 
-## What worked
+## Attribution boundary
 
-- Whole-training `jax.lax.scan` preserved all 600 sequential updates while
-  removing repeated host dispatch.
-- OMECo plus the scan produced a valid `1.504705x` paired mean speedup in its
-  own session, but its `94.512163 s` candidate mean was slower and more
-  variable than Round 6.
-- A deterministic one-trial `cotengra.ReusableHyperOptimizer` using `greedy`,
-  `combo`, and TensorCircuit preprocessing reduced the accepted candidate mean
-  to `83.153831 s`.
+The final direct exact-MPS-versus-accepted-dense-parent run did not start
+because the Docker approval service disconnected and prohibited automatic
+retry. Do not estimate a paired factor result from separate sessions. The
+eligible current claim is the full MPS candidate versus the immutable expert;
+historical scan/contractor ablations remain contextual.
 
-## What did not work
+## Do not repeat unchanged
 
-- `K.jaxy_scan` did not establish improvement; its paired-speedup confidence
-  interval crossed `1.0`.
-- Exact `MPSCircuit` timed out on the first canonical candidate cell. Its
-  two-step smoke test passed, so the failure was performance rather than an
-  immediate semantic mismatch.
-- The `plain-experimental` contractor was unstable, with candidate runtimes
-  from `77.34 s` to `243.87 s`.
-- Algebraic contraction primitives passed correctness but regressed the
-  candidate mean to `91.053881 s`.
-- Repacking parameters into a single array passed correctness but regressed
-  the candidate mean to `91.990646 s`.
+- Generic `MPSCircuit.apply_MPO` with QR/RQ.
+- `K.jaxy_scan` as a wrapper-only substitution on the old dense graph.
+- `plain-experimental` contractor.
+- Algebraic contraction primitives on the dense circuit.
+- Single-array dense parameter layout.
+- Dense layer gate fusion without a new contraction-path mechanism.
+- RX absorption into both MPS MPO branches.
 
-Do not repeat these variants unchanged. A retry needs a new mechanism or new
-profiling evidence that explains why its outcome should differ.
+## Reusable lesson
 
-## Open hypotheses
-
-The leading remaining hypothesis is layer-level kernel fusion. Each even layer
-could combine its two RX gates and one RZZ gate into one two-qubit
-TensorCircuit gate per disjoint bond; odd layers would additionally handle the
-two endpoint RX gates. The candidate must retain every normalization and its
-gradient.
-
-Other useful follow-ups:
-
-- profile the Round 6 compiled program rather than extrapolating only from the
-  immutable reference;
-- measure compilation time and steady-state contraction time separately while
-  keeping evaluator runtime primary;
-- test whether a precomputed deterministic contraction tree can avoid search
-  without coupling the solution to evaluator internals;
-- study larger public Task 05 configurations only after defining versioned
-  workloads and an unchanged validity rule.
-
-## Evidence limits
-
-- The campaign stopped after eight rounds rather than twenty.
-- The measured speedup is `1.461524x`, not 10x.
-- Evidence covers the single canonical public configuration, pinned Docker
-  image, and one host resource profile; it does not establish scaling.
-- A fresh closeout rerun was invalid because the immutable reference timed out
-  during Pair 2. It provides no speedup claim. The complete Round 6 six-pair
-  session remains the eligible promotion evidence.
+Before tuning contraction search on a dense state, derive exact rank growth
+from the circuit's operator-Schmidt structure. A bounded-rank representation
+can dominate path and dispatch micro-optimizations by an order of magnitude.
+When a framework's generic MPS method canonicalizes after every update,
+inspect whether the rank is already statically bounded; if so, its local
+TensorCircuit contraction kernel may be used exactly without QR/RQ.
