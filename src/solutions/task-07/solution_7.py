@@ -45,13 +45,32 @@ def make_one_trajectory(config):
     n_layers = config["n_layers"]
     transverse_field = config["transverse_field"]
 
+    pauli_strings = []
+    weights = []
+    for i in range(n_data - 1):
+        term = [0] * n_data
+        term[i] = 3
+        term[i + 1] = 3
+        pauli_strings.append(term)
+        weights.append(-1.0)
+    for i in range(n_data):
+        term = [0] * n_data
+        term[i] = 1
+        pauli_strings.append(term)
+        weights.append(-transverse_field)
+    hamiltonian = tc.quantum.PauliStringSum2COO(pauli_strings, weights)
+
     def energy_of_data(c):
-        e = 0.0
-        for i in range(n_data - 1):
-            e = e - K.real(c.expectation_ps(z=[i, i + 1]))
-        for i in range(n_data):
-            e = e - transverse_field * K.real(c.expectation_ps(x=[i]))
-        return e
+        # The final Z-measured ancillas remain computational-basis states
+        # under diagonal RZZ feedback, so exactly one ancilla column is
+        # nonzero. Contract the adaptive circuit once, recover the data state,
+        # and evaluate all TFIM terms with one TensorCircuit-native operator.
+        full_state = K.reshape(c.state(), [2**n_data, 2**n_anc])
+        data_state = K.sum(full_state, axis=1)
+        data_circuit = tc.Circuit(n_data, inputs=data_state)
+        return tc.templates.measurements.operator_expectation(
+            data_circuit, hamiltonian
+        )
 
     def one_trajectory(params, status):
         c = tc.Circuit(n_qubits)

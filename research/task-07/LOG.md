@@ -98,7 +98,12 @@ Secondary experiments, each isolated from the latest accepted commit:
 
 ## Experiment `e01`
 
-Branch and fresh hypothesis worktree: pending.
+Branch: `codex/orbitbreakers/task-07/e01-single-state-energy`.
+
+Fresh hypothesis worktree:
+`/Users/qqy/Desktop/2026Project/ORBIT-Q-worktrees/orbitbreakers/task-07/e01-single-state-energy`.
+
+Parent commit: `21d7271` (`research: freeze task 07 optimization campaign`).
 
 ### Hypothesis
 
