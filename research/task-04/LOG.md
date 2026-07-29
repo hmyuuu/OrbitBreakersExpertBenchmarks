@@ -112,6 +112,51 @@ Timeout: `300 seconds`
 
 Decision: pending.
 
+## Result for `e07-kraus-basis`
+
+Candidate commit:
+`94ce8b7`.
+
+Candidate SHA-256:
+`ff0f2cf62f76284279f9c2a3044d2eb326ab9e3598529a9f9984585226a972f1`.
+
+The enhanced reduced exact-equivalence report is
+`research/task-04/profiles/e07-equivalence.json`
+(`sha256:b89960a76b16324e086d2cbb419cfece422646c759e7f980da3c254aa3380e4b`).
+All diagnostics passed `2e-6`; maximum error was `2.38e-7`. The canonical
+evaluator passed.
+
+To isolate this factor, accepted e06 was the reference and e07 was supplied as
+an explicit candidate:
+
+```bash
+./bench run 04 --candidate <e07>/src/solutions/task-04/solution_4.py \
+  --compare-to optimized --repeat 6 --engine docker \
+  --cpus 6 --memory 7g --timeout 300 --no-build \
+  --output results/task-04-e07-vs-e06-paired
+```
+
+Immutable report:
+`results/task-04-e07-vs-e06-paired/results.json`
+(`sha256:7d7687f486c9fbe4aaa25a1247d595cc63a8bd1d741d98e2cf59311193d79381`).
+
+```text
+terminal_status: SUCCESS x 12
+valid: 12/12
+reference (e06) mean_runtime_sec: 5.816354
+reference (e06) runtime_stderr_sec: 0.182596
+candidate (e07) mean_runtime_sec: 6.041231
+candidate (e07) runtime_stderr_sec: 0.285759
+paired_improvement_mean: -3.872651%
+paired_speedup_mean: 0.969277x
+paired_speedup_stderr: 0.035507x
+pair_wins: 3/6
+```
+
+Decision: `discard`. The candidate mean and median are both slower, only half
+the pairs win, and the paired speedup is below one. Shorter source-level
+matrix assembly does not translate to better end-to-end compiled execution.
+
 ## Result for `e06-fused-rxx-kraus`
 
 Candidate commit:

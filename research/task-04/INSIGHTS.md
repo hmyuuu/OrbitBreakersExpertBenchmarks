@@ -86,6 +86,11 @@ case, but the 12-qubit smoke attempts a 9,263,654,532-byte allocation and
 fails before timing. Explicit `reuse=False` must remain in the accepted
 implementation.
 
+Replacing nested TensorCircuit stack/cast construction with static complex64
+matrix units is exact but slower and more variable: `0.969277x ± 0.035507x`
+relative to e06, with only 3/6 wins. Source line reduction is not evidence of
+a better XLA graph.
+
 ## Open hypotheses
 
 1. Exact MPO/purification formulations through TensorCircuit-native classes if
