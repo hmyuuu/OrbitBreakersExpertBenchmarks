@@ -743,3 +743,58 @@ The final comparison will use six canonical matched pairs, alternating the
 immutable human expert and e11 in one no-network container with six CPUs,
 7 GiB, the same evaluator and latest repository TensorCircuit image. No
 candidate tuning follows this freeze.
+
+## Final e11 six-pair expert comparison
+
+Date: 2026-07-29.
+
+Candidate implementation commit: `b7d34dd`.
+
+Candidate SHA-256:
+`0337bf428a7c4a820f12f7db1232620b2777677617dd4f1a657dfd5f53bbdb0e`.
+
+Staging snapshot SHA-256:
+`d46912b2aba5e201c56754f98a21065be1009fe3c90d105a4a2b29b95aeaab0f`.
+
+Docker image:
+`sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833`
+(TensorCircuit-NG `1.8.0.dev20260726`, JAX/JAXLIB `0.10.0`).
+
+Sanitized paired report:
+`profiles/e11-final-canonical-six-pairs.json`
+(`sha256:068593daf65d132d1c7b3f18a0cbc2f7fc4b378558f3c4ccedf79231c0248c0f`).
+
+```text
+terminal_status: SUCCESS x 12
+valid cells: 12/12
+passing pairs: 6/6
+candidate wins: 6/6
+
+reference runtimes:
+123.286060, 126.247088, 150.224728,
+129.913867, 159.579514, 151.207388
+
+candidate runtimes:
+3.062554, 3.311737, 2.989908,
+3.030923, 3.063330, 2.966582
+
+reference mean / median / stderr:
+140.076441 / 140.069298 / 6.281458 s
+
+candidate mean / median / stderr:
+3.070839 / 3.046739 / 0.050718 s
+
+ratio-of-means speedup: 45.615039x
+ratio-of-means improvement: 97.8077%
+mean paired speedup: 45.757921x
+paired speedup stderr: 2.479287x
+95% Student-t CI: [39.384711x, 52.131131x]
+```
+
+Decision: `promote under the executable contract`. Every cell passes, every
+pair wins, and the frozen confidence lower bound is far above 1.0. The
+separate challenge-design report marks the semantic caveat: this exact
+reduction should not be represented as a generic acceleration of
+mid-circuit measurement, and maintainers may prefer the conservative e04a
+implementation if literal 16-qubit `cond_measure` execution is the intended
+policy.

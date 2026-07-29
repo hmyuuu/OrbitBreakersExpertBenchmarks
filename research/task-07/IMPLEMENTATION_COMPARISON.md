@@ -1,4 +1,14 @@
-# Task 07 Human-Expert Optimization Report
+# Task 07 Conservative Human-Expert Optimization Report
+
+> **Status:** retained as the literal 16-qubit / `cond_measure` fallback.
+> The current executable-contract winner is the exact classical-ancilla
+> reduction documented in
+> [`CLASSICAL_ANCILLA_REDUCTION_REPORT.md`](CLASSICAL_ANCILLA_REDUCTION_REPORT.md):
+> 3.070839-second candidate mean versus 140.076441-second expert mean,
+> 45.757921x mean paired speedup, 95% CI
+> [39.384711x, 52.131131x]. Unlike the conservative implementation below,
+> that candidate exposes a challenge-design loophole and does not literally
+> execute the measured ancilla register.
 
 ## Scope and claim
 
@@ -6,7 +16,7 @@ This campaign optimizes only ORBIT-Q Task 07: the 16-qubit, two-layer
 measurement-feedback VQE with 64 fixed trajectories and exactly 100 Adam
 updates.
 
-The final candidate passes all public functional checks in all six measured
+The conservative candidate passes all public functional checks in all six measured
 runs and wins all six counterbalanced pairs against the immutable human
 expert. Mean paired speedup is **4.479x**, with a two-sided 95% Student-t
 interval of **[3.891x, 5.067x]**. Ratio-of-means speedup is **4.438x**
@@ -14,8 +24,8 @@ interval of **[3.891x, 5.067x]**. Ratio-of-means speedup is **4.438x**
 
 No external implementation reports a matched runtime for this exact
 evaluator, seed, trajectory batch, container, and software stack. The result
-is therefore the **campaign-best / repository-SOTA Task 07 implementation**,
-not a global hardware-independent SOTA claim.
+was the **campaign-best / repository-SOTA Task 07 implementation before the
+exact e11 reduction**, not a global hardware-independent SOTA claim.
 
 | Artifact | Path | SHA-256 |
 | --- | --- | --- |
