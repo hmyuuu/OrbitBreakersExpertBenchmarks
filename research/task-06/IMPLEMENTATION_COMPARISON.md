@@ -55,6 +55,14 @@ compile-cost optimization, automatic initial-step selection contributes
 nothing measurable, and sparse BCOO conversion is actively harmful on this
 stack.
 
+![Task 06 factor-ablation plots](figures/factor-ablation.svg)
+
+The panels use the frozen canonical screens and isolated profiler values.
+They are intentionally not multiplied together: the left panel is cumulative,
+while the other two isolate compilation and Hamiltonian-action mechanisms.
+Regenerate with
+[`plot_factor_ablation.py`](plot_factor_ablation.py).
+
 ## Correctness
 
 The candidate keeps the 14-qubit Néel state, four hybrid blocks, four true
