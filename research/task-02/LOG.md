@@ -296,3 +296,40 @@ source SHA-256 before confirmation is:
 
 The full E07 equivalence audit and final immutable-reference timing are rerun
 after this normalization; no earlier factor result is reused as final timing.
+
+## Experiment `e08-purestate-purity`
+
+Parent commit: `0501d90`. Candidate source SHA-256:
+`950e86b9c0db25497034ce0ff385619262bbdecfee56e35bcf832f13f95da7e3`.
+
+Hypothesis: exploit the contiguous six/six public half-chain cut by reshaping
+all checkpoint pure states to `(3, 64, 64)`, constructing retained-half Gram
+matrices in one backend `K.einsum`, and computing their purities together.
+
+The audit failed the frozen gate before timing. Initial loss error was
+`5.96e-7` and gradient error `3.77e-8`, but the changed complex64 contraction
+order produced auxiliary error `2.50e-6` and 12-step entropy-history error
+`5.35e-6`, above the predeclared tolerance. Audit report SHA-256:
+`d032009a567fcf2ec1da244318e27a8f1788a20c19af029b6afb8cc0eaa08b4d`.
+
+Decision: `discard_before_timing`. No performance claim or chart is produced
+for a candidate that failed correctness.
+
+## Final immutable-reference confirmation
+
+Final candidate SHA-256:
+`aef3652f8d80ec6f3e414f9496295b8b852db2b256ec414f4146b3a636485b30`.
+
+The post-normalization 12-step audit reproduced the E07 values: loss error
+`0`, auxiliary error `2.981e-7`, gradient error `1.211e-8`, and maximum
+history error `1.073e-6`.
+
+All twelve cells in six alternating immutable-reference/candidate pairs
+passed. Reference/candidate means were `4.495463/4.031039 s`; candidate wins
+`6/6`; mean paired speedup `1.115649x`, 95% Student-t interval
+`[1.057686x, 1.173613x]`; mean paired improvement `10.192992%`. The first
+five pairs independently give mean runtimes `4.506090/4.039244 s` and mean
+paired speedup `1.116107x`. Raw report SHA-256:
+`27ec959f8e23156a0c8f0b15bb0f122b86e3a32e1842764888ef90eb07a842dd`.
+
+Decision: `final_keep`.

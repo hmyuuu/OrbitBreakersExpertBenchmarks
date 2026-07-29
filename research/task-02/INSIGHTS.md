@@ -67,12 +67,14 @@ Profile: [`profiles/reference-profile.json`](profiles/reference-profile.json).
   `0.428014x` due to slice/gather/scatter compile and autodiff overhead.
 - Frobenius purity alone and checkpoint `K.vmap` alone were inconclusive and
   are not claimed independently.
+- Direct batched pure-state Gram matrices were rejected before timing: a
+  different complex64 contraction order exceeded the frozen trajectory
+  tolerance despite algebraic equivalence.
 
 ## Open hypotheses
 
-1. final immutable-reference six-pair confirmation;
-2. larger-qubit scaling, which is outside this frozen workload;
-3. future TensorCircuit compiler changes that may alter the discarded
+1. larger-qubit scaling, which is outside this frozen workload;
+2. future TensorCircuit compiler changes that may alter the discarded
    gate-fusion or sparse-kernel tradeoffs.
 
 ## Evidence limits
@@ -81,3 +83,6 @@ Evidence covers only the canonical public Task 02 configuration, one latest
 TensorCircuit-NG image, and one 6-CPU/7-GiB same-host profile. It does not
 establish global SOTA or scaling. End-to-end differences include cold import,
 tracing, compilation, 500 updates, synchronization, and conversion.
+
+The final six-pair comparison records `1.115649x` mean paired speedup with a
+95% Student-t interval `[1.057686x, 1.173613x]` and `6/6` wins.
