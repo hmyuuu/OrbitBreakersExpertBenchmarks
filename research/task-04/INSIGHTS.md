@@ -47,6 +47,11 @@ The first baseline command session was interrupted after two passing cells and
 did not produce a complete report. Those timings are excluded rather than
 spliced into the complete baseline.
 
+Changing only `tc.DMCircuit` to `tc.DMCircuit2` is semantically valid but not
+promotable: `1.0180x ± 0.0159x`, 95% CI `[0.9772x, 1.0588x]`, with only 4/6
+pair wins. The newer class must be combined with an explicit scalar-TN
+contraction/reuse strategy to change the compiled graph materially.
+
 ## Open hypotheses
 
 1. Native `DMCircuit2` delayed Kraus-superoperator TN nodes.

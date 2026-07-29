@@ -136,3 +136,60 @@ stablehlo_line_count: 21720
 Interpretation: Task 04 is compilation dominated. The training Python loop can
 account for only a small fraction of runtime; the first candidate should reduce
 the traced Kraus/density contraction graph before testing `K.jaxy_scan`.
+## Append-only correction for `e01-dmcircuit2`
+
+The parent commit left as pending in the predeclared entry is
+`f83ab5d`. The experiment changes one factor only:
+`tc.DMCircuit` to `tc.DMCircuit2`; all gate, Kraus, observable, optimizer, and
+output code remains byte-for-byte unchanged.
+
+## Result for `e01-dmcircuit2`
+
+Candidate commit:
+`c8b1850`.
+
+Candidate SHA-256:
+`54f0e4144dac3c7d757100af7acbc9dc09ce726debbff3871227717d77e8c006`.
+
+Reduced exact-equivalence report:
+`research/task-04/profiles/e01-equivalence.json`
+(`sha256:48b3016ae69b7ef6905c820f7467e4f265a846ef7024f13492178bf460d05c0f`).
+Target, observables, loss, gradient, and one Adam update all passed a `2e-6`
+threshold; the largest error was `5.96e-8`. The canonical evaluator also
+passed.
+
+Command:
+
+```bash
+./bench run 04 --solution optimized --compare-to reference --repeat 6 \
+  --engine docker --cpus 6 --memory 7g --timeout 300 --no-build \
+  --output results/task-04-e01-paired
+```
+
+Immutable report:
+`results/task-04-e01-paired/results.json`
+(`sha256:e50489e8da594310726a457c32a55765b9ed6a6f3024fd45f3396e8c3e2014a9`).
+
+```text
+terminal_status: SUCCESS x 12
+valid: 12/12
+timed_out: 0
+passing_pairs: 6
+reference_mean_runtime_sec: 14.442584
+reference_runtime_stderr_sec: 0.277754
+reference_median_runtime_sec: 14.345619
+candidate_mean_runtime_sec: 14.185293
+candidate_runtime_stderr_sec: 0.124329
+candidate_median_runtime_sec: 14.188593
+improvement_pct: 1.781477
+paired_speedup_mean: 1.018020
+paired_speedup_median: 1.025506
+paired_speedup_stderr: 0.015880
+paired_speedup_ci_low: 0.977198
+paired_speedup_ci_high: 1.058841
+pair_wins: 4/6
+```
+
+Decision: `discard`. The lower confidence bound does not exceed one and only
+four of six pairs won, below the frozen 80% rule. In this image, changing the
+class name alone is not an attributable improvement.
