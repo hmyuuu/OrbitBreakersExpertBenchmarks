@@ -111,3 +111,28 @@ Pair-order pattern: odd `reference -> candidate`, even reverse
 Timeout: `300 seconds`
 
 Decision: pending.
+
+## Immutable reference profile
+
+Date: 2026-07-29
+
+Script:
+`research/task-04/profile_reference.py`.
+
+Output:
+`research/task-04/profiles/reference-profile.json`
+(`sha256:eecfa9259600492fe7a8b3b3e9a4fa17a55df13395a41142683f9ece16001ebf`).
+
+```text
+target_observable_table_seconds: 2.629306
+lower_seconds: 3.067534
+compile_seconds: 10.712149
+first_compiled_step_seconds: 0.003231
+steady_step_mean_seconds: 0.001257
+projected_120_step_seconds: 0.150788
+stablehlo_line_count: 21720
+```
+
+Interpretation: Task 04 is compilation dominated. The training Python loop can
+account for only a small fraction of runtime; the first candidate should reduce
+the traced Kraus/density contraction graph before testing `K.jaxy_scan`.

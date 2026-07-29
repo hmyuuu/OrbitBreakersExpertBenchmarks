@@ -32,6 +32,10 @@ passing Docker runs on the current 6 CPU / 7 GiB host profile.
 - A 12-qubit complex64 density matrix occupies 128 MiB before gradient
   temporaries; one observable table invokes 88 one-qubit channels.
 - The exact canonical reference takes `14.671115 ± 0.123236 s` end to end.
+- The tracked profile measures `2.629 s` target construction, `3.068 s`
+  lowering, `10.712 s` XLA compilation, but only `1.257 ms` per compiled
+  update (`0.151 s` projected for all 120). Compilation of the 21,720-line
+  StableHLO graph, not Python optimizer dispatch, dominates this workload.
 
 ## What worked
 
@@ -49,7 +53,8 @@ spliced into the complete baseline.
 2. Scalar `reuse=False` versus reusable full-density `reuse=True`
    expectations.
 3. TensorCircuit `K.vmap` over probes and/or measurements.
-4. TensorCircuit `K.jaxy_scan` over all 120 optimizer steps.
+4. TensorCircuit `K.jaxy_scan` over all 120 optimizer steps as a secondary
+   factor; the profile limits standalone dispatch headroom.
 5. Exact composite two-qubit noisy superoperators and reusable contraction
    paths.
 6. Exact MPO/purification formulations through TensorCircuit-native classes if

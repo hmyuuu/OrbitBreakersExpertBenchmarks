@@ -133,6 +133,17 @@ It is stored at
 (`sha256:be8696214fa5c170398cd7a57bb3df56a476e658ebca5c99f8ec7a487735ff16`).
 The earlier bootstrap's two byte-identical runs are timing-noise context only.
 
+The immutable-reference profile
+`research/task-04/profiles/reference-profile.json`
+(`sha256:eecfa9259600492fe7a8b3b3e9a4fa17a55df13395a41142683f9ece16001ebf`)
+separates the dominant stages. Target-table generation took `2.629 s`; lowering
+one expert update took `3.068 s`; XLA compilation took `10.712 s`; eight
+compiled steady updates averaged `1.257 ms`, projecting to only `0.151 s` for
+120 executions. The lowered update has 21,720 StableHLO lines. Thus the
+canonical end-to-end runtime is compilation dominated. A whole-training scan
+cannot be the leading factor here; reducing the traced noisy-circuit graph and
+target construction has much higher expected value.
+
 ## Predeclared optimization hypotheses
 
 Each factor is evaluated separately before consolidation.
