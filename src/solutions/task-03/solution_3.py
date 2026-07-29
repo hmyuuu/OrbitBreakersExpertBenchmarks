@@ -142,8 +142,10 @@ def one_qubit_expectation(state, operator):
 
 def observables(params, config):
     states, log_probabilities = cooling_product(params, config)
-    xs = K.stack([one_qubit_expectation(state, tc.gates.x()) for state in states])
-    zs = K.stack([one_qubit_expectation(state, tc.gates.z()) for state in states])
+    x_gate = tc.gates.x()
+    z_gate = tc.gates.z()
+    xs = K.vmap(lambda state: one_qubit_expectation(state, x_gate))(states)
+    zs = K.vmap(lambda state: one_qubit_expectation(state, z_gate))(states)
     zz_sum = 2.0 * K.sum(zs[:-1]) + zs[-1]
     energy = -(zz_sum + config["transverse_field"] * K.sum(xs))
     energy_density = energy / config["n_qubits"]
