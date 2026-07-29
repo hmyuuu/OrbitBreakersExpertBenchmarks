@@ -202,6 +202,13 @@ Reproduction and sanitized output:
 - [`profile_factor_ablation.py`](profile_factor_ablation.py)
 - [`profiles/factor-ablation.json`](profiles/factor-ablation.json)
 
+![Task 11 component-ablation plots](figures/factor-ablation.svg)
+
+Each panel is one independently removable component. The onsite panel uses a
+logarithmic axis because its isolated ratio is much larger; the ratios are not
+multiplied into an end-to-end claim. Regenerate with
+[`plot_factor_ablation.py`](plot_factor_ablation.py).
+
 ## Final-rerun status
 
 The paired session recorded above is the final local-engine benchmark for

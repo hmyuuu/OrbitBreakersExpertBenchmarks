@@ -183,6 +183,13 @@ Reproduction and sanitized output:
 - [`profile_factor_ablation.py`](profile_factor_ablation.py)
 - [`profiles/factor-ablation.json`](profiles/factor-ablation.json)
 
+![Task 12 factor-ablation plots](figures/factor-ablation.svg)
+
+Each panel removes one factor and normalizes runtime to the promoted form.
+The scan panel uses cold lower+compile+execute time, matching the end-to-end
+evaluation emphasis. Regenerate with
+[`plot_factor_ablation.py`](plot_factor_ablation.py).
+
 ## Final-rerun status
 
 The paired sessions recorded above are the final local-engine benchmarks for
