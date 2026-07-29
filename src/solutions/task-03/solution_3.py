@@ -66,48 +66,65 @@ def cooling_product(params, config):
 
     def block_step(states, inputs):
         even_params, odd_params, even_input = inputs
-        log_probabilities = []
-        next_states = []
-        for k, odd in enumerate(states):
-            odd, probability = pair_map(
+        def even_map(odd, xx, zz, odd_rx, even_rx):
+            return pair_map(
                 odd,
                 even_input,
-                even_params["xx"][k],
-                even_params["zz"][k],
-                even_params["rx"][2 * k + 1],
-                even_params["rx"][2 * k],
+                xx,
+                zz,
+                odd_rx,
+                even_rx,
                 True,
             )
-            next_states.append(odd)
-            log_probabilities.append(K.log(probability + 1e-12))
-        states = next_states
+
+        states, even_probabilities = K.vmap(
+            even_map, vectorized_argnums=(0, 1, 2, 3, 4)
+        )(
+            states,
+            even_params["xx"],
+            even_params["zz"],
+            even_params["rx"][1::2],
+            even_params["rx"][::2],
+        )
 
         even_only = K.tensordot(
             tc.gates.rx_gate(theta=odd_params["rx"][0]).tensor, zero, 1
         )
-        probability = K.real(K.conj(even_only[0]) * even_only[0])
-        log_probabilities.append(K.log(probability + 1e-12))
-        next_states = []
-        for k, odd in enumerate(states[:-1]):
-            odd, probability = pair_map(
+        even_only_probability = K.real(K.conj(even_only[0]) * even_only[0])
+
+        def odd_map(odd, xx, zz, odd_rx, even_rx):
+            return pair_map(
                 odd,
                 zero,
-                odd_params["xx"][k],
-                odd_params["zz"][k],
-                odd_params["rx"][2 * k + 1],
-                odd_params["rx"][2 * k + 2],
+                xx,
+                zz,
+                odd_rx,
+                even_rx,
                 False,
             )
-            next_states.append(odd)
-            log_probabilities.append(K.log(probability + 1e-12))
-        next_states.append(
-            K.tensordot(
-                tc.gates.rx_gate(theta=odd_params["rx"][-1]).tensor,
-                states[-1],
-                1,
-            )
+
+        paired_states, odd_probabilities = K.vmap(
+            odd_map, vectorized_argnums=(0, 1, 2, 3, 4)
+        )(
+            states[:-1],
+            odd_params["xx"],
+            odd_params["zz"],
+            odd_params["rx"][1:-1:2],
+            odd_params["rx"][2:-1:2],
         )
-        return K.stack(next_states), K.stack(log_probabilities)
+        last_state = K.tensordot(
+            tc.gates.rx_gate(theta=odd_params["rx"][-1]).tensor,
+            states[-1],
+            1,
+        )
+        log_probabilities = K.concat(
+            [
+                K.log(even_probabilities + 1e-12),
+                K.reshape(K.log(even_only_probability + 1e-12), [1]),
+                K.log(odd_probabilities + 1e-12),
+            ]
+        )
+        return K.concat([paired_states, K.reshape(last_state, [1, 2])]), log_probabilities
 
     states, log_probabilities = K.jaxy_scan(
         block_step,
