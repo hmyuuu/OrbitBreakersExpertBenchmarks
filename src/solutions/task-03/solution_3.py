@@ -59,30 +59,31 @@ def cooling_product(params, config):
     n_survivors = config["n_qubits"] // 2
     zero = K.convert_to_tensor(np.array([1.0, 0.0], dtype=np.complex64))
     plus = tc.gates.h().tensor[:, 0]
-    states = [plus for _ in range(n_survivors)]
-    log_probabilities = []
+    states = K.stack([plus for _ in range(n_survivors)])
+    even_inputs = K.stack(
+        [plus] + [zero for _ in range(config["n_steps"] // 2 - 1)]
+    )
 
-    for block in range(config["n_steps"] // 2):
-        even_input = plus if block == 0 else zero
-        p = params["even"]
+    def block_step(states, inputs):
+        even_params, odd_params, even_input = inputs
+        log_probabilities = []
         next_states = []
         for k, odd in enumerate(states):
             odd, probability = pair_map(
                 odd,
                 even_input,
-                p["xx"][block, k],
-                p["zz"][block, k],
-                p["rx"][block, 2 * k + 1],
-                p["rx"][block, 2 * k],
+                even_params["xx"][k],
+                even_params["zz"][k],
+                even_params["rx"][2 * k + 1],
+                even_params["rx"][2 * k],
                 True,
             )
             next_states.append(odd)
             log_probabilities.append(K.log(probability + 1e-12))
         states = next_states
 
-        p = params["odd"]
         even_only = K.tensordot(
-            tc.gates.rx_gate(theta=p["rx"][block, 0]).tensor, zero, 1
+            tc.gates.rx_gate(theta=odd_params["rx"][0]).tensor, zero, 1
         )
         probability = K.real(K.conj(even_only[0]) * even_only[0])
         log_probabilities.append(K.log(probability + 1e-12))
@@ -91,24 +92,29 @@ def cooling_product(params, config):
             odd, probability = pair_map(
                 odd,
                 zero,
-                p["xx"][block, k],
-                p["zz"][block, k],
-                p["rx"][block, 2 * k + 1],
-                p["rx"][block, 2 * k + 2],
+                odd_params["xx"][k],
+                odd_params["zz"][k],
+                odd_params["rx"][2 * k + 1],
+                odd_params["rx"][2 * k + 2],
                 False,
             )
             next_states.append(odd)
             log_probabilities.append(K.log(probability + 1e-12))
         next_states.append(
             K.tensordot(
-                tc.gates.rx_gate(theta=p["rx"][block, -1]).tensor,
+                tc.gates.rx_gate(theta=odd_params["rx"][-1]).tensor,
                 states[-1],
                 1,
             )
         )
-        states = next_states
+        return K.stack(next_states), K.stack(log_probabilities)
 
-    return K.stack(states), K.stack(log_probabilities)
+    states, log_probabilities = K.jaxy_scan(
+        block_step,
+        states,
+        (params["even"], params["odd"], even_inputs),
+    )
+    return states, K.reshape(log_probabilities, [-1])
 
 
 def one_qubit_expectation(state, operator):
