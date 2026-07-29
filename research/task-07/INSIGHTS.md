@@ -8,10 +8,10 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-Experiment `e01` contracts the final adaptive circuit once and evaluates one
-TensorCircuit-native sparse data Hamiltonian. Its first canonical screen
-passes in 61.396553 seconds versus the expert's 135.815605 seconds (2.2121x).
-This is provisional one-run evidence, not the final paired claim.
+Experiment `e02` combines e01's single native data-Hamiltonian evaluation with
+the exact measured-ancilla feedback reduction. Its canonical screen passes in
+33.546170 seconds versus the expert's 135.815605 seconds (4.0487x). This is
+provisional one-run evidence, not the final paired claim.
 
 ## Preserved semantics
 
@@ -43,6 +43,11 @@ This is provisional one-run evidence, not the final paired claim.
   the 50-step passing screen from 91.540 to 52.769 seconds.
 - One-trajectory energy and gradient agree within `3.34e-6` and `1.01e-6`;
   the full 50/100-step physical outputs pass and remain close.
+- Reducing post-measurement
+  `RZZ(theta_b)|b,psi>` to
+  `|b> RZ((1-2b)theta_b)|psi>` removes 16 selected two-qubit nodes. The
+  identity audit's maximum complex64 error is `2.98e-8`; canonical runtime
+  falls again from 61.397 to 33.546 seconds.
 
 ## Measurement lesson
 

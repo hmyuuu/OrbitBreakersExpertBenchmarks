@@ -219,4 +219,36 @@ candidate is retained only if its canonical screen is faster than e01's
 
 ### Result
 
-Pending. Append all screens and failures.
+Candidate hypothesis commit: `067a1d365e8ef4a9e3f81d6dd62939c0b3af6b39`.
+
+Candidate SHA-256:
+`b3dcbaa35a233d8dde4576de7257c79a1a81034eee49f1f0bef6489116dcafcd`.
+
+Candidate diff SHA-256:
+`759b7139a8463d53c80f2d48148eca189235a872fac5402ae9f64be4100bac45`.
+
+Sanitized record: `profiles/e02-feedback-rz-screen.json`.
+
+The independent two-branch matrix-action audit passed all four cases. Maximum
+complex64 error was `2.98e-8` against the frozen `1e-7` threshold.
+
+```text
+max_steps=1:   e01 44.917110 s, e02 29.918828 s
+max_steps=50:  reference 91.540316 s, e01 52.769482 s,
+               e02 31.299628 s, e02 PASS
+max_steps=100: reference 135.815605 s, e01 61.396553 s,
+               e02 33.546170 s, e02 PASS
+canonical e02/reference single-screen speedup: 4.0487x
+canonical e02/e01 single-screen speedup: 1.8302x
+```
+
+The one-step initial energy and post-update trajectory-mean differences from
+accepted e01 are `1.43e-6` and `7.53e-5`, passing the frozen `5e-5` and
+`1e-4` physical thresholds. The canonical run passed every evaluator gate:
+initial `-6.8462653160`, final history `-10.0280771255`, improvement
+`3.1818118095`, final trajectory mean/std
+`-10.0335464478 / 0.0000002666`, history length 100, required keys/shapes.
+
+Decision: `keep`. The exact feedback reduction removes a major trace,
+path-search, contraction, and gradient burden. Proceed from e02 to isolate
+whole-training scan.
