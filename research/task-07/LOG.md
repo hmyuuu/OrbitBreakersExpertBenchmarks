@@ -208,6 +208,8 @@ any measurement, selected parameter, branch state, or observable.
 ### Pre-run frozen checks
 
 The exact two-branch gate identity will be checked at complex64 precision.
+The frozen matrix-action tolerance is `1e-7` for both bit values and two
+nontrivial signed angles.
 The physical one-step criteria are initial energy absolute error at most
 `5e-5` versus accepted e01 and post-update final-trajectory mean absolute
 error at most `1e-4`; the strict parameter maximum remains diagnostic only.
