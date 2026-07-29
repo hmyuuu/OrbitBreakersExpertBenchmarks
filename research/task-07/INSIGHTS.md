@@ -64,6 +64,11 @@ screen passes in 24.362414 seconds versus the expert's 135.815605 seconds
   Control-flow compilation outweighs only 100 cached-JIT host dispatches.
 - TensorNetwork greedy takes 23.234 seconds for the frozen one-step screen,
   12.39% slower than OMECo 1x1, so it was discarded before full training.
+- Joint TensorCircuit-state measurement rounds are the fastest 1/50-step
+  method (4.606/14.523 seconds) and closely reproduce the expert, but dense
+  16-qubit state differentiation raises the 100-step time to 26.531 seconds,
+  8.90% slower than e04a. This exposes a crossover between staging cost and
+  per-update dense-state cost.
 
 ## Contractor result
 

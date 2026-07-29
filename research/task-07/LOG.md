@@ -416,4 +416,33 @@ public workloads pass and canonical runtime is below 24.362414 seconds.
 
 ### Result
 
-Pending.
+Candidate hypothesis commit: `5c4f0ba61509625c4c2bf76bcb3e21adf9fc09c9`.
+
+Candidate SHA-256:
+`5f4ec8d45e1fa91c053f3ed2027c90bdb1abf1e9e7d87add399c6c5ce883add7`.
+
+Candidate diff SHA-256:
+`d4a0277c7c1184b22be90dc51215a63690b39cb23871d9fcd3d6d6818aafd64b`.
+
+Sanitized record: `profiles/e05-measurement-round-screen.json`.
+
+```text
+max_steps=1:   e04a 20.672377 s, e05 4.606171 s
+max_steps=50:  reference 91.540316 s, e04a 21.473078 s,
+               e05 14.522625 s, e05 PASS
+max_steps=100: reference 135.815605 s, e04a 24.362414 s,
+               e05 26.530668 s, e05 PASS
+```
+
+All physical checks and both public workloads pass. The canonical result is
+especially close to the immutable expert: final history
+`-10.0279579163` versus `-10.0279636383`, with improvement
+`3.1816935539` and final trajectory mean/std
+`-10.0334491730 / 0.0000033379`.
+
+Decision: `discard for the canonical metric`. Joint measurement rounds cut
+the fixed trace/path cost by 16 seconds and dominate at 1/50 updates, but
+materializing and differentiating full 16-qubit states makes each update
+roughly 0.20 seconds slower. At 100 updates it is 8.90% slower than accepted
+e04a. Preserve it as a valuable scaling crossover insight, not the final
+candidate.
