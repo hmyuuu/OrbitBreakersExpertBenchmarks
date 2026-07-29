@@ -15,6 +15,12 @@ Against the accepted paired-Kraus parent, six paired Docker runs give
 12/12 cells PASS. The retained cumulative factors are probe VMAP, exact
 pairing of adjacent Kraus nodes, and absorption of RXX into those nodes.
 
+The fresh final cumulative comparison against the immutable expert gives
+expert `14.742286 ± 0.274987 s`, campaign best `5.672258 ± 0.148840 s`,
+paired speedup `2.602133x ± 0.028270x`, 95% CI
+`[2.529463x, 2.674804x]`, and 6/6 wins. See
+[`IMPLEMENTATION_COMPARISON.md`](IMPLEMENTATION_COMPARISON.md).
+
 ## Preserved semantics
 
 - Four fixed 12-qubit probe preparations and the exact even/odd `RXX(0.31)`

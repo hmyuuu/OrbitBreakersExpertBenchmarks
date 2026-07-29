@@ -643,3 +643,44 @@ Pair-order pattern: odd `reference -> candidate`, even reverse
 Timeout: `300 seconds`
 
 Decision: pending.
+
+## Final cumulative comparison
+
+Final candidate SHA-256:
+`251f283d208ebb5316c8347ff71ea6da66aca5fd11b42f25032db32ada83ef0c`.
+
+Command:
+
+```bash
+./bench run 04 --solution optimized --compare-to reference --repeat 6 \
+  --engine docker --cpus 6 --memory 7g --timeout 300 --no-build \
+  --output results/task-04-final-paired-20260729
+```
+
+Immutable report:
+`results/task-04-final-paired-20260729/results.json`
+(`sha256:c234d9fd4de4ab992f97b524e99e2894732e0ca608d69bc43f1459f5d500c84d`).
+
+```text
+terminal_status: SUCCESS x 12
+valid: 12/12
+reference_mean_runtime_sec: 14.742286
+reference_runtime_stderr_sec: 0.274987
+reference_median_runtime_sec: 14.918234
+candidate_mean_runtime_sec: 5.672258
+candidate_runtime_stderr_sec: 0.148840
+candidate_median_runtime_sec: 5.838748
+ratio_of_means_improvement_pct: 61.523891
+paired_speedup_mean: 2.602133x
+paired_speedup_stderr: 0.028270x
+paired_speedup_95pct_ci: [2.529463x, 2.674804x]
+pair_wins: 6/6
+first_five_reference_mean_sec: 14.725538
+first_five_candidate_mean_sec: 5.640346
+first_five_paired_speedup_mean: 2.614107x
+```
+
+Decision: `final`. The candidate passes every semantic/resource/promotion
+gate. The tracked sanitized evidence, factor plots, implementation derivation,
+and limitations are in
+`research/task-04/IMPLEMENTATION_COMPARISON.md`.
