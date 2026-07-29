@@ -30,8 +30,11 @@ The immutable sanitized evidence is
 [`results-20260729/ablation-summary.json`](results-20260729/ablation-summary.json),
 generated from raw report SHA-256
 `220bf9b519cc69e7996a78855308fa1e1b70b82a51d7861561cca8b5a01678c5`.
-The optimized source SHA-256 is
-`f741e6cc75b8ed1e47bbedafc557d231d54db60fb064011650fc9c7da36c9ef6`.
+The current optimized source SHA-256 is
+`e1a0d8a13020687f0afc89867e114683c052200c955a3515c80397a6a580b24e`.
+The benchmarked byte-for-byte artifact retains SHA-256
+`f741e6cc75b8ed1e47bbedafc557d231d54db60fb064011650fc9c7da36c9ef6`;
+the only difference is restoration of the immutable expert module docstring.
 
 This is a same-workload, same-host expert optimization result. No global SOTA
 claim is made because no external implementation was measured in the same

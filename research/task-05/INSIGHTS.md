@@ -12,7 +12,7 @@ The accepted implementation is the exact no-QR MPS candidate:
 
 - source: [`src/solutions/task-05/solution_5.py`](../../src/solutions/task-05/solution_5.py);
 - SHA-256:
-  `f741e6cc75b8ed1e47bbedafc557d231d54db60fb064011650fc9c7da36c9ef6`;
+  `e1a0d8a13020687f0afc89867e114683c052200c955a3515c80397a6a580b24e`;
 - candidate mean: `6.898409 s`;
 - immutable expert mean in the matched session: `97.083712 s`;
 - mean paired speedup: `14.075570x`;

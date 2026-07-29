@@ -691,6 +691,12 @@ equivalence-harness SHA-256
 pre-commit diff SHA-256
 `5184e31df8c257667116db6aacc7eecab918994e6524893e08c56761eef6f877`.
 
+Review correction: the candidate module docstring was restored byte-for-byte
+from the immutable expert source. The current source SHA-256 is
+`e1a0d8a13020687f0afc89867e114683c052200c955a3515c80397a6a580b24e`.
+Executable statements and benchmark results are unchanged; the frozen
+measurement artifact retains the SHA-256 recorded above.
+
 ### Continuation results and decisions
 
 - `2026-07-29T06:27:37.838917Z`: latest-image immutable-reference baseline

@@ -1,4 +1,9 @@
-"""Task 05: exact bounded-rank TensorCircuit-NG MPS cooling."""
+"""
+Task Suite Problem 5: custom non-unitary gate cooling.
+
+The cooling filters are implemented as ordinary RX/RZZ gates with imaginary
+angles. The solution returns only NumPy values consumed by evaluate_5.py.
+"""
 
 import numpy as np
 import optax
