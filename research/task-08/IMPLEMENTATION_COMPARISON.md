@@ -155,16 +155,32 @@ The raw untracked report is
 (`sha256:cf254f54739057b85903702df7f824d018081106339b3b27003c7e65057dc178`);
 the tracked sanitized record is `profiles/final-reduced-2048-pairs.json`.
 
-## Rejected approaches
+## Factor ablation and rejected approaches
+
+Task 08 does not bundle several unexplained speedups into the promoted result.
+The only promoted factor is **bounded contiguous shot batching**. The
+experiments below remove or vary one factor at a time around that design.
+They are full-workload screening runs unless explicitly labeled as a reduced
+audit, so they rank mechanisms but are not independent five-pair speedup
+claims.
 
 | Experiment | Result | Interpretation |
 | --- | --- | --- |
+| Expert monolithic 8192-shot `vmap` | 0/5 PASS; 9.31–17.97 GiB attempted buffers | The dominant contribution is bounding the mapped batch, which converts OOM into 5/5 PASS. |
 | Native generic rank-2 split | 30.307 s vs 24.601 s at 256 shots; exact audit 75.652 s vs 11.032 s | Doubling entangler nodes hurts OMECo despite lower bond rank. |
 | 512-shot Python chunks | 50.843 s full screen | Feasible, but larger mapped intermediates lose to 256. |
+| **256-shot Python chunks (promoted)** | **44.028 s full screen** | Best measured memory/dispatch balance; the promoted candidate changes no other factor. |
 | 128-shot Python chunks | 55.182 s full screen | Extra dispatch/synchronization dominates. |
 | `K.jaxy_scan` over 256 blocks | 67.401 s | Staging the large contraction body in XLA control flow costs more than cached-JIT dispatch. |
 | OMECo 1x1 | 131.959 s | Under-search produces paths that are expensive across 32 executions. |
 | Fuse 42 final RX gates into RXX | Exact audit passes and improves 11.032 -> 9.618 s, but full sampling is 60.989 s | Fewer nodes do not guarantee better conditional-sampling paths. |
+
+The attribution is therefore unambiguous: chunking is the sole necessary
+OOM-to-PASS factor, while the 256-shot size is an empirically selected
+secondary tuning choice. Scan, smaller path-search budget, gate fusion, and a
+rank-2 rewrite were measured separately and rejected. The reduced 2048-shot
+six-pair result remains statistically inconclusive and is not used to assign a
+runtime-speedup percentage to chunking.
 
 The evidence does not justify changing measurement order: row-major removes
 complete grid rows and already exposes a width-seven frontier. With the
