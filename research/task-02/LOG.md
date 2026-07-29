@@ -83,6 +83,10 @@ improvement is claimed without matched candidate pairs.
 - `2026-07-29T13:31Z`: completed the cited survey and canonical public workload
   record. Candidate editing remains blocked until the manifest is rebound and
   the fail-closed gate passes.
+- `2026-07-29T13:33Z`: survey, public dataset, and repeated-reference gates all
+  pass. Added an immutable-reference profiler to separate lowering,
+  compilation, trajectory, entropy, Hamiltonian action, and steady optimizer
+  execution before selecting candidate factors.
 
 ## Append-only corrections
 
