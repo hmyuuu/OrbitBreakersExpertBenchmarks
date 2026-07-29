@@ -38,10 +38,57 @@ def trajectory_status(config):
     )
 
 
-def make_one_trajectory(config):
+def trajectory_patterns(config, params, status):
+    # RZZ is diagonal, and the ancilla CNOT ladder is a computational-basis
+    # permutation. Therefore the measured bits can be sampled analytically
+    # from the independent pre-ladder ancilla bits with the exact same fixed
+    # uniforms. The objective is piecewise constant in the ancilla RY angles,
+    # so their pathwise gradients are zero and these patterns remain fixed.
+    p = np.asarray(K.numpy(params))
+    uniforms = np.asarray(K.numpy(status))
+    measured = np.zeros(
+        (config["n_trajectories"], config["n_layers"], config["n_ancilla_qubits"]),
+        dtype=np.int32,
+    )
+    source = np.zeros_like(measured)
+    for trajectory in range(config["n_trajectories"]):
+        previous_layer = np.zeros(config["n_ancilla_qubits"], dtype=np.int32)
+        for layer in range(config["n_layers"]):
+            offset = layer * PARAMS_PER_LAYER
+            base = np.sin(p[offset + 8 : offset + 16] / 2.0) ** 2
+            probability_one = base + previous_layer * (1.0 - 2.0 * base)
+            previous_output = 0
+            for a in range(config["n_ancilla_qubits"]):
+                q = probability_one[a]
+                if previous_output:
+                    q = 1.0 - q
+                bit = int(
+                    uniforms[trajectory, layer * config["n_ancilla_qubits"] + a]
+                    > 1.0 - q
+                )
+                measured[trajectory, layer, a] = bit
+                source[trajectory, layer, a] = bit ^ previous_output
+                previous_output = bit
+            previous_layer = measured[trajectory, layer]
+    patterns = np.stack([measured, source], axis=1)
+    unique, inverse, counts = np.unique(
+        patterns.reshape(config["n_trajectories"], -1),
+        axis=0,
+        return_inverse=True,
+        return_counts=True,
+    )
+    unique = unique.reshape(
+        -1, 2, config["n_layers"], config["n_ancilla_qubits"]
+    )
+    return (
+        K.convert_to_tensor(unique),
+        K.convert_to_tensor(inverse, dtype="int32"),
+        K.convert_to_tensor(counts.astype(np.float32) / config["n_trajectories"]),
+    )
+
+
+def make_one_pattern(config):
     n_data = config["n_data_qubits"]
-    n_anc = config["n_ancilla_qubits"]
-    n_qubits = config["n_qubits"]
     n_layers = config["n_layers"]
     transverse_field = config["transverse_field"]
 
@@ -60,76 +107,43 @@ def make_one_trajectory(config):
         weights.append(-transverse_field)
     hamiltonian = tc.quantum.PauliStringSum2COO(pauli_strings, weights)
 
-    def energy_of_data(c):
-        # The final Z-measured ancillas remain computational-basis states
-        # under diagonal RZZ feedback, so exactly one ancilla column is
-        # nonzero. Contract the adaptive circuit once, recover the data state,
-        # and evaluate all TFIM terms with one TensorCircuit-native operator.
-        full_state = K.reshape(c.state(), [2**n_data, 2**n_anc])
-        data_state = K.sum(full_state, axis=1)
-        data_circuit = tc.Circuit(n_data, inputs=data_state)
-        return tc.templates.measurements.operator_expectation(
-            data_circuit, hamiltonian
-        )
-
-    def one_trajectory(params, status):
-        c = tc.Circuit(n_qubits)
-        pidx = 0
-        sidx = 0
-
-        for _ in range(n_layers):
+    def one_pattern(params, pattern):
+        measured, source = pattern
+        c = tc.Circuit(n_data)
+        for layer in range(n_layers):
+            offset = layer * PARAMS_PER_LAYER
             for q in range(n_data):
-                c.ry(q, theta=params[pidx + q])
-            pidx += n_data
-
-            for a in range(n_anc):
-                c.ry(n_data + a, theta=params[pidx + a])
-            pidx += n_anc
-
-            for a in range(n_anc):
-                c.rzz(n_data + a, a, theta=params[pidx + a])
-            pidx += n_anc
-
-            for a in range(n_anc - 1):
-                c.cnot(n_data + a, n_data + a + 1)
-
-            theta0 = params[pidx : pidx + n_anc]
-            pidx += n_anc
-            theta1 = params[pidx : pidx + n_anc]
-            pidx += n_anc
-
-            for a in range(n_anc):
-                anc = n_data + a
-                bit = c.cond_measure(anc, status=status[sidx])
-                bitf = K.cast(bit, "float32")
-                feedback_theta = theta0[a] + bitf * (theta1[a] - theta0[a])
+                c.ry(q, theta=params[offset + q])
+            theta0 = params[offset + 24 : offset + 32]
+            theta1 = params[offset + 32 : offset + 40]
+            for q in range(n_data):
+                bitf = K.cast(measured[layer, q], "float32")
+                sourcef = K.cast(source[layer, q], "float32")
+                feedback_theta = theta0[q] + bitf * (theta1[q] - theta0[q])
                 c.rz(
-                    a,
-                    theta=(1.0 - 2.0 * bitf) * feedback_theta,
+                    q,
+                    theta=(1.0 - 2.0 * sourcef) * params[offset + 16 + q]
+                    + (1.0 - 2.0 * bitf) * feedback_theta,
                 )
-                sidx += 1
-
             for q in range(n_data - 1):
                 c.cnot(q, q + 1)
-
             for q in range(n_data):
-                c.rz(q, theta=params[pidx + q])
-            pidx += n_data
+                c.rz(q, theta=params[offset + 40 + q])
+        return tc.templates.measurements.operator_expectation(c, hamiltonian)
 
-        return energy_of_data(c)
-
-    return one_trajectory
+    return one_pattern
 
 
 def run_solution(config):
     params = initial_parameters(config)
     status = trajectory_status(config)
-    one_trajectory = make_one_trajectory(config)
-    batched_trajectories = K.jit(K.vmap(one_trajectory, vectorized_argnums=1))
+    patterns, inverse, weights = trajectory_patterns(config, params, status)
+    one_pattern = make_one_pattern(config)
+    batched_patterns = K.jit(K.vmap(one_pattern, vectorized_argnums=1))
     optimizer = optax.adam(config["learning_rate"])
 
     def loss_fn(p):
-        return K.mean(batched_trajectories(p, status))
+        return K.sum(batched_patterns(p, patterns) * weights)
 
     def train_step(p, state):
         value, grads = K.value_and_grad(loss_fn)(p)
@@ -144,7 +158,8 @@ def run_solution(config):
         params, opt_state, value = train_step(params, opt_state)
         energy_history.append(value)
 
-    final_trajectory_energies = batched_trajectories(params, status)
+    final_pattern_energies = batched_patterns(params, patterns)
+    final_trajectory_energies = final_pattern_energies[inverse]
     return {
         "energy_history": K.numpy(K.stack(energy_history)),
         "final_trajectory_energies": K.numpy(final_trajectory_energies),

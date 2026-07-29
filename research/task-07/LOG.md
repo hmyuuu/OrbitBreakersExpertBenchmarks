@@ -551,3 +551,114 @@ The runner is corrected to use `True` and now writes a checkpoint after each
 cell. `research/check_gates.py --task 07 --baseline-report
 research/task-07/profiles/final-reference-six.json` returns
 `promotion_ready: true`.
+
+## Experiment `e07`: exact classical-ancilla reduction
+
+Branch: `codex/orbitbreakers/task-07/e07-classical-ancilla`.
+
+Parent commit: `529a5c5` (the published e04a implementation and six-pair
+evidence).
+
+### Structural derivation
+
+This experiment follows a user-supplied concern that the apparent
+measurement-feedback workload may contain an unintended exact reduction.
+The eight ancillas enter each layer as a computational-basis product state.
+Their `RY` gates create independent Bernoulli source bits. Each following
+data-ancilla `RZZ` is diagonal and applies a norm-preserving data unitary
+conditioned on its source bit, so it cannot change the ancilla Z-basis
+probabilities. The ordered ancilla CNOT ladder is only the reversible map
+
+```text
+measured[0] = source[0]
+measured[i] = source[0] xor ... xor source[i].
+```
+
+Its inverse is
+`source[0] = measured[0]` and
+`source[i] = measured[i] xor measured[i-1]`.
+Conditioning on one measured string therefore selects one unique source
+string and an eight-qubit data-only circuit. The pre-measurement entangler
+becomes `RZ((1-2*source) theta_entangler)` on data; measured feedback becomes
+`RZ((1-2*measured) theta_feedback[measured])`. They commute and combine into
+one data `RZ`.
+
+For an ancilla entering as previous measured bit `b`, the next independent
+source probability is
+
+```text
+P(source=1 | b=0) = sin(theta/2)^2
+P(source=1 | b=1) = cos(theta/2)^2.
+```
+
+The implementation reconstructs TensorCircuit's strict
+`status > 1-P(bit=1)` sampling rule, maps the fixed seed-2048 uniforms to
+complete two-layer patterns, and deduplicates equal patterns before quantum
+evaluation.
+
+### Independent audit
+
+Audit program:
+`validate_classical_ancilla_reduction.py`
+(`sha256:86e30424397d816be4db109a5eb64013de152db25477aba15bff7d7db44c4d3e`).
+
+Sanitized record:
+`profiles/e07-classical-ancilla-audit.json`
+(`sha256:f371e2429a3a5724583db82eb6a45089e4040c4e699b7db3d51a50035ad126c3`).
+
+All 1,024 measured bits produced by the analytic sampler are identical to
+the full 16-qubit TensorCircuit `cond_measure` implementation. The 64 fixed
+trajectories contain only two distinct complete patterns: the all-zero
+pattern occurs 63 times and trajectory 36 supplies the sole rare pattern.
+
+Against the accepted full 16-qubit e04a implementation:
+
+```text
+initial energy absolute error:          4.7684e-6
+trajectory energy maximum error:        4.2915e-6
+full ancilla-gradient maximum magnitude:4.6559e-7
+reduced ancilla-gradient magnitude:     0
+non-ancilla gradient maximum error:     1.5116e-6
+post-one-update energy error:            4.6730e-5
+audit passed:                            true
+```
+
+The ideal pathwise derivative of a fixed discrete branch with respect to
+the ancilla sampling angle is exactly zero. The full complex64 graph produces
+only sub-micro numerical residue there; Adam can amplify that residue into
+a parameter-coordinate difference, but the corresponding physical energy
+checks remain close. This distinction is disclosed rather than hidden.
+
+### Exploratory evaluator screens
+
+These screens were exploratory and occurred before a final candidate freeze;
+they are not the promotional paired measurement.
+
+Candidate source SHA-256:
+`29d4d94101c21d757f57f3c639752533bfb84feb8acae5a8b2659a40e0f78631`.
+
+```text
+max_steps=50:  3.008539 s, PASS
+  initial/final history: -6.8462691307 / -8.7942304611
+max_steps=100: 2.998158 s, PASS
+  initial/final history: -6.8462700844 / -10.0277271271
+  final trajectory mean/std: -10.0331859589 / 0.0007448916
+```
+
+Decision: `keep provisionally`. The canonical screen is about 8.1x faster
+than e04a's 24.362-second screen and about 45.3x faster than the original
+expert's 135.816-second bootstrap. Because compilation now dominates and
+50 versus 100 updates costs almost the same, isolate a whole-training scan
+and small-circuit gate/contractor choices before freezing a new paired run.
+
+### Scope and policy caveat
+
+This is an exact reduction of the public fixed workload, not hard-coded
+energies or fewer requested trajectories. All 64 statuses are consumed, all
+96 parameters retain their original layout, all trajectory outputs are
+reconstructed, and TensorCircuit performs every remaining quantum evolution
+and Hamiltonian expectation. It nevertheless removes the explicit
+16-qubit/mid-circuit-measurement execution that the task prose may have
+intended to benchmark. The final report must present this openly as a
+challenge-design loophole and keep the conservative e04a implementation
+available if maintainers require literal `cond_measure` use.
