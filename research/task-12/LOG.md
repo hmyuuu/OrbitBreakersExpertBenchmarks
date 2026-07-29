@@ -328,3 +328,24 @@ fidelities inside the reference's own run-to-run band.
 
 Decision: `keep` as a tracked variant (same local-engine eligibility caveat
 as e01).
+
+## Post-merge scan-removal ablation
+
+Date: 2026-07-29
+
+`profile_factor_ablation.py` runs the identical fixed-Pade candidate objective
+for all 5000 updates through either one compiled scan or 5000 dispatches of
+the same compiled step. Three executions per path on the 6-CPU/7-GiB Docker
+backend measured:
+
+```text
+scan mean execution:        0.913101 s
+Python-loop mean execution: 1.159565 s
+loop / scan:                1.269920x
+cold lower+compile+execute: 1.836521 s vs 1.988862 s
+```
+
+All loss, fidelity, overlap, and parameter arrays were bitwise equal. Combined
+with the existing `3.109x` fixed-Pade kernel microbenchmark and the `8.49%`
+canonical pair-fusion increment, the report now attributes the dominant gain
+to gate construction and treats scan and pair fusion as secondary factors.

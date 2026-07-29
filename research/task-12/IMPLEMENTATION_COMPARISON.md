@@ -157,6 +157,32 @@ most 4). The evidence supports gate-construction batching with a fixed-order
 exponential as the main improvement; the scan and the pair-fused network
 address the remaining dispatch and node-count overheads.
 
+## Factor ablation addendum
+
+The original e01 result bundled fixed batched SU4 construction with the
+whole-training scan. The tracked ququart variant already provides a clean
+incremental contraction ablation. A post-merge scan-removal profile completes
+the attribution:
+
+| Factor | Control | Removal or alternative | Measured contribution | Numerical check |
+|---|---:|---:|---:|---:|
+| Fixed batched Pade gate construction | 0.1225 ms per gate-build/grad/Adam kernel | 0.3808 ms with adaptive Pade-13 expm | adaptive/fixed `3.109x` for the isolated kernel | candidate error envelope already audited |
+| Whole-training scan | 0.9131 s mean for 5000 steps | 1.1596 s with 5000 dispatches of the identical compiled step | loop/scan `1.270x` in execution; cold lower+compile+execute improves only 7.66% | all histories and parameters bitwise equal |
+| Pair-fused ququart contraction | 2.3206 s canonical candidate mean | 2.1237 s tracked-variant mean | 8.49% lower end to end; `1.093x` incremental | 12/12 cells PASS |
+
+The factors are not additive because cold compilation and execution overlap in
+the end-to-end timer. Still, their relative scale is clear: the fixed batched
+gate construction is the dominant source of the `3.914x` candidate gain.
+The scan saves about 0.25 s of 5000-step execution but only about 0.15 s after
+its slightly larger cold compile boundary is included. Pair fusion is another
+roughly 8.5% end-to-end refinement. The report no longer credits all three
+items equally.
+
+Reproduction and sanitized output:
+
+- [`profile_factor_ablation.py`](profile_factor_ablation.py)
+- [`profiles/factor-ablation.json`](profiles/factor-ablation.json)
+
 ## Final-rerun status
 
 The paired sessions recorded above are the final local-engine benchmarks for
