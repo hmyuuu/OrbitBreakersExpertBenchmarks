@@ -193,3 +193,27 @@ pair_wins: 4/6
 Decision: `discard`. The lower confidence bound does not exceed one and only
 four of six pairs won, below the frozen 80% rule. In this image, changing the
 class name alone is not an attributable improvement.
+
+## Experiment `e02-probe-vmap`
+
+Branch: `codex/orbitbreakers/task-04/extreme-native`
+
+Hypothesis: constructing the four exact probe states once with
+`tc.Circuit`, then evaluating their identical noisy density-matrix TN through
+TensorCircuit `K.vmap`, will reduce four repeated traced circuit graphs to one
+batched graph. This should reduce the measured lowering/compilation bottleneck
+without changing Kraus algebra, observables, or training.
+
+Parent commit: `c5b1c9e`
+
+Candidate file: `src/solutions/task-04/solution_4.py`
+
+Public dataset version: `orbitq-workloads-v20260729.1`
+
+Private evaluation used: `no`
+
+Pair-order pattern: odd `reference -> candidate`, even reverse
+
+Timeout: `300 seconds`
+
+Decision: pending.

@@ -26,15 +26,24 @@ def load_module(path: Path, name: str):
 
 def diagnostics(module, config):
     K = module.K
-    target = module.observable_table(
-        K.convert_to_tensor(config["true_p01"]),
-        K.convert_to_tensor(config["true_p10"]),
-        config,
-    )
+    true_p01 = K.convert_to_tensor(config["true_p01"])
+    true_p10 = K.convert_to_tensor(config["true_p10"])
+    if hasattr(module, "probe_states"):
+        initial_states = module.probe_states(config)
+        target = module.observable_table(
+            true_p01, true_p10, initial_states, config
+        )
+    else:
+        initial_states = None
+        target = module.observable_table(true_p01, true_p10, config)
     params = module.initial_parameters(config)
 
     def loss_fn(p):
-        return module.loss_and_observables(p, target, config)
+        if initial_states is None:
+            return module.loss_and_observables(p, target, config)
+        return module.loss_and_observables(
+            p, target, initial_states, config
+        )
 
     (loss, aux), grads = K.value_and_grad(loss_fn, has_aux=True)(params)
     optimizer = optax.adam(config["learning_rate"])

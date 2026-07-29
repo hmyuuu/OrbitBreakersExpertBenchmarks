@@ -82,10 +82,18 @@ def prepare_initial_state(circuit, probe_index, config):
             circuit.h(i)
 
 
-def probe_observables(probe_index, p01, p10, config):
-    circuit = tc.DMCircuit(config["n_qubits"])
+def probe_states(config):
+    states = []
+    for probe_index in range(PROBE_COUNT):
+        circuit = tc.Circuit(config["n_qubits"])
+        prepare_initial_state(circuit, probe_index, config)
+        states.append(circuit.state())
+    return K.stack(states)
+
+
+def probe_observables(initial_state, p01, p10, config):
+    circuit = tc.DMCircuit(config["n_qubits"], inputs=initial_state)
     kraus = asymmetric_bitflip_kraus(p01, p10)
-    prepare_initial_state(circuit, probe_index, config)
     apply_noisy_entangler_layer(circuit, kraus, config)
     values = [
         K.real(circuit.expectation((tc.gates.z(), [i]), reuse=False))
@@ -96,26 +104,30 @@ def probe_observables(probe_index, p01, p10, config):
     return K.stack(values)
 
 
-def observable_table(p01, p10, config):
-    return K.stack(
-        [
-            probe_observables(probe_index, p01, p10, config)
-            for probe_index in range(PROBE_COUNT)
-        ]
+def observable_table(p01, p10, initial_states, config):
+    evaluate = K.vmap(
+        lambda initial_state: probe_observables(
+            initial_state, p01, p10, config
+        )
     )
+    return evaluate(initial_states)
 
 
-def loss_and_observables(raw_params, target_expectations, config):
+def loss_and_observables(
+    raw_params, target_expectations, initial_states, config
+):
     p01, p10 = probabilities(raw_params)
-    fitted_expectations = observable_table(p01, p10, config)
+    fitted_expectations = observable_table(p01, p10, initial_states, config)
     loss = K.mean((fitted_expectations - target_expectations) ** 2)
     return loss, (p01, p10, fitted_expectations)
 
 
 def run_solution(config):
+    initial_states = probe_states(config)
     true_target = observable_table(
         K.convert_to_tensor(config["true_p01"]),
         K.convert_to_tensor(config["true_p10"]),
+        initial_states,
         config,
     )
     params = initial_parameters(config)
@@ -123,7 +135,7 @@ def run_solution(config):
     opt_state = optimizer.init(params)
 
     def loss_fn(p):
-        return loss_and_observables(p, true_target, config)
+        return loss_and_observables(p, true_target, initial_states, config)
 
     def train_step(p, state):
         (loss, aux), grads = K.value_and_grad(loss_fn, has_aux=True)(p)
