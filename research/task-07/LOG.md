@@ -469,3 +469,20 @@ Result: physical outputs pass, but one step takes 39.419801 seconds,
 1.90687x e04a. Decision: `discard` without longer runs. Mapping individual
 value-and-gradient programs duplicates reverse-mode structure for this
 shared-parameter objective.
+
+## Frozen final candidate and paired run
+
+Final candidate: accepted e04a source
+`0cd9676dc904660597a2f7dd6981fdac596295e4eae99510a3f4f21671859592`.
+
+No candidate tuning follows this freeze. The final command is:
+
+```bash
+python -u research/task-07/run_docker_matrix.py \
+  --repeat 6 --max-steps 100 --timeout 300 --cpus 6 --memory 7g \
+  --output results/task-07-final-canonical-6-pairs
+```
+
+It stages immutable source snapshots, uses one no-network container and fresh
+evaluator processes, alternates pair order, and applies the survey's frozen
+Student-t promotion rule.
