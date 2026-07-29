@@ -72,7 +72,8 @@ def apply_layer(circuit, layer_params, bonds, config):
 def renyi2_entropy(state, config):
     traceout = list(range(config["subsystem_size"], config["n_qubits"]))
     rho = tc.quantum.reduced_density_matrix(state, cut=traceout)
-    return tc.quantum.renyi_entropy(rho, k=2)
+    purity = K.real(K.sum(rho * K.conj(rho)))
+    return -K.real(K.log(purity))
 
 
 def block_states(params, input_state, config):
@@ -85,9 +86,11 @@ def block_states(params, input_state, config):
         apply_layer(circuit, block_params["odd"], odd, config)
         state = circuit.state()
 
-        return state, renyi2_entropy(state, config)
+        return state, state
 
-    return jax.lax.scan(block_step, input_state, params)
+    final_state, states = jax.lax.scan(block_step, input_state, params)
+    entropies = K.vmap(lambda state: renyi2_entropy(state, config))(states)
+    return final_state, entropies
 
 
 def build_xxz_mvp(config):

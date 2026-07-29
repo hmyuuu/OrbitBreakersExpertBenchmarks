@@ -106,6 +106,34 @@ improvement is claimed without matched candidate pairs.
 Append corrections below this heading. Never rewrite an earlier result after
 it has informed another experiment.
 
+## Experiment `e07-batched-purity`
+
+Branch: `codex/orbitbreakers/task-02/e07-batched-purity`
+
+Parent commit: `edf1e91` (accepted whole-training scan).
+
+Execution note: this hypothesis uses a fresh local shared Git checkout and
+independent branch at the accepted commit after worktree permission review
+timed out.
+
+Hypothesis: the predeclared shared-kernel combination of checkpoint
+`K.vmap` and exact Frobenius purity will batch the three reduced-density
+matrices while removing all three dense `rho @ rho` products. The prior
+single-factor reports remain the subfactor ablations; neither subfactor alone
+passed the confidence rule.
+
+Permitted data: public Task 02 artifacts and the two completed single-factor
+reports only. No hidden/private evaluation.
+
+Pre-evaluation correctness rule: initial loss/auxiliary values, gradient, and
+all four 12-step histories must satisfy the frozen survey tolerances.
+
+Candidate source SHA-256:
+`181c0459c8194aa259be813e23896d3c70691adf5999a26353fe57cab14d3f3d`.
+
+Candidate source-diff SHA-256:
+`ad7f082c18273b9f8c67cab5aef8477983791011261bb604ea62f6768d3a3fcf`.
+
 ## Experiment `e02-training-scan`
 
 Branch: `codex/orbitbreakers/task-02/e02-training-scan`
