@@ -168,6 +168,30 @@ from `1.790` to `1.706 s`.
 Decision: `keep`. All frozen paired-promotion gates pass. This fused
 TensorCircuit Kraus node is the new accepted parent.
 
+## Experiment `e07-kraus-basis`
+
+Branch: `codex/orbitbreakers/task-04/e07-kraus-basis`
+
+Hypothesis: replace runtime nested `stack`/`cast` construction of the three
+single-qubit Kraus matrices with four immutable complex64 matrix-unit tensors
+created through the TensorCircuit backend at module import. The differentiable
+probability square roots and exact matrices remain unchanged, while the traced
+scalar assembly graph becomes smaller.
+
+Parent commit: `6b49074`
+
+Candidate file: `src/solutions/task-04/solution_4.py`
+
+Public dataset version: `orbitq-workloads-v20260729.1`
+
+Private evaluation used: `no`
+
+Pair-order pattern: odd accepted parent then candidate, even reverse
+
+Timeout: `300 seconds`
+
+Decision: pending.
+
 ## Result for `e05-paired-kraus`
 
 Candidate commit:
