@@ -153,6 +153,30 @@ causes a 9.26 GB allocation, beyond the frozen 7 GiB memory limit. No repeated
 timing is scientifically meaningful after this functional/resource gate
 failure.
 
+## Experiment `e05-paired-kraus`
+
+Branch: `codex/orbitbreakers/task-04/e05-paired-kraus`
+
+Hypothesis: replace the two consecutive single-qubit channel superoperator
+nodes after each RXX with one exact two-qubit TensorCircuit Kraus channel. Its
+nine Kraus matrices are all `K.kron(left, right)` combinations of the original
+three matrices. This halves channel-node count from 22 to 11 per probe while
+preserving the same product channel and contraction framework.
+
+Parent commit: `9fbb36f`
+
+Candidate file: `src/solutions/task-04/solution_4.py`
+
+Public dataset version: `orbitq-workloads-v20260729.1`
+
+Private evaluation used: `no`
+
+Pair-order pattern: odd accepted parent then candidate, even reverse
+
+Timeout: `300 seconds`
+
+Decision: pending.
+
 ## Result for `e03-training-scan`
 
 Candidate commit:
