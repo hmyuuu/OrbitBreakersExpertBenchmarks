@@ -25,9 +25,10 @@ Build the pinned image only when `env doctor` reports that it is absent:
 ./bench env build tensorcircuit-py311
 ```
 
-The current local profile is fixed at 8 CPUs and 9 GiB because that is the
-available Colima resource envelope. Start a new baseline campaign if the host,
-resource limits, image ID, or dependency lock changes.
+The tracked default profile is 8 CPUs and 9 GiB. On a different Docker
+backend, pass per-run `--cpus` and `--memory` overrides and keep the same
+values for every measurement in that campaign. Start a new baseline campaign
+if the host, resource limits, image ID, or dependency lock changes.
 
 ## Step 1: measure the original references
 
@@ -120,9 +121,10 @@ Use `--engine local` only when the active Python environment exactly matches
 | `./bench run TASK` | Run `01` through `12`, `task-XX`, or `all`; defaults to `optimized` |
 
 `run` accepts `--repeat`, `--solution`, `--candidate`, `--compare-to`,
-`--timeout`, `--engine`, `--output`, `--no-build`, and `--dry-run`. The default
-repeat count comes from `bench.toml` and is currently four. The timeout is 300
-seconds per evaluator process, not per task container.
+`--timeout`, `--cpus`, `--memory`, `--engine`, `--output`, `--no-build`, and
+`--dry-run`. Resource overrides affect only that invocation and do not modify
+`bench.toml`. The default repeat count comes from `bench.toml` and is currently
+four. The timeout is 300 seconds per evaluator process, not per task container.
 
 ## Runtime contract
 
@@ -211,6 +213,10 @@ Karpathy's [autoresearch](https://github.com/karpathy/autoresearch) uses a fixed
 evaluator, one editable program, short measured experiments, Git checkpoints,
 and an experiment ledger. `GOAL.md` maps that loop to one eligible ORBIT-Q
 task per campaign and one hypothesis per fresh Git worktree.
+
+The reusable gate-to-PR checklist, including factor ablation and one chart per
+measured factor, is
+[`autoresearch/EXPERT_OPTIMIZATION_WORKFLOW.md`](autoresearch/EXPERT_OPTIMIZATION_WORKFLOW.md).
 
 Do not start optimization until the selected-task survey and public workload
 dataset required by `GOAL.md` exist. Before starting a campaign, inspect the
