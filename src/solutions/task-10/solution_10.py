@@ -1,4 +1,10 @@
-"""Task 10: exact bond-dimension-four TensorCircuit-NG MPS VQE."""
+"""
+Task Suite Problem 10: VQE with an 18-qubit CMZ hyperedge.
+
+The ansatz uses TensorCircuit-NG's built-in cmz gate on non-adjacent selected
+qubits. The Hamiltonian is evaluated as an MPO expectation so the optimization
+step can be JIT-compiled into a highly efficient fixed graph.
+"""
 
 import numpy as np
 import optax

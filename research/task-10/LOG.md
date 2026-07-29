@@ -397,6 +397,13 @@ Task 11 and Task 10 cases and advancing the current manifest to
 remain unchanged; the benchmark-time dataset version recorded above remains
 `orbitq-workloads-v20260729.3`.
 
+Reviewer correction: the candidate module docstring is now restored
+byte-for-byte from the immutable expert source. This changes the current
+source SHA-256 to
+`4696844a075c2fc18110f4d40e595c7c47bc69d58f2175bf28f8e76a80997998`.
+The executable statements are unchanged, so the measured artifact and all
+timing records correctly retain their original SHA-256 above.
+
 ## Post-publication starter-insight ablations
 
 Date: 2026-07-29
