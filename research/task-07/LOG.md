@@ -446,3 +446,26 @@ materializing and differentiating full 16-qubit states makes each update
 roughly 0.20 seconds slower. At 100 updates it is 8.90% slower than accepted
 e04a. Preserve it as a valuable scaling crossover insight, not the final
 candidate.
+
+## Experiment `e06`: TensorCircuit vectorized value-and-gradient
+
+Branch: `codex/orbitbreakers/task-07/e06-vvag`.
+
+Parent commit: `f8da3bb`.
+
+Hypothesis: `K.vvag` may generate a better batched-trajectory AD program than
+differentiating through the mapped mean. Retain only if its one-step runtime
+beats e04a's 20.672377 seconds with physical outputs within `1e-4`.
+
+Candidate commit: `828e921ddf69709054d5fa52a5e3e62d9fac475e`;
+source SHA-256
+`4f0a8757af372c41db677981f1551c363f82f128e0f295073228defece065c68`;
+diff SHA-256
+`82e90bad5bb428a53d623e268808a22a1ca321a686540f8e7c8ea5b46a15d7fa`.
+
+Sanitized record: `profiles/e06-vvag-screen.json`.
+
+Result: physical outputs pass, but one step takes 39.419801 seconds,
+1.90687x e04a. Decision: `discard` without longer runs. Mapping individual
+value-and-gradient programs duplicates reverse-mode structure for this
+shared-parameter objective.

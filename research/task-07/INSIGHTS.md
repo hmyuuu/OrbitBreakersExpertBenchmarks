@@ -69,6 +69,9 @@ screen passes in 24.362414 seconds versus the expert's 135.815605 seconds
   16-qubit state differentiation raises the 100-step time to 26.531 seconds,
   8.90% slower than e04a. This exposes a crossover between staging cost and
   per-update dense-state cost.
+- TensorCircuit `K.vvag` is 90.69% slower at one step (39.420 seconds) because
+  it maps individual reverse-mode programs; differentiating the shared mapped
+  mean remains superior here.
 
 ## Contractor result
 
