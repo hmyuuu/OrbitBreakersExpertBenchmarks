@@ -59,15 +59,19 @@ promotable: `1.0180x ± 0.0159x`, 95% CI `[0.9772x, 1.0588x]`, with only 4/6
 pair wins. The newer class must be combined with an explicit scalar-TN
 contraction/reuse strategy to change the compiled graph materially.
 
+Putting all 120 Adam updates in one TensorCircuit `K.jaxy_scan` is also exact
+but regressed relative to the accepted VMAP parent: e02 `6.645754 ±
+0.033795 s` versus e03 `6.736220 ± 0.061509 s`, paired speedup `0.986981x ±
+0.010315x`, with only 2/6 wins. This confirms the profile's prediction that
+host dispatch is not the useful bottleneck after probe batching.
+
 ## Open hypotheses
 
-1. TensorCircuit `K.jaxy_scan` over all 120 optimizer steps as a secondary
-   factor; the profile limits standalone dispatch headroom.
-2. Scalar `reuse=False` versus reusable full-density `reuse=True`
+1. Scalar `reuse=False` versus reusable full-density `reuse=True`
    expectations on the accepted batched parent.
-3. Exact composite two-qubit noisy superoperators and reusable contraction
+2. Exact composite two-qubit noisy superoperators and reusable contraction
    paths.
-4. Exact MPO/purification formulations through TensorCircuit-native classes if
+3. Exact MPO/purification formulations through TensorCircuit-native classes if
    simpler delayed contraction is insufficient.
 
 ## Evidence limits

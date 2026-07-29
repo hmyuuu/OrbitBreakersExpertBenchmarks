@@ -112,6 +112,55 @@ Timeout: `300 seconds`
 
 Decision: pending.
 
+## Result for `e03-training-scan`
+
+Candidate commit:
+`777ebfc`.
+
+Candidate SHA-256:
+`df308796deebb576ead6e2c47d6ac73494206de9e73980a7a939c8a1712c81f6`.
+
+The enhanced reduced exact-equivalence report checks the target, one
+value/gradient/update, the complete three-step loss history, final
+probabilities, and final fitted expectations:
+`research/task-04/profiles/e03-equivalence.json`
+(`sha256:5b5cb1919d294b26177e06ef51f7c70eb397e36c62bf086a6e6a3ae699e8b3bb`).
+Every field passed the `2e-6` threshold; the maximum error was `1.79e-7`.
+The canonical 12-qubit evaluator also passed.
+
+To isolate this factor, the immutable accepted e02 source was the reference
+and the e03 file was supplied as an explicit candidate:
+
+```bash
+./bench run 04 --candidate <e03>/src/solutions/task-04/solution_4.py \
+  --compare-to optimized --repeat 6 --engine docker \
+  --cpus 6 --memory 7g --timeout 300 --no-build \
+  --output results/task-04-e03-vs-e02-paired
+```
+
+Immutable report:
+`results/task-04-e03-vs-e02-paired/results.json`
+(`sha256:dfe56ba11cbf8a5144a19bb4e118a6ab57f258c2b54ffe9492a7140c6e9f7f89`).
+
+```text
+terminal_status: SUCCESS x 12
+valid: 12/12
+reference (e02) mean_runtime_sec: 6.645754
+reference (e02) runtime_stderr_sec: 0.033795
+candidate (e03) mean_runtime_sec: 6.736220
+candidate (e03) runtime_stderr_sec: 0.061509
+paired_improvement_mean: -1.374862%
+paired_speedup_mean: 0.986981x
+paired_speedup_stderr: 0.010315x
+pair_wins: 2/6
+```
+
+Decision: `discard`. A single TensorCircuit `K.jaxy_scan` is exact but does
+not meet the frozen positive-speedup or 80% pair-win gates. The earlier
+profile already bounded 120 host dispatches to a small part of total runtime;
+the scan wrapper instead produced a small measured regression on this
+compilation-dominated workload.
+
 ## Result for `e02-probe-vmap`
 
 Candidate commit:

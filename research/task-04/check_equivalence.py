@@ -50,12 +50,20 @@ def diagnostics(module, config):
     state = optimizer.init(params)
     updates, _ = optimizer.update(grads, state, params)
     next_params = optax.apply_updates(params, updates)
+    full_result = module.run_solution(config)
     return {
         "target": np.asarray(K.numpy(target)),
         "loss": np.asarray(K.numpy(loss)),
         "observables": np.asarray(K.numpy(aux[2])),
         "grads": np.asarray(K.numpy(grads)),
         "next_params": np.asarray(K.numpy(next_params)),
+        "loss_history": np.asarray(full_result["loss_history"]),
+        "final_probabilities": np.asarray(
+            full_result["final_probabilities"]
+        ),
+        "fitted_expectations": np.asarray(
+            full_result["fitted_expectations"]
+        ),
     }
 
 
