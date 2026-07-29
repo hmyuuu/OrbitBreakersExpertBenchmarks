@@ -183,6 +183,30 @@ legacy implementation. Its null result is expected. Current-image bottleneck
 claims use local superoperator TN nodes and measured compilation/profile data;
 legacy class-body observations are historical context only.
 
+## Experiment `e06-fused-rxx-kraus`
+
+Branch: `codex/orbitbreakers/task-04/e06-fused-rxx-kraus`
+
+Hypothesis: on top of accepted paired Kraus nodes, absorb the fixed RXX
+unitary into each product-channel matrix as
+`(K_left ⊗ K_right) @ U_RXX`. The exact noisy map is unchanged, while each
+bond uses one TensorCircuit Kraus-superoperator node rather than a separate
+RXX node followed by a channel node.
+
+Parent commit: `8f14569`
+
+Candidate file: `src/solutions/task-04/solution_4.py`
+
+Public dataset version: `orbitq-workloads-v20260729.1`
+
+Private evaluation used: `no`
+
+Pair-order pattern: odd accepted parent then candidate, even reverse
+
+Timeout: `300 seconds`
+
+Decision: pending.
+
 ## Result for `e04-expectation-reuse`
 
 Candidate commit:
