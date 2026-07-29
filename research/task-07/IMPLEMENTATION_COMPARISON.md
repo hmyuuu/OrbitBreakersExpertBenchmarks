@@ -8,7 +8,9 @@
 > 45.757921x mean paired speedup, 95% CI
 > [39.384711x, 52.131131x]. Unlike the conservative implementation below,
 > that candidate exposes a challenge-design loophole and does not literally
-> execute the measured ancilla register.
+> execute the measured ancilla register. The implementation below is retained
+> as the runnable `conservative` variant at
+> `src/solutions/task-07/variants/solution_7_conservative.py`.
 
 ## Scope and claim
 

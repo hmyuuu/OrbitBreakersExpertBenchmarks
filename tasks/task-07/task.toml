@@ -25,3 +25,10 @@ module = "solution_7"
 kind = "autoresearch-optimized-candidate"
 initialized_from = "reference"
 initialized_from_sha256 = "ac483319363f3c386a7646eaa867670ae3d3cd687f8517e6d4201e69240ff0a3"
+
+[[solutions]]
+name = "conservative"
+path = "../../src/solutions/task-07/variants/solution_7_conservative.py"
+module = "solution_7_conservative"
+kind = "literal-mid-circuit-measurement-variant"
+sha256 = "0cd9676dc904660597a2f7dd6981fdac596295e4eae99510a3f4f21671859592"

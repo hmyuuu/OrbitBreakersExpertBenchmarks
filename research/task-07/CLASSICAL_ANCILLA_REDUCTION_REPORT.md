@@ -242,9 +242,11 @@ contract is under-specified.
 
 Keep two implementations visible:
 
-1. The conservative e04a candidate is the appropriate answer when literal
-   16-qubit TensorCircuit `cond_measure` execution is required. It preserves
-   every intended operation and measured a 4.479x paired speedup.
+1. The registered `conservative` e04a variant at
+   `src/solutions/task-07/variants/solution_7_conservative.py` is the
+   appropriate answer when literal 16-qubit TensorCircuit `cond_measure`
+   execution is required. It preserves every intended operation and measured
+   a 4.479x paired speedup.
 2. The e11 reduction is the campaign-best answer to the current executable
    contract and should be used to document/fix the challenge-design gap.
 
