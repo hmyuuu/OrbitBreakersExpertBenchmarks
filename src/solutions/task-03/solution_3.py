@@ -44,7 +44,11 @@ def pair_map(odd, even, xx, zz, odd_rx, even_rx, even_left):
     else:
         state = K.kron(odd, even)
         rotations = K.kron(ro, re)
-    state = K.matmul(rotations, K.matmul(rzz, K.matmul(rxx, state)))
+    state = K.tensordot(
+        rotations,
+        K.tensordot(rzz, K.tensordot(rxx, state, 1), 1),
+        1,
+    )
     state = K.reshape(state, [2, 2])
     selected = state[0, :] if even_left else state[:, 0]
     probability = K.real(K.sum(K.conj(selected) * selected))
@@ -77,8 +81,8 @@ def cooling_product(params, config):
         states = next_states
 
         p = params["odd"]
-        even_only = K.matmul(
-            tc.gates.rx_gate(theta=p["rx"][block, 0]).tensor, zero
+        even_only = K.tensordot(
+            tc.gates.rx_gate(theta=p["rx"][block, 0]).tensor, zero, 1
         )
         probability = K.real(K.conj(even_only[0]) * even_only[0])
         log_probabilities.append(K.log(probability + 1e-12))
@@ -96,9 +100,10 @@ def cooling_product(params, config):
             next_states.append(odd)
             log_probabilities.append(K.log(probability + 1e-12))
         next_states.append(
-            K.matmul(
+            K.tensordot(
                 tc.gates.rx_gate(theta=p["rx"][block, -1]).tensor,
                 states[-1],
+                1,
             )
         )
         states = next_states
@@ -108,7 +113,7 @@ def cooling_product(params, config):
 
 def one_qubit_expectation(state, operator):
     return K.real(
-        K.sum(K.conj(state) * K.matmul(operator.tensor, state))
+        K.sum(K.conj(state) * K.tensordot(operator.tensor, state, 1))
     )
 
 
