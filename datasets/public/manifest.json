@@ -2,11 +2,11 @@
   "schema_version": 1,
   "dataset_id": "orbitbreakers-public-dev",
   "status": "ready",
-  "version": "orbitq-workloads-v20260729.6",
-  "created_at": "2026-07-29T01:36:02Z",
-  "generator_commit": "5af98f27b9404c513df8eee0f4568b1512edee19",
+  "version": "orbitq-workloads-v20260729.7",
+  "created_at": "2026-07-29T12:38:00Z",
+  "generator_commit": "d13e2591574cc1480507b00bcb33b0c6a48e6b99",
   "environment_image_digest": null,
-  "selected_task_id": "06",
+  "selected_task_id": "03",
   "coverage_requirements": {
     "canonical_case": 1,
     "reduced_smoke_case_when_supported": 1,
@@ -31,6 +31,10 @@
     {
       "task_id": "06",
       "scale_probe": "Only the fixed 14-qubit, four-block configuration is eligible for promotion; max_steps is exposed solely for public profiling."
+    },
+    {
+      "task_id": "03",
+      "scale_probe": "Only the fixed 12-qubit, ten-layer configuration is eligible for promotion; max_steps is exposed solely for public diagnostics."
     }
   ],
   "cases": [
@@ -69,7 +73,16 @@
       "provenance": "Canonical public configuration from tasks/task-06/problem.md and tasks/task-06/evaluator/evaluate_6.py at commit 5af98f27b9404c513df8eee0f4568b1512edee19.",
       "expert_validation_status": "PASS",
       "expert_validation_report_sha256": "bdb7b985d6a0fa6bd6e7044816f9764e90b285fa9be0e6f07b79aa2587e9ff35"
+    },
+    {
+      "task_id": "03",
+      "case_id": "task-03-canonical-fixed-v1",
+      "path": "task-03/canonical.json",
+      "sha256": "1218007d6a736bcd28eea8fe66872d52f6ea6f854d5c8923ed6cb2d686324735",
+      "provenance": "Canonical public configuration from tasks/task-03/problem.md and tasks/task-03/evaluator/evaluate_3.py at commit d13e2591574cc1480507b00bcb33b0c6a48e6b99.",
+      "expert_validation_status": "PASS",
+      "expert_validation_report_sha256": "da63de7d86bd158adfd720b1cd2c3ed653fac05f97ea75c505297df65eb8ed22"
     }
   ],
-  "environment_note": "Task 06 coverage was validated in image sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833 with 6 CPUs, 7 GiB, no network, and the latest installed TensorCircuit-NG 1.8.0.dev20260726. Earlier task cases retain their original validation records."
+  "environment_note": "Task 03 coverage was validated in image sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833 with 6 CPUs, 7 GiB, no network, and the latest installed TensorCircuit-NG 1.8.0.dev20260726. Earlier task cases retain their original validation records."
 }
