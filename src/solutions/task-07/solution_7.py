@@ -137,21 +137,15 @@ def run_solution(config):
         p = optax.apply_updates(p, updates)
         return p, state, value
 
+    train_step = K.jit(train_step)
     opt_state = optimizer.init(params)
-
-    def scan_step(carry, _):
-        p, state = carry
-        p, state, value = train_step(p, state)
-        return (p, state), value
-
-    (params, opt_state), energy_history = K.jaxy_scan(
-        scan_step,
-        (params, opt_state),
-        K.arange(config["max_steps"]),
-    )
+    energy_history = []
+    for _ in range(config["max_steps"]):
+        params, opt_state, value = train_step(params, opt_state)
+        energy_history.append(value)
 
     final_trajectory_energies = batched_trajectories(params, status)
     return {
-        "energy_history": K.numpy(energy_history),
+        "energy_history": K.numpy(K.stack(energy_history)),
         "final_trajectory_energies": K.numpy(final_trajectory_energies),
     }
