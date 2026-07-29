@@ -6,7 +6,6 @@ materialized so the half-chain Renyi-2 profile is part of the differentiable
 loss. The solution returns only NumPy values consumed by evaluate_2.py.
 """
 
-import jax
 import numpy as np
 import optax
 
@@ -72,7 +71,8 @@ def apply_layer(circuit, layer_params, bonds, config):
 def renyi2_entropy(state, config):
     traceout = list(range(config["subsystem_size"], config["n_qubits"]))
     rho = tc.quantum.reduced_density_matrix(state, cut=traceout)
-    return tc.quantum.renyi_entropy(rho, k=2)
+    purity = K.real(K.sum(rho * K.conj(rho)))
+    return -K.real(K.log(purity))
 
 
 def block_states(params, input_state, config):
@@ -85,9 +85,11 @@ def block_states(params, input_state, config):
         apply_layer(circuit, block_params["odd"], odd, config)
         state = circuit.state()
 
-        return state, renyi2_entropy(state, config)
+        return state, state
 
-    return jax.lax.scan(block_step, input_state, params)
+    final_state, states = K.jaxy_scan(block_step, input_state, params)
+    entropies = K.vmap(lambda state: renyi2_entropy(state, config))(states)
+    return final_state, entropies
 
 
 def build_xxz_mvp(config):
@@ -140,29 +142,27 @@ def run_solution(config):
     def loss_fn(p):
         return observables(p, input_state, hamiltonian_mvp, config, target_entropies)
 
-    def train_step(p, state):
+    def train_step(carry, _):
+        p, state = carry
         (loss, aux), grads = K.value_and_grad(loss_fn, has_aux=True)(p)
         updates, state = optimizer.update(grads, state, p)
         p = optax.apply_updates(p, updates)
-        return p, state, loss, aux
-
-    train_step = K.jit(train_step)
-
-    energy_density_history = []
-    loss_history = []
-    entropy_mse_history = []
-    entropy_history = []
-    for _ in range(config["max_steps"]):
-        params, opt_state, loss, aux = train_step(params, opt_state)
         energy_density, entropies, entropy_mse = aux
-        energy_density_history.append(energy_density)
-        loss_history.append(loss)
-        entropy_mse_history.append(entropy_mse)
-        entropy_history.append(entropies)
+        return (p, state), (loss, energy_density, entropies, entropy_mse)
+
+    def train(carry):
+        return K.jaxy_scan(
+            train_step, carry, K.arange(config["max_steps"])
+        )
+
+    (_, _), history = K.jit(train)((params, opt_state))
+    loss_history, energy_density_history, entropy_history, entropy_mse_history = (
+        history
+    )
 
     return {
-        "energy_density_history": K.numpy(K.stack(energy_density_history)),
-        "loss_history": K.numpy(K.stack(loss_history)),
-        "entropy_mse_history": K.numpy(K.stack(entropy_mse_history)),
-        "entropy_history": K.numpy(K.stack(entropy_history)),
+        "energy_density_history": K.numpy(energy_density_history),
+        "loss_history": K.numpy(loss_history),
+        "entropy_mse_history": K.numpy(entropy_mse_history),
+        "entropy_history": K.numpy(entropy_history),
     }

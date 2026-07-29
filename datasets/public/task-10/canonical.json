@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "dataset_version": "orbitq-workloads-v20260729.3",
+  "tier": "public-development",
+  "task_id": "10",
+  "case_id": "task-10-canonical-fixed-v1",
+  "description": "Canonical Task 10 22-qubit VQE workload with an 18-qubit CMZ hyperedge.",
+  "input_config": {
+    "n_qubits": 22,
+    "selected_qubits": [
+      0,
+      1,
+      2,
+      4,
+      5,
+      6,
+      8,
+      9,
+      10,
+      12,
+      13,
+      14,
+      16,
+      17,
+      18,
+      19,
+      20,
+      21
+    ],
+    "initial_ones": [
+      1,
+      3,
+      5,
+      7,
+      9,
+      11,
+      13,
+      15,
+      17,
+      19,
+      21
+    ],
+    "n_layers": 2,
+    "max_steps": 200,
+    "learning_rate": 0.03,
+    "initial_parameter_scale": 0.08,
+    "zz_strength": 1.0,
+    "x_strength": 1.05,
+    "seed": 2040,
+    "minimum_energy_improvement": 0.001,
+    "exact_tol": 1e-07,
+    "exact_maxiter": 400,
+    "exact_ncv": 24,
+    "exact_lower_bound_tolerance": 1e-05,
+    "maximum_energy_density_gap": 0.25
+  },
+  "seed": 2040,
+  "randomness": "fixed NumPy default_rng seed 2040 for float32 parameter initialization",
+  "expected_result_contract": {
+    "energy_history": {
+      "shape": [
+        200
+      ],
+      "meaning": "Pre-update TFIM energy density for each of exactly 200 Adam updates."
+    },
+    "final_parameters": {
+      "shape": [
+        2,
+        22,
+        3
+      ],
+      "meaning": "RX, RZ, and RY angles after the 200th Adam update."
+    }
+  },
+  "functional_thresholds": {
+    "largest_gate_qubits": 18,
+    "minimum_energy_improvement": 0.001,
+    "exact_lower_bound_tolerance": 1e-05,
+    "maximum_energy_density_gap": 0.25,
+    "history_and_parameters_must_be_finite": true
+  },
+  "variation_support": {
+    "reduced_smoke_case": false,
+    "scale_probe": false,
+    "reason": "The campaign performance claim is restricted to the canonical two-layer, 200-update evaluator configuration; reduced runs are profiling aids rather than eligible workload records."
+  },
+  "source_provenance": {
+    "repository_commit": "7be259106c9dae899e5ea8f82c2251ca285640a4",
+    "problem_path": "tasks/task-10/problem.md",
+    "problem_sha256": "a5e96735db39f9b19c314c31fe1b6bc63a6b8c90ff5cd02b0d8f9a6b4df65584",
+    "evaluator_path": "tasks/task-10/evaluator/evaluate_10.py",
+    "evaluator_sha256": "0ab012597cfa79ec32ebc55bb28307c7b15309315f8057604760df5ad4be71db",
+    "expert_path": "references/task-10/solution_10.py",
+    "expert_sha256": "0e3266857e4faa8a4d65092b0e88c2866042d716cb0ef8a278633a4f30bb6172"
+  },
+  "expert_validation": {
+    "status": "PASS",
+    "validated_at_utc": "2026-07-29",
+    "engine": "docker",
+    "environment_image_id": "sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833",
+    "environment_lock_sha256": "cd5ac5cb2102ea7b40bd46dc81320cc59e0ce0671ab88c597f81d82b384a824b",
+    "environment_note": "The immutable expert passed in the available newer ORBIT-Q TensorCircuit-NG development image at 6 CPUs and 7 GiB with network disabled. This validates workload semantics only; pinned-lock performance promotion remains gated on rebuilding the benchmark image.",
+    "host_fingerprint_sha256": "c627504db97dc65b8d998afb4b9cdf73cfc3eff2ce2ac589b4a7a4aa0c7fdc48",
+    "evaluator_runtime_sec": 18.117244,
+    "initial_energy_density": 0.9718865752,
+    "final_energy_density": -1.1781760454,
+    "exact_ground_energy_density": -1.2925285569,
+    "vqe_energy_density_gap": 0.1143525115
+  }
+}
