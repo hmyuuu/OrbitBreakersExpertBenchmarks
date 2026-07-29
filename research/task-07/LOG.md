@@ -380,3 +380,40 @@ OMECo-1x1's 20.672377 seconds.
 
 Decision: `discard` without 50/100-step runs; greedy is 12.39% slower at the
 predeclared screen.
+
+## Experiment `e05`: joint TensorCircuit-state measurement rounds
+
+Branch: `codex/orbitbreakers/task-07/e05-batched-measurement-rounds`.
+
+Fresh hypothesis worktree:
+`/Users/qqy/Desktop/2026Project/ORBIT-Q-worktrees/orbitbreakers/task-07/e05-batched-measurement-rounds`.
+
+Parent commit: `e38891f` (accepted OMECo-1x1 plus greedy rejection evidence).
+
+### Hypothesis
+
+Before each eight-ancilla measurement round, one TensorCircuit `c.state()`
+contains the exact joint ancilla distribution. Sequentially condition that
+distribution with the same eight fixed uniforms and strict
+`status > p0` rule used by TensorCircuit `_unitary_kraus_template`, select and
+normalize the corresponding TensorCircuit state column, and continue the
+adaptive circuit from that collapsed state. This replaces eight separately
+contracted `cond_measure` probability networks per layer with one
+TensorCircuit state contraction while preserving the exact projective
+measurement law, bit order, fixed uniforms, feedback branches, and central
+TensorCircuit gate/state computation.
+
+### Frozen policy and numerical checks
+
+This is explicitly a higher-risk framework-native restructuring: JAX is used
+only to condition probabilities and select a column of a state computed by
+TensorCircuit; all quantum state evolution, gates, and Hamiltonian evaluation
+remain TensorCircuit APIs. Screen one step first. Initial and post-update
+trajectory-mean energies must be within `5e-3` of accepted e04a, all outputs
+must be finite, and memory must remain below 7 GiB. Continue to 50/100 steps
+only if the one-step runtime is below 20.672377 seconds. Retain only if both
+public workloads pass and canonical runtime is below 24.362414 seconds.
+
+### Result
+
+Pending.

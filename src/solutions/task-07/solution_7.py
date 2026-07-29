@@ -60,6 +60,30 @@ def make_one_trajectory(config):
         weights.append(-transverse_field)
     hamiltonian = tc.quantum.PauliStringSum2COO(pauli_strings, weights)
 
+    def measure_ancilla_register(c, status, offset):
+        # One TensorCircuit state contraction contains the complete joint
+        # ancilla distribution. Consume the same per-bit uniforms in the same
+        # order as sequential cond_measure, then rebuild the normalized branch.
+        state = K.reshape(c.state(), [2**n_data, 2**n_anc])
+        probabilities = K.sum(K.abs(state) ** 2, axis=0)
+        suffix = probabilities
+        bits = []
+        branch = K.cast(K.convert_to_tensor(0), "int32")
+        for a in range(n_anc):
+            suffix = K.reshape(suffix, [2, -1])
+            p0 = K.sum(suffix[0]) / K.sum(suffix)
+            bit = K.cast(status[offset + a] > p0, "int32")
+            bits.append(bit)
+            branch = 2 * branch + bit
+            suffix = K.gather1d(suffix, K.reshape(bit, [1]))[0]
+
+        column = K.gather1d(K.transpose(state), K.reshape(branch, [1]))[0]
+        norm = K.sqrt(K.sum(K.abs(column) ** 2))
+        ancilla = K.cast(K.onehot(branch, 2**n_anc), "complex64")
+        collapsed = K.reshape(column[:, None] * ancilla[None, :], [-1])
+        collapsed = collapsed / K.cast(norm + 1e-10, "complex64")
+        return tc.Circuit(n_qubits, inputs=collapsed), bits
+
     def energy_of_data(c):
         # The final Z-measured ancillas remain computational-basis states
         # under diagonal RZZ feedback, so exactly one ancilla column is
@@ -98,9 +122,9 @@ def make_one_trajectory(config):
             theta1 = params[pidx : pidx + n_anc]
             pidx += n_anc
 
+            c, bits = measure_ancilla_register(c, status, sidx)
             for a in range(n_anc):
-                anc = n_data + a
-                bit = c.cond_measure(anc, status=status[sidx])
+                bit = bits[a]
                 bitf = K.cast(bit, "float32")
                 feedback_theta = theta0[a] + bitf * (theta1[a] - theta0[a])
                 c.rz(
