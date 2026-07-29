@@ -161,6 +161,29 @@ profile already bounded 120 host dispatches to a small part of total runtime;
 the scan wrapper instead produced a small measured regression on this
 compilation-dominated workload.
 
+## Experiment `e04-expectation-reuse`
+
+Branch: `codex/orbitbreakers/task-04/e04-expectation-reuse`
+
+Hypothesis: on top of accepted probe VMAP, use TensorCircuit
+`DMCircuit.expectation(..., reuse=True)` so the framework contracts and caches
+the final density tensor once per probe before evaluating the 12 single-Z
+values and parity, instead of explicitly disabling reuse for every observable.
+
+Parent commit: `9f01883`
+
+Candidate file: `src/solutions/task-04/solution_4.py`
+
+Public dataset version: `orbitq-workloads-v20260729.1`
+
+Private evaluation used: `no`
+
+Pair-order pattern: odd accepted parent then candidate, even reverse
+
+Timeout: `300 seconds`
+
+Decision: pending.
+
 ## Result for `e02-probe-vmap`
 
 Candidate commit:
