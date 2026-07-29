@@ -347,3 +347,36 @@ final trajectory mean/std `-10.0331916809 / 0.0014021704`.
 
 Decision: `keep`. For the simplified graph, TreeSA 1x1 finds an adequate
 repeated contraction path while saving most of the timed search latency.
+
+## Experiment `e04b`: TensorNetwork greedy contractor
+
+Branch: `codex/orbitbreakers/task-07/e04-greedy`.
+
+Fresh hypothesis worktree:
+`/Users/qqy/Desktop/2026Project/ORBIT-Q-worktrees/orbitbreakers/task-07/e04-greedy`.
+
+Parent commit: `945430e`.
+
+### Hypothesis and frozen rule
+
+The built-in greedy contractor may eliminate nearly all path-search latency.
+Retain only if its one-step screen is faster than OMECo-1x1's
+`20.672377` seconds and energies remain within `1e-4`.
+
+### Result
+
+Candidate hypothesis commit: `834de2a4f8e06b23cc9555b7fee4c25ff843a053`.
+
+Candidate SHA-256:
+`96e2cd89224867352de887bec17058c43deb798a2e8200df670854a8538c3eda`.
+
+Candidate diff SHA-256:
+`080396317aee29749b4c075b18778756af94b6621f1c52c9daaba270575eddd1`.
+
+Sanitized record: `profiles/e04b-greedy-screen.json`.
+
+The physical comparison passed, but greedy required 23.234316 seconds versus
+OMECo-1x1's 20.672377 seconds.
+
+Decision: `discard` without 50/100-step runs; greedy is 12.39% slower at the
+predeclared screen.

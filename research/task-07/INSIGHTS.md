@@ -8,10 +8,10 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-Experiment `e02` combines e01's single native data-Hamiltonian evaluation with
-the exact measured-ancilla feedback reduction. Its canonical screen passes in
-33.546170 seconds versus the expert's 135.815605 seconds (4.0487x). This is
-provisional one-run evidence, not the final paired claim.
+Experiment `e04a` combines one native data-Hamiltonian evaluation, exact
+measured-ancilla feedback reduction, and OMECo 1x1 path search. Its canonical
+screen passes in 24.362414 seconds versus the expert's 135.815605 seconds
+(5.5757x). This is provisional one-run evidence, not the final paired claim.
 
 ## Preserved semantics
 
@@ -62,6 +62,8 @@ provisional one-run evidence, not the final paired claim.
 - Whole-training `K.jaxy_scan` is correct but slower after e02: 36.747 versus
   33.546 seconds for 100 steps and 34.917 versus 31.300 seconds for 50.
   Control-flow compilation outweighs only 100 cached-JIT host dispatches.
+- TensorNetwork greedy takes 23.234 seconds for the frozen one-step screen,
+  12.39% slower than OMECo 1x1, so it was discarded before full training.
 
 ## Contractor result
 
@@ -82,10 +84,6 @@ provisional one-run evidence, not the final paired claim.
 
 ## Open hypotheses
 
-- Single native sparse-Hamiltonian evaluation (`e01`, highest priority).
-- Exact feedback-node reduction (`e02`).
-- Whole-training scan (`e03`).
-- OMECo budget sweep after the graph is simplified (`e04`).
 - More aggressive measurement-round state reuse (`e05`, higher policy and
   numerical risk).
 
