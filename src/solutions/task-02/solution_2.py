@@ -6,7 +6,6 @@ materialized so the half-chain Renyi-2 profile is part of the differentiable
 loss. The solution returns only NumPy values consumed by evaluate_2.py.
 """
 
-import jax
 import numpy as np
 import optax
 
@@ -88,7 +87,7 @@ def block_states(params, input_state, config):
 
         return state, state
 
-    final_state, states = jax.lax.scan(block_step, input_state, params)
+    final_state, states = K.jaxy_scan(block_step, input_state, params)
     entropies = K.vmap(lambda state: renyi2_entropy(state, config))(states)
     return final_state, entropies
 

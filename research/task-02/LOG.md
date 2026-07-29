@@ -184,3 +184,115 @@ SHA-256:
 
 Decision: `keep`. Whole-training `K.jaxy_scan` is the first accepted parent
 and removes about 3.41% of end-to-end runtime in this session.
+
+## Consolidated independent-factor records
+
+The following experiments ran on isolated branches. They are appended here
+after completion so the final branch retains both successful and negative
+evidence without promoting discarded code.
+
+### Experiment `e01-gate-fusion`
+
+Parent commit: `77939b1`. Candidate SHA-256:
+`76917fc2292984b0102dda14ceb3b873f4ca55779554d29f2fa887ffd2f3f214`.
+
+Hypothesis: replace all exact `RY -> RZ` pairs and commuting
+`RXX -> RYY -> RZZ` triples with one differentiable TensorCircuit unitary,
+reducing circuit applications from 243 to 105 without tying parameters.
+
+The final audit passed: local matrix error `1.33e-7`, state error `3.07e-7`,
+loss error `2.38e-7`, gradient error `7.45e-8`, and post-update physical
+output error `5.36e-7`. The raw Adam parameter difference (`3.63e-4`) came
+from near-zero-gradient sensitivity and did not alter observables. Audit
+report SHA-256:
+`0c389fba34386ab57904a833d90f1192fe174515bfc5c928e27f44fb1e670a33`.
+
+Six pairs: reference/candidate means `4.659226/4.825325 s`, `0/6` wins,
+mean paired speedup `0.965849x`, 95% interval
+`[0.946219x, 0.985478x]`. Raw report SHA-256:
+`1804ebe44515690e1985411b16a51153aa6ddb88ec8a6c964d4d90fe0c365ce9`.
+
+Decision: `discard`. Dynamic trigonometric and matrix assembly outweighed the
+smaller gate-application count.
+
+### Experiment `e03-purity`
+
+Parent: accepted scan. Candidate SHA-256:
+`ab560235d23e2dcd5256467f1dba03bb4eee7d675250ccf9054c3d8a670c508e`.
+
+Hypothesis: use the exact Hermitian identity
+`trace(rho @ rho) = sum(rho * conj(rho))`, removing three 64-by-64 matrix
+products per loss.
+
+The audit passed with gradient error `1.70e-8` and maximum 12-step history
+error `1.25e-6`. Six pairs: parent/factor means
+`4.591056/4.491962 s`, `5/6` wins, mean paired speedup `1.024675x`, 95%
+interval `[0.961881x, 1.087470x]`. Raw report SHA-256:
+`cccabf99871f8fe7d62ac42fdedd6d77394157fdd41a490ff42f324104565184`.
+
+Decision: `discard_inconclusive`; the interval crosses one.
+
+### Experiment `e04-sparse-xxz`
+
+Parent: accepted scan. Candidate SHA-256:
+`c5997e6147212271ec45321880a14d696849a6436fb99f16a02b72fc42992942`.
+
+Hypothesis: replace 45 termwise MVP traces with TensorCircuit
+`PauliStringSum2COO(..., numpy=True)` plus `K.sparse_dense_matmul`.
+
+The audit passed with Hamiltonian-action error `1.67e-5`, gradient error
+`3.91e-8`, and maximum 12-step history error `1.19e-6`. Six pairs:
+parent/factor means `4.296697/4.417261 s`, `2/6` wins, mean paired speedup
+`0.972882x`, 95% interval `[0.947782x, 0.997981x]`. Raw report SHA-256:
+`8bfba5d0d90cde8ddb571e38d975044e5ea50001e9581a1a617a13fe9bca6c12`.
+
+Decision: `discard`. For this 12-qubit, 45-term workload the native sparse
+construction/kernel is slower than the current termwise MVP.
+
+### Experiment `e05-packed-params`
+
+Parent: accepted scan. Candidate SHA-256:
+`895ede0c511e60221400a85066b036ab57fce683df614a2cabb389e928826b70`.
+
+Hypothesis: pack ten parameter leaves into one `(3, 81)` tensor to shrink scan
+carry, Optax state, PyTree bookkeeping, and the compiled graph.
+
+The audit was bit-identical for initialization, loss, auxiliary values,
+gradient, and four 12-step histories. Six pairs: parent/factor means
+`4.592900/10.730835 s`, `0/6` wins, mean paired speedup `0.428014x`, 95%
+interval `[0.411501x, 0.444527x]`. Raw report SHA-256:
+`b24d2fbeb2094e23f2353b94a71896dc6b1f506bf6eea600b14536aa7d7617fb`.
+
+Decision: `discard`. Static unpack slices add costly gather/scatter autodiff;
+the original ten-leaf PyTree is substantially better.
+
+### Experiment `e06-entropy-vmap`
+
+Parent: accepted scan. Candidate SHA-256:
+`c9c7840740152f03f23ddbc50379098847508007288da397ecf592952204cdb2`.
+
+Hypothesis: return all three checkpoint states, then apply unchanged
+TensorCircuit reduced-density-matrix Renyi-2 kernels through `K.vmap`.
+
+The audit passed with gradient error `1.86e-8` and maximum 12-step history
+error `8.34e-7`. Six pairs: parent/factor means
+`4.765934/4.572339 s`, `5/6` wins, mean paired speedup `1.046783x`, 95%
+interval `[0.985861x, 1.107705x]`. Raw report SHA-256:
+`a43cd8242d76503057c88e4de2ee7b702965ecf89c41643b21ba4d8664d13a97`.
+
+Decision: `discard_inconclusive`. It is not retained alone; E07 separately
+predeclared and measured the changed shared kernel formed by combining this
+factor with exact Frobenius purity.
+
+## Final TensorCircuit-native normalization
+
+After factor selection, the inner block scan was changed from direct
+`jax.lax.scan` to TensorCircuit backend `K.jaxy_scan`, and the now-unused
+direct JAX import was removed. In the installed backend this is a thin
+framework-native delegation to the same JAX primitive, so it is a fidelity
+normalization rather than a separately claimed speedup factor. The final
+source SHA-256 before confirmation is:
+`aef3652f8d80ec6f3e414f9496295b8b852db2b256ec414f4146b3a636485b30`.
+
+The full E07 equivalence audit and final immutable-reference timing are rerun
+after this normalization; no earlier factor result is reused as final timing.

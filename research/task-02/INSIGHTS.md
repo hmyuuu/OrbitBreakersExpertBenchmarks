@@ -8,10 +8,12 @@ Evidence ledger: [`LOG.md`](LOG.md)
 
 ## Current best
 
-Whole-training TensorCircuit `K.jaxy_scan`, source SHA-256
-`6e44df512170e071655eee7697f7a0c084704dd34c266f441b2755cb1f29bc1a`,
-is the accepted parent. Its six-pair mean speedup is `1.035580x`, 95%
-Student-t interval `[1.010063x, 1.061098x]`, with `6/6` wins.
+The accepted implementation combines whole-training TensorCircuit
+`K.jaxy_scan` with batched checkpoint states and exact Frobenius purity.
+Against the scan-only parent, the entropy combination achieved `1.074457x`
+mean paired speedup, 95% interval `[1.044174x, 1.104740x]`, and `6/6` wins.
+The final immutable-reference comparison is recorded separately after source
+freeze.
 
 ## Preserved semantics
 
@@ -46,20 +48,36 @@ Profile: [`profiles/reference-profile.json`](profiles/reference-profile.json).
 - Whole-training `K.jaxy_scan` preserved the four 12-step histories
   bit-for-bit and reduced canonical mean runtime from `4.724217` to
   `4.563051 s` in its six-pair session.
+- Returning all three block checkpoints and batching the exact
+  `-log(sum(rho * conj(rho)))` calculation with `K.vmap` produced a further
+  `1.074457x` paired gain over scan-only, with its confidence interval wholly
+  above one.
+- The combination result is not attributed to either subfactor alone:
+  `K.vmap` alone (`1.046783x`) and Frobenius purity alone (`1.024675x`) both
+  had wide intervals crossing one. The confirmed unit is their shared kernel.
 
 ## What did not work
 
-No candidate result yet.
+- Exact local gate fusion reduced the gate-application count but regressed to
+  `0.965849x`; dynamic trigonometry and matrix assembly cost more than the
+  saved applications.
+- TensorCircuit sparse XXZ action regressed to `0.972882x`; the 45-term
+  termwise MVP is preferable at this size.
+- Packing the ten-leaf PyTree into one tensor was bit-exact but collapsed to
+  `0.428014x` due to slice/gather/scatter compile and autodiff overhead.
+- Frobenius purity alone and checkpoint `K.vmap` alone were inconclusive and
+  are not claimed independently.
 
 ## Open hypotheses
 
-1. exact Frobenius-purity Renyi-2 evaluation on the scan parent;
-2. TensorCircuit-native sparse XXZ action on the accepted parent;
-3. final leave-one-factor-out checks for every retained mechanism.
+1. final immutable-reference six-pair confirmation;
+2. larger-qubit scaling, which is outside this frozen workload;
+3. future TensorCircuit compiler changes that may alter the discarded
+   gate-fusion or sparse-kernel tradeoffs.
 
 ## Evidence limits
 
 Evidence covers only the canonical public Task 02 configuration, one latest
-TensorCircuit-NG image, and one 6-CPU/7-GiB same-host profile. It establishes
-a small paired improvement over the bundled expert, not global SOTA or
-scaling.
+TensorCircuit-NG image, and one 6-CPU/7-GiB same-host profile. It does not
+establish global SOTA or scaling. End-to-end differences include cold import,
+tracing, compilation, 500 updates, synchronization, and conversion.
