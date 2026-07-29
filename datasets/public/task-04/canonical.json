@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "dataset_version": "orbitq-workloads-v20260729.1",
+  "tier": "public-development",
+  "task_id": "04",
+  "case_id": "task-04-canonical-fixed-v1",
+  "description": "Canonical fixed Task 04 trainable asymmetric Kraus-channel calibration workload.",
+  "input_config": {
+    "n_qubits": 12,
+    "entangler_angle": 0.31,
+    "true_p01": 0.034,
+    "true_p10": 0.011,
+    "initial_p01": 0.07,
+    "initial_p10": 0.04,
+    "max_steps": 120,
+    "learning_rate": 0.04,
+    "probability_absolute_tolerance": 0.0002
+  },
+  "seed": null,
+  "randomness": "none",
+  "expected_result_contract": {
+    "loss_history": {
+      "shape": [
+        120
+      ],
+      "meaning": "Pre-update mean-squared observable loss for each of exactly 120 Adam updates."
+    },
+    "final_probabilities": {
+      "shape": [
+        2
+      ],
+      "meaning": "Fitted asymmetric transition probabilities [p01, p10]."
+    },
+    "fitted_expectations": {
+      "shape": [
+        4,
+        13
+      ],
+      "meaning": "Final single-site Z and full-chain parity expectations for four fixed probe circuits."
+    }
+  },
+  "functional_thresholds": {
+    "loss_must_improve": true,
+    "probability_absolute_tolerance": 0.0002,
+    "trace_preserving_error_maximum": 1e-08
+  },
+  "variation_support": {
+    "reduced_smoke_case": false,
+    "scale_probe": false,
+    "reason": "The public Task 04 contract fixes 12 qubits, four probes, two brickwork sublayers, and exactly 120 Adam updates; altered sizes are diagnostics only."
+  },
+  "source_provenance": {
+    "repository_commit": "dc84f6a38d44cad8c0fd46f788ecbe135f43440d",
+    "problem_path": "tasks/task-04/problem.md",
+    "problem_sha256": "8724b467812e5fca2be6f8c6b6157e9e083fd1b318149577d54fe4337f41f4ea",
+    "evaluator_path": "tasks/task-04/evaluator/evaluate_4.py",
+    "evaluator_sha256": "7f7e215064695ba3d0a0f5fb4883d78f7d225b2b7a79db70cdf3a0f3228314c5",
+    "expert_path": "references/task-04/solution_4.py",
+    "expert_sha256": "04e37b73e7246599ed3eb8f65e38bb7e084db7aab511d7af3b20baa0867b21ae"
+  },
+  "expert_validation": {
+    "status": "PASS",
+    "validated_at_utc": "2026-07-29T07:56:11Z",
+    "environment_image_id": "sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833",
+    "host_fingerprint_sha256": "c627504db97dc65b8d998afb4b9cdf73cfc3eff2ce2ac589b4a7a4aa0c7fdc48",
+    "evaluator_runtime_sec": 15.250249,
+    "final_p01": 0.03403889,
+    "final_p10": 0.01104028,
+    "initial_loss": 0.0070707812,
+    "final_loss": 2.53985082e-08,
+    "report_sha256": "be8696214fa5c170398cd7a57bb3df56a476e658ebca5c99f8ec7a487735ff16",
+    "summary_sha256": "ed91414e8ae956f4a4cca3ec0a9db60c2c739cde4f39be058843c7f1ff3e324b",
+    "stdout_sha256": "46f76e517916e871e9c61a7f7e8ad3406ed7010f673b0833eca5978c5a4698d6"
+  }
+}
