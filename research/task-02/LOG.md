@@ -105,3 +105,25 @@ improvement is claimed without matched candidate pairs.
 
 Append corrections below this heading. Never rewrite an earlier result after
 it has informed another experiment.
+
+## Experiment `e02-training-scan`
+
+Branch: `codex/orbitbreakers/task-02/e02-training-scan`
+
+Parent commit: `77939b1`
+
+Hypothesis: carrying parameters and Optax state through one TensorCircuit
+`K.jaxy_scan`, compiled by `K.jit`, will preserve all 500 sequential updates
+and pre-update histories while removing 500 Python-to-device dispatches.
+
+Permitted data: public Task 02 artifacts and tracked reference profile only.
+No hidden/private evaluation.
+
+Candidate SHA-256:
+`6e44df512170e071655eee7697f7a0c084704dd34c266f441b2755cb1f29bc1a`.
+
+Candidate diff SHA-256:
+`9b590f4cb193a39327b38165bcd255f3e051f5eb76d495b141194ebefbcbe1d8`.
+
+Pre-evaluation correctness rule: all four 12-step pre-update histories must
+match the immutable expert within `2e-4` and retain identical shapes.

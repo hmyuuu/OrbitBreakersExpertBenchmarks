@@ -140,29 +140,27 @@ def run_solution(config):
     def loss_fn(p):
         return observables(p, input_state, hamiltonian_mvp, config, target_entropies)
 
-    def train_step(p, state):
+    def train_step(carry, _):
+        p, state = carry
         (loss, aux), grads = K.value_and_grad(loss_fn, has_aux=True)(p)
         updates, state = optimizer.update(grads, state, p)
         p = optax.apply_updates(p, updates)
-        return p, state, loss, aux
-
-    train_step = K.jit(train_step)
-
-    energy_density_history = []
-    loss_history = []
-    entropy_mse_history = []
-    entropy_history = []
-    for _ in range(config["max_steps"]):
-        params, opt_state, loss, aux = train_step(params, opt_state)
         energy_density, entropies, entropy_mse = aux
-        energy_density_history.append(energy_density)
-        loss_history.append(loss)
-        entropy_mse_history.append(entropy_mse)
-        entropy_history.append(entropies)
+        return (p, state), (loss, energy_density, entropies, entropy_mse)
+
+    def train(carry):
+        return K.jaxy_scan(
+            train_step, carry, K.arange(config["max_steps"])
+        )
+
+    (_, _), history = K.jit(train)((params, opt_state))
+    loss_history, energy_density_history, entropy_history, entropy_mse_history = (
+        history
+    )
 
     return {
-        "energy_density_history": K.numpy(K.stack(energy_density_history)),
-        "loss_history": K.numpy(K.stack(loss_history)),
-        "entropy_mse_history": K.numpy(K.stack(entropy_mse_history)),
-        "entropy_history": K.numpy(K.stack(entropy_history)),
+        "energy_density_history": K.numpy(energy_density_history),
+        "loss_history": K.numpy(loss_history),
+        "entropy_mse_history": K.numpy(entropy_mse_history),
+        "entropy_history": K.numpy(entropy_history),
     }
