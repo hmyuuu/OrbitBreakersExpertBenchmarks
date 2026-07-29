@@ -222,6 +222,12 @@ Reproduction and sanitized measurements:
 - [`profiles/ablation-no-scan-five-pair.json`](profiles/ablation-no-scan-five-pair.json)
 - [`profiles/ablation-unfused-rotations-five-pair.json`](profiles/ablation-unfused-rotations-five-pair.json)
 
+![Task 10 five-pair factor-ablation plots](figures/factor-ablation.svg)
+
+Each line is one matched pair; pair numbers are labeled at the ablation end.
+The figure is generated directly from the two tracked JSON records with
+[`plot_factor_ablation.py`](plot_factor_ablation.py).
+
 ## Environment and reproducibility
 
 The final paired campaign used the latest TensorCircuit nightly image already
