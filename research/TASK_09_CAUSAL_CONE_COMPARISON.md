@@ -495,20 +495,45 @@ The candidate therefore keeps the simpler string representation.
 
 ## Attribution limits and next checks
 
-The final timing measures cone extraction, coordinate packing, separation, and
-`lax.scan` together. We did not measure independent full-size ablations for
-packing, grouping, or scan, so the evidence does not assign a speedup to any
-one of those changes.
+The original final timing measures cone extraction, coordinate packing,
+separation, and scan together. It must not be quoted as though every bullet
+independently contributes `3.82x`. Available removal and follow-up screens now
+separate several factors:
+
+| Factor | Ablation evidence | Contribution conclusion |
+|---|---|---|
+| Explicit pre-construction causal cones | 3,897 gates become 74 and 80; final six-pair candidate is `3.82x` over the expert | Dominant structural factor, but its percentage is coupled to the compact TensorCircuit graph. |
+| Inner `enable_lightcone=True` | Removing it after explicit pruning exceeded 300 s | Independently necessary; explicit pruning and framework cancellation solve different costs. |
+| Pre-resolved gate methods | Six pairs: `9.395 s` vs `8.726 s`, mean paired ratio `0.9385x` | Negative contribution; rejected. |
+| One combined 154-coordinate loss | Three pairs: `7.722 s` vs `7.139 s`, `-8.16%`, 0/3 wins | Group separation is beneficial for this graph; combining losses is worse. |
+| Threaded submission of the two groups | Three pairs: `6.900 s` vs `7.447 s`, `+7.34%`, bitwise history | Promising follow-up, not part of this PR's measured candidate. |
+| Manual single-qubit run fusion | Six pairs: `1.0197x`, 95% t-CI `[0.9692, 1.0702]`, 3/6 wins | No resolved contribution; rejected. |
+
+The remaining unisolated pieces are active-coordinate packing and
+whole-training scan. Packing reduces optimizer arrays from 3,897 to 154
+coordinates, a `25.3x` storage/elementwise-work reduction, but no independent
+end-to-end percentage is claimed. The scan likewise remains bundled with the
+compact optimizer graph. This explicit limit is preferable to assigning the
+full `3.82x` to either one.
+
+![Task 09 factor-ablation plots](task-09/figures/factor-ablation.svg)
+
+The figure separates structural graph reduction, measured removal/follow-up
+screens, and the inner light-cone timeout. Packing and scan intentionally have
+no invented bars because no clean independent timing exists. Regenerate with
+[`task-09/plot_factor_ablation.py`](task-09/plot_factor_ablation.py).
 
 The comparison covers the deterministic public Task 09 configuration on one
 host and one pinned image. A follow-up performance report should run at least
 six counterbalanced pairs and report the mean, median, standard error, pair
-wins, and paired-speedup confidence interval. Separate ablations could then
-measure:
+wins, and paired-speedup confidence interval. The two still-useful clean
+ablations are:
 
 - compact cones with full optimizer coordinates;
-- packed coordinates with a Python optimizer loop;
-- one combined 154-coordinate loss instead of two disjoint scans.
+- packed coordinates with a Python optimizer loop.
+
+Post-PR screen data are preserved in
+[`task-09/profiles/post-pr-factor-screens.json`](task-09/profiles/post-pr-factor-screens.json).
 
 ## Provenance
 
@@ -523,3 +548,49 @@ measure:
 | JAX/JAXLIB | `0.10.0` |
 | CPU and memory limits | 8 CPUs, 9 GiB |
 | Evaluator timeout | 300 seconds |
+
+## Follow-up: TC-native APIs + six-pair local remeasure (2026-07-28)
+
+Branch: `cursor/task-09-tc-native-remeasure-f598`
+
+Style-only execution change relative to the merged compact-cone candidate:
+replace direct `import jax` / `jax.lax.scan` with TensorCircuit backend
+primitives `K.jit` and `K.jaxy_scan`. The cone extraction, active-parameter
+packing, disjoint-group Adam protocol, and module docstring are unchanged.
+
+Candidate SHA-256:
+`4f95bc939b89c9a1810c7c3e8c8195df11a3d754022bb539004acfd070a76efa`
+
+Host fingerprint matches the Task 11/12 local campaigns
+(`748423c1790b38ddbdd8eb77499b222a173b313f350e3bc35402ee8889a49dc4`;
+4 vCPU, pinned `envs/tensorcircuit-py311/requirements.lock`,
+`--engine local`, no Docker daemon).
+
+Command:
+
+```bash
+./bench run 9 --solution optimized --compare-to reference --repeat 6 \
+  --engine local --timeout 300 \
+  --output results/task-09-tc-native-pairs-local
+```
+
+Immutable report SHA-256:
+`8199194e197ebae969a51b454620afcc95ececf0dc2b9e78107ff5de2aaf0cba`
+
+Summary SHA-256:
+`60c858f0d36df7fa84c1b2d77ce8544642337671e10de640ef1e8ddd29046dff`
+
+```text
+terminal_status: SUCCESS x 12
+valid: 12/12
+passing_pairs: 6/6
+reference_mean_runtime_sec: 33.503727
+candidate_mean_runtime_sec: 8.766516
+speedup: 3.821725
+speedup_stderr: 0.035825
+paired_speedup_ci_low: 3.729633
+paired_speedup_ci_high: 3.913817
+```
+
+Decision: `keep` as a TC-native refresh of the merged candidate. The formal
+Docker Gate-3 promotion protocol remains deferred on this host.
