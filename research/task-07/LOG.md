@@ -185,3 +185,36 @@ metric is discontinuously sensitive at zero gradient. It remains visible as
 a failed diagnostic. Subsequent candidates will predeclare post-update
 energy/trajectory checks as the physical one-update criterion while continuing
 to report gradient errors and any parameter differences.
+
+## Experiment `e02`: measured-ancilla feedback reduction
+
+Branch: `codex/orbitbreakers/task-07/e02-feedback-rz`.
+
+Fresh hypothesis worktree:
+`/Users/qqy/Desktop/2026Project/ORBIT-Q-worktrees/orbitbreakers/task-07/e02-feedback-rz`.
+
+Parent commit: `2e5cd61` (accepted e01 code and complete provisional evidence).
+
+### Hypothesis
+
+After `cond_measure`, ancilla `a` is the Z eigenstate with eigenvalue
+`1-2*bit`. Therefore the selected
+`RZZ(theta_bit)` on `(ancilla_a, data_a)` is exactly
+`RZ((1-2*bit)*theta_bit)` on the data qubit, with the ancilla unchanged.
+Replacing all 16 generic selected two-qubit tensors with those native
+TensorCircuit `RZ` gates reduces graph/path/gradient work without changing
+any measurement, selected parameter, branch state, or observable.
+
+### Pre-run frozen checks
+
+The exact two-branch gate identity will be checked at complex64 precision.
+The physical one-step criteria are initial energy absolute error at most
+`5e-5` versus accepted e01 and post-update final-trajectory mean absolute
+error at most `1e-4`; the strict parameter maximum remains diagnostic only.
+Both the public 50-step and canonical 100-step evaluators must pass. A
+candidate is retained only if its canonical screen is faster than e01's
+61.396553 seconds.
+
+### Result
+
+Pending. Append all screens and failures.

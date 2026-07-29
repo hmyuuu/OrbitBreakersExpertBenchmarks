@@ -101,11 +101,11 @@ def make_one_trajectory(config):
             for a in range(n_anc):
                 anc = n_data + a
                 bit = c.cond_measure(anc, status=status[sidx])
-                c.conditional_gate(
-                    bit,
-                    [tc.gates.rzz(theta=theta0[a]), tc.gates.rzz(theta=theta1[a])],
-                    anc,
+                bitf = K.cast(bit, "float32")
+                feedback_theta = theta0[a] + bitf * (theta1[a] - theta0[a])
+                c.rz(
                     a,
+                    theta=(1.0 - 2.0 * bitf) * feedback_theta,
                 )
                 sidx += 1
 
