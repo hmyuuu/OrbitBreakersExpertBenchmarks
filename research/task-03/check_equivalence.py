@@ -82,6 +82,31 @@ def main():
     cand_updates, cand_opt = optimizer.update(cand_grad, cand_opt, params)
     ref_next = optax.apply_updates(params, ref_updates)
     cand_next = optax.apply_updates(params, cand_updates)
+    material_update_error = 0.0
+    worst_update = None
+    for parity in ("even", "odd"):
+        for gate in ("rx", "xx", "zz"):
+            rg = np.asarray(ref_grad[parity][gate])
+            cg = np.asarray(cand_grad[parity][gate])
+            rp = np.asarray(ref_next[parity][gate])
+            cp = np.asarray(cand_next[parity][gate])
+            difference = np.abs(rp - cp)
+            index = np.unravel_index(np.argmax(difference), difference.shape)
+            if worst_update is None or difference[index] > worst_update["error"]:
+                worst_update = {
+                    "leaf": f"{parity}.{gate}",
+                    "index": [int(value) for value in index],
+                    "error": float(difference[index]),
+                    "reference_gradient": float(rg[index]),
+                    "candidate_gradient": float(cg[index]),
+                }
+            material = np.maximum(np.abs(rg), np.abs(cg)) > 1e-7
+            if np.any(material):
+                material_update_error = max(
+                    material_update_error, float(np.max(difference[material]))
+                )
+    ref_after_loss, ref_after_aux = reference_loss(ref_next)
+    cand_after_loss, cand_after_aux = candidate_loss(cand_next)
 
     ref_history = reference.run_solution(CONFIG)
     cand_history = candidate.run_solution(CONFIG)
@@ -113,6 +138,15 @@ def main():
         ),
         "gradient_max_abs_error": max_tree_error(ref_grad, cand_grad),
         "one_adam_update_max_abs_error": max_tree_error(ref_next, cand_next),
+        "one_adam_update_material_gradient_max_abs_error": material_update_error,
+        "worst_update_location": worst_update,
+        "post_update_loss_abs_error": float(
+            np.abs(np.asarray(ref_after_loss) - np.asarray(cand_after_loss))
+        ),
+        "post_update_aux_max_abs_error": max(
+            float(np.abs(np.asarray(a) - np.asarray(b)))
+            for a, b in zip(ref_after_aux, cand_after_aux)
+        ),
         "optimizer_state_max_abs_error": max_tree_error(ref_opt, cand_opt),
         "history_max_abs_error": history_errors,
         "thresholds": {

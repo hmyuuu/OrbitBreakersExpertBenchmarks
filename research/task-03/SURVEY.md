@@ -67,7 +67,7 @@ exactly 300 sequential Adam updates.
 
 Every candidate must preserve:
 
-- 12 logical qubits, ten alternating layers, all 170 independent float32
+- 12 logical qubits, ten alternating layers, all 230 independent float32
   parameters, seed 2027, and complex64 TensorCircuit semantics;
 - the gate order `RXX -> RZZ -> RX`, all zero-outcome post-selections, and
   normalization after each measurement event;
