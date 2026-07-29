@@ -134,6 +134,22 @@ Candidate source SHA-256:
 Candidate source-diff SHA-256:
 `ad7f082c18273b9f8c67cab5aef8477983791011261bb604ea62f6768d3a3fcf`.
 
+The 12-step audit passed: initial loss error `0`, auxiliary maximum error
+`2.981e-7`, gradient maximum error `1.211e-8`, and maximum history error
+`1.073e-6`. Audit report SHA-256:
+`107c59ce1785ee9ada91e061d01970f1522ea73f3d8fe3efea37c03138d06b53`.
+
+Six direct parent/factor pairs all passed. Parent/factor means were
+`4.531128/4.218862 s`; factor wins `6/6`; mean paired speedup `1.074457x`,
+95% Student-t interval `[1.044174x, 1.104740x]`. The runner roles were
+intentionally reversed so its registered `optimized` source was the factor;
+the tracked report normalizes every ratio as parent/factor. Raw report
+SHA-256:
+`6dd10f3c24054668734022000058391c192c87f0554d404a6d3b7d61593ee07e`.
+
+Decision: `keep`. The shared-kernel combination passes the confidence rule
+although each predeclared subfactor was inconclusive alone.
+
 ## Experiment `e02-training-scan`
 
 Branch: `codex/orbitbreakers/task-02/e02-training-scan`
