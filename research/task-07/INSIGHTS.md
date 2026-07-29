@@ -63,6 +63,12 @@ provisional one-run evidence, not the final paired claim.
   33.546 seconds for 100 steps and 34.917 versus 31.300 seconds for 50.
   Control-flow compilation outweighs only 100 cached-JIT host dispatches.
 
+## Contractor result
+
+- After simplifying the graph, OMECo 32x32 over-searches. The 1x1 budget
+  lowers the passing canonical screen from 33.546 to 24.362 seconds and the
+  50-step screen from 31.300 to 21.473 seconds without hurting convergence.
+
 ## High-confidence exact identities
 
 - Final ancillas factor from the data state because the last operation that

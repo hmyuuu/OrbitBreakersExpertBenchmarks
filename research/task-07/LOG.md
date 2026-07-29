@@ -322,4 +322,28 @@ energies remain within `1e-4`.
 
 ### Result
 
-Pending.
+Candidate hypothesis commit: `1eb52b206dacd848dd8efae29473415c1e37d3b0`.
+
+Candidate SHA-256:
+`0cd9676dc904660597a2f7dd6981fdac596295e4eae99510a3f4f21671859592`.
+
+Candidate diff SHA-256:
+`673f016863a7b777669c83dc399753004ebb19e8bc6f49003259699666d438d3`.
+
+Sanitized record: `profiles/e04a-omeco-1x1-screen.json`.
+
+```text
+max_steps=1:   e02/32x32 29.918828 s, 1x1 20.672377 s
+max_steps=50:  reference 91.540316 s, 1x1 21.473078 s, PASS
+max_steps=100: reference 135.815605 s, e02/32x32 33.546170 s,
+               1x1 24.362414 s, PASS
+canonical 1x1/reference single-screen speedup: 5.5757x
+```
+
+Initial and one-step post-update trajectory-mean differences from e02 are
+`4.77e-7` and `5.19e-5`, within the frozen `1e-4` rule. The canonical run
+passes with final history `-10.0276298523`, improvement `3.1813645363`, and
+final trajectory mean/std `-10.0331916809 / 0.0014021704`.
+
+Decision: `keep`. For the simplified graph, TreeSA 1x1 finds an adequate
+repeated contraction path while saving most of the timed search latency.
