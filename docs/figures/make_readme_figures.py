@@ -328,8 +328,8 @@ def expert_optimization_runtime_bars():
 
 
 def factor_ablation_overview():
-    # Direct parent comparisons from the task-level reports. Values are
-    # incremental speedups and must not be multiplied across rows.
+    # Task-specific incremental or diagnostic comparisons from the reports.
+    # Values from separate rows must not be multiplied.
     panels = [
         (
             "01",
@@ -378,9 +378,9 @@ def factor_ablation_overview():
             "06",
             [
                 ("Native jaxode", 1.529, True, None),
-                ("Euler fusion", 1.152, True, None),
+                ("Euler cold compile", 1.152, True, "1.152×*"),
                 ("Automatic dt0", 1.001, False, None),
-                ("Sparse BCOO", 0.295, False, None),
+                ("BCOO microbench", 0.295, False, "0.295×*"),
             ],
         ),
         (
@@ -420,17 +420,17 @@ def factor_ablation_overview():
         (
             "11",
             [
-                ("Onsite vector", 81.215, True, None),
-                ("Batched Pade", 1.695, True, None),
-                ("Training scan", 1.158, True, None),
+                ("Onsite vector", 81.215, True, "81.215×*"),
+                ("Batched Pade", 1.695, True, "1.695×*"),
+                ("Training scan", 1.158, True, "1.158×*"),
             ],
         ),
         (
             "12",
             [
-                ("Batched Pade", 3.109, True, None),
+                ("Pade kernel", 3.109, True, "3.109×*"),
                 ("Cold training scan", 1.083, True, None),
-                ("Pair fusion", 1.093, False, None),
+                ("Pair fusion", 1.093, True, None),
             ],
         ),
     ]
@@ -485,7 +485,7 @@ def factor_ablation_overview():
 
     fig.legend(
         handles=[
-            Patch(facecolor=keep_color, edgecolor="#222222", label="retained"),
+            Patch(facecolor=keep_color, edgecolor="#222222", label="supported"),
             Patch(facecolor=reject_color, edgecolor="#222222", label="rejected / unresolved"),
         ],
         loc="upper center",
@@ -494,16 +494,16 @@ def factor_ablation_overview():
         bbox_to_anchor=(0.5, 0.965),
     )
     fig.suptitle(
-        "Factor ablations for all twelve expert-optimization campaigns",
+        "Factor evidence for all twelve expert-optimization campaigns",
         y=0.995,
         fontsize=12,
     )
     fig.text(
         0.5,
         0.005,
-        "Direct-parent speedup (log scale; panel scales vary). Values from "
-        "different rows are not multiplicative. Task 11 onsite-vector and "
-        "Pade values are isolated kernels.",
+        "Task-specific ratio (log scale; panel scales vary). Values from "
+        "different rows are not multiplicative. * phase-specific or isolated "
+        "kernel/microbenchmark; see the report for scope.",
         ha="center",
         fontsize=7.5,
         color="#555555",

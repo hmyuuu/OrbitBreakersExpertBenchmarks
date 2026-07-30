@@ -11,41 +11,113 @@
   });
 
   const sidebarToggle = document.querySelector(".sidebar-toggle");
-  const closeSidebar = () => {
+  const sidebar = document.querySelector("#docs-sidebar");
+  const sidebarMedia = window.matchMedia("(max-width: 980px)");
+  const syncSidebarState = () => {
+    if (!sidebar || !sidebarToggle) return;
+    if (!sidebarMedia.matches) {
+      document.body.classList.remove("sidebar-open");
+      sidebar.inert = false;
+      sidebar.removeAttribute("aria-hidden");
+      sidebarToggle.setAttribute("aria-expanded", "false");
+      sidebarToggle.setAttribute("aria-label", "Open task navigation");
+      return;
+    }
+    const open = document.body.classList.contains("sidebar-open");
+    sidebar.inert = !open;
+    sidebar.setAttribute("aria-hidden", String(!open));
+    sidebarToggle.setAttribute("aria-expanded", String(open));
+    sidebarToggle.setAttribute(
+      "aria-label",
+      open ? "Close task navigation" : "Open task navigation",
+    );
+  };
+  const closeSidebar = (restoreFocus = true) => {
     document.body.classList.remove("sidebar-open");
-    sidebarToggle?.setAttribute("aria-expanded", "false");
+    if (restoreFocus) sidebarToggle?.focus();
+    syncSidebarState();
   };
 
   sidebarToggle?.addEventListener("click", () => {
     const open = document.body.classList.toggle("sidebar-open");
-    sidebarToggle.setAttribute("aria-expanded", String(open));
+    syncSidebarState();
+    if (open) {
+      window.setTimeout(() => sidebar?.querySelector("a")?.focus(), 0);
+    }
   });
   document.querySelector("[data-close-sidebar]")?.addEventListener("click", closeSidebar);
   document.querySelectorAll(".docs-sidebar a").forEach((link) => {
-    link.addEventListener("click", closeSidebar);
+    link.addEventListener("click", () => closeSidebar(false));
   });
+  sidebarMedia.addEventListener("change", syncSidebarState);
+  syncSidebarState();
 
   const filterButtons = [...document.querySelectorAll("[data-filter]")];
   const filterable = [
     ...document.querySelectorAll(".task-table tbody tr[data-task-kind], .task-card-mobile[data-task-kind]"),
   ];
+  const filterRows = [...document.querySelectorAll(".task-table tbody tr[data-task-kind]")];
+  const filterCount = document.querySelector("[data-filter-count]");
   const matchesFilter = (kind, filter) => {
     if (filter === "all") return true;
-    if (filter === "validated") return kind === "validated" || kind === "caveat";
-    if (filter === "provisional") return kind === "provisional";
-    if (filter === "open") return kind === "pending" || kind === "feasibility";
+    if (filter === "docker") return kind === "validated" || kind === "caveat";
+    if (filter === "qualified") return kind === "qualified";
+    if (filter === "local") return kind === "provisional";
+    if (filter === "special") return kind === "caveat" || kind === "feasibility";
     return true;
   };
 
   filterButtons.forEach((button) => {
     button.addEventListener("click", () => {
       const filter = button.dataset.filter;
-      filterButtons.forEach((item) => item.classList.toggle("is-active", item === button));
+      filterButtons.forEach((item) => {
+        const active = item === button;
+        item.classList.toggle("is-active", active);
+        item.setAttribute("aria-pressed", String(active));
+      });
       filterable.forEach((item) => {
         item.hidden = !matchesFilter(item.dataset.taskKind, filter);
       });
+      if (filterCount) {
+        filterCount.textContent = String(
+          filterRows.filter((item) => !item.hidden).length,
+        );
+      }
     });
   });
+
+  const graphTabs = [...document.querySelectorAll("[data-graph-tab]")];
+  const activateGraphTab = (tab, focus = false) => {
+    graphTabs.forEach((item) => {
+      const active = item === tab;
+      item.setAttribute("aria-selected", String(active));
+      item.tabIndex = active ? 0 : -1;
+      const panel = document.getElementById(item.getAttribute("aria-controls"));
+      if (panel) panel.hidden = !active;
+    });
+    if (focus) tab.focus();
+  };
+
+  graphTabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => activateGraphTab(tab));
+    tab.addEventListener("keydown", (event) => {
+      let nextIndex = null;
+      if (event.key === "ArrowRight") nextIndex = (index + 1) % graphTabs.length;
+      if (event.key === "ArrowLeft") nextIndex = (index - 1 + graphTabs.length) % graphTabs.length;
+      if (event.key === "Home") nextIndex = 0;
+      if (event.key === "End") nextIndex = graphTabs.length - 1;
+      if (nextIndex === null) return;
+      event.preventDefault();
+      activateGraphTab(graphTabs[nextIndex], true);
+    });
+  });
+
+  if (window.location.hash.startsWith("#graph-panel-")) {
+    const deepLinkTab = graphTabs.find(
+      (tab) => `#${tab.getAttribute("aria-controls")}` === window.location.hash,
+    );
+    if (deepLinkTab) activateGraphTab(deepLinkTab);
+  }
 
   const dialog = document.querySelector("#search-dialog");
   const input = document.querySelector("#task-search");
@@ -55,6 +127,7 @@
   const tasks = dataNode ? JSON.parse(dataNode.textContent) : [];
   let selectedIndex = 0;
   let visibleTasks = tasks;
+  let searchOpener = null;
 
   const normalize = (value) =>
     value
@@ -74,6 +147,7 @@
     visibleTasks.forEach((task, index) => {
       const link = document.createElement("a");
       link.className = `search-result${index === selectedIndex ? " is-selected" : ""}`;
+      link.id = `search-option-${task.id}`;
       link.href = task.href;
       link.setAttribute("role", "option");
       link.setAttribute("aria-selected", String(index === selectedIndex));
@@ -95,22 +169,30 @@
       results.append(link);
     });
 
+    input?.setAttribute(
+      "aria-activedescendant",
+      visibleTasks[selectedIndex] ? `search-option-${visibleTasks[selectedIndex].id}` : "",
+    );
     if (empty) empty.hidden = visibleTasks.length !== 0;
   };
 
-  const openSearch = () => {
+  const openSearch = (opener = null) => {
     if (!dialog) return;
+    searchOpener = opener || document.activeElement;
     renderSearch(input?.value || "");
     if (typeof dialog.showModal === "function") dialog.showModal();
+    input?.setAttribute("aria-expanded", "true");
     input?.focus();
   };
 
   const closeSearch = () => {
     if (dialog?.open) dialog.close();
+    input?.setAttribute("aria-expanded", "false");
+    if (searchOpener instanceof HTMLElement) searchOpener.focus();
   };
 
   document.querySelectorAll("[data-open-search]").forEach((button) => {
-    button.addEventListener("click", openSearch);
+    button.addEventListener("click", () => openSearch(button));
   });
   document.querySelector("[data-close-search]")?.addEventListener("click", closeSearch);
   input?.addEventListener("input", () => renderSearch(input.value));
@@ -120,9 +202,15 @@
   });
 
   document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && document.body.classList.contains("sidebar-open")) {
+      event.preventDefault();
+      closeSidebar();
+      return;
+    }
+
     if ((event.metaKey || event.ctrlKey) && event.key.toLocaleLowerCase() === "k") {
       event.preventDefault();
-      dialog?.open ? closeSearch() : openSearch();
+      dialog?.open ? closeSearch() : openSearch(document.activeElement);
       return;
     }
 

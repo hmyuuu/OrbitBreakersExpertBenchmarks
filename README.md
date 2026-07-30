@@ -39,6 +39,23 @@ equivalence checks, and experiment ledgers needed to audit those conclusions.
 The original operational documentation is preserved in
 [`BENCHMARKING.md`](BENCHMARKING.md).
 
+## Visual report
+
+Open the [interactive GitHub Pages report](https://hmyuuu.github.io/OrbitBreakersBench/)
+for the tabbed, expandable graph gallery and task-by-task source comparisons.
+GitHub README files do not run the gallery interface, so the links below are
+accessible section jumps rather than interactive tabs:
+
+[**Model generations**](#gpt-56-sol-high-1012-with-faster-valid-artifacts-than-gpt-55-high)
+· [**Reasoning effort**](#gpt-56-sol-ultra-1112-after-task-07-adjudication)
+· [**Agent resources**](#solver-resource-comparison)
+· [**Fable hybrid**](#fable-5-1212-under-a-hybrid-solving-protocol)
+· [**Expert optimization**](#3-human-expert--ai-co-optimization)
+
+| Agent comparison | Expert runtimes | Factor ablations |
+|:---:|:---:|:---:|
+| [![GPT-5.5 high versus GPT-5.6 Sol high validity and expert-normalized artifact-runtime comparison](docs/figures/gpt55-vs-gpt56-comparison.png)](#gpt-56-sol-high-1012-with-faster-valid-artifacts-than-gpt-55-high) | [![Mean evaluator runtimes for human experts and AI-human optimized implementations across Tasks 01 through 12 on a logarithmic scale](docs/figures/expert-optimization-runtime-log-bars.png)](#3-human-expert--ai-co-optimization) | [![Task-specific factor evidence across Tasks 01 through 12, distinguishing retained or supported factors from rejected or unresolved factors](docs/figures/factor-ablation-overview.png)](#combined-factor-ablations) |
+
 ## 1. Evidence model
 
 Three quantities must not be conflated.
@@ -96,8 +113,8 @@ recorded solver cost.
 GPT-5.5 high and GPT-5.6 Sol high both produced ten valid solutions. The
 paper's GPT-5.5 high row had a 2.197x passed-task geometric-mean slowdown,
 versus 1.428x for GPT-5.6 Sol high. Under this normalized but not fully
-controlled comparison, the GPT-5.6 artifacts were about **35% closer to the
-expert runtime baseline**.
+controlled comparison, the GPT-5.6 artifacts had about **35% lower normalized
+slowdown**.
 
 The comparison is informative rather than causal: the two model generations
 used different hosts, benchmark revisions, and audit procedures. Normalizing
@@ -260,20 +277,23 @@ displayed means when run-to-run noise is asymmetric.
 | [09](research/TASK_09_CAUSAL_CONE_COMPARISON.md) | 33.504 → 8.767 s | **3.822x**, CI 3.730–3.914 | Prune the exact causal cone before TensorCircuit graph construction, then retain the framework's inner light-cone cancellation. |
 | [10](research/task-10/IMPLEMENTATION_COMPARISON.md) | 18.931 → 3.869 s | **4.898x**, CI 4.598–5.199 | Use the exact low-rank MPS/MPO structure of the two CMZ reflections instead of repeated generic path search. |
 | [11](research/task-11/IMPLEMENTATION_COMPARISON.md) | 168.362 → 114.968 s | **1.464x**, CI 1.457–1.472 | Reduce dense-state passes and replace twelve diagonal onsite expectations with one coefficient-vector contraction. |
-| [12](research/task-12/IMPLEMENTATION_COMPARISON.md) | 9.083 → 2.321 s | **3.914x**, CI 3.877–3.951 | Batch the 31 fixed-order SU4 exponentials; this is the promoted primary candidate, not the secondary fused variant. |
+| [12](research/task-12/IMPLEMENTATION_COMPARISON.md) | 9.083 → 2.321 s | **3.914x**, CI 3.877–3.951 | Batch the 31 fixed-order SU4 exponentials; this is the registered primary candidate, not the secondary fused variant. |
 
 ### Combined factor ablations
 
 ![Combined factor ablations for Tasks 01 through 12](docs/figures/factor-ablation-overview.png)
 
-Each panel summarizes the task's direct factor-removal or matched-parent
-experiment. Blue factors were retained; orange factors were rejected or
-remain statistically unresolved. The horizontal distance from `1x` shows the
-measured effect of adding that factor to its direct parent. Panel scales vary,
-and values from separate rows must not be multiplied. Task 11's onsite-vector
-and Pade measurements are isolated kernels; the task-level reports linked in
-the table retain the complete paired data, confidence intervals, and
-experiment context.
+Each panel summarizes task-specific factor evidence. Most rows are direct
+factor-removal or matched-parent experiments; starred rows are phase-specific
+or isolated measurements. Blue factors were retained or otherwise supported;
+orange factors were rejected or remain statistically unresolved. Panel scales
+vary, and values from separate rows must not be multiplied. Task 06's Euler
+value is compile-plus-first-execution and its BCOO value is a microbenchmark;
+Task 11's onsite-vector and Pade values are isolated kernels and its scan value
+is a phase-specific execution profile; Task 12's Pade value is also an
+isolated kernel. Task 12 pair fusion is a valid secondary end-to-end variant.
+The task-level reports linked in the table retain the complete measurement
+scope, paired data, confidence intervals, and experiment context.
 
 Ten ordinary, statistically supported speedups—Tasks 01–06 and 09–12—have
 an unweighted descriptive geometric mean of **2.88x**. Task 07 is excluded

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
+import hashlib
 import html
 import json
 import shutil
@@ -12,20 +13,24 @@ import subprocess
 from pathlib import Path
 from typing import Any
 from urllib.parse import quote
+from urllib.parse import urlsplit
 
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE_DIR = ROOT / "site"
 DATA_PATH = SITE_DIR / "data" / "tasks.json"
+REPORT_PATH = SITE_DIR / "data" / "report.json"
 STATIC_DIR = SITE_DIR / "static"
+FIGURES_DIR = ROOT / "docs" / "figures"
 
 
 def escape(value: Any) -> str:
     return html.escape(str(value), quote=True)
 
 
-def load_data() -> tuple[dict[str, Any], list[dict[str, Any]]]:
+def load_data() -> tuple[dict[str, Any], dict[str, Any], list[dict[str, Any]]]:
     payload = json.loads(DATA_PATH.read_text(encoding="utf-8"))
+    report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
     try:
         payload["site"]["commit"] = subprocess.check_output(
             ["git", "rev-parse", "--short", "HEAD"],
@@ -40,7 +45,54 @@ def load_data() -> tuple[dict[str, Any], list[dict[str, Any]]]:
     ids = [task["id"] for task in tasks]
     if ids != [f"{index:02d}" for index in range(1, 13)]:
         raise ValueError(f"Task IDs must be 01 through 12 in order, got {ids}")
-    return payload["site"], tasks
+    if len(report.get("evidence_axes", [])) != 3:
+        raise ValueError("Final report must define exactly three evidence axes")
+    if len(report.get("graph_tabs", [])) < 3:
+        raise ValueError("Final report must define at least three graph tabs")
+    for tab in report["graph_tabs"]:
+        if not tab.get("figures"):
+            raise ValueError(f'Graph tab {tab.get("id", "<missing>")} has no figures')
+        for figure in tab["figures"]:
+            for key in ("src", "width", "height", "alt", "caption"):
+                if not figure.get(key):
+                    raise ValueError(
+                        f'Graph figure in {tab["id"]} is missing required field {key}'
+                    )
+            if not (FIGURES_DIR / figure["src"]).is_file():
+                raise FileNotFoundError(FIGURES_DIR / figure["src"])
+            if figure.get("svg") and not (FIGURES_DIR / figure["svg"]).is_file():
+                raise FileNotFoundError(FIGURES_DIR / figure["svg"])
+    for task in tasks:
+        candidate_source = ROOT / task.get(
+            "candidate_source_path", task["candidate_path"]
+        )
+        if not candidate_source.is_file():
+            raise FileNotFoundError(candidate_source)
+        expected_sha256 = task.get("candidate_sha256")
+        if expected_sha256:
+            actual_sha256 = hashlib.sha256(candidate_source.read_bytes()).hexdigest()
+            if actual_sha256 != expected_sha256:
+                raise ValueError(
+                    f"Candidate snapshot hash mismatch for Task {task['id']}: "
+                    f"expected {expected_sha256}, got {actual_sha256}"
+                )
+        reference_source = ROOT / task.get(
+            "reference_source_path", task["reference_path"]
+        )
+        if not reference_source.is_file():
+            raise FileNotFoundError(reference_source)
+        expected_reference_sha256 = task.get("reference_sha256")
+        if expected_reference_sha256:
+            actual_reference_sha256 = hashlib.sha256(
+                reference_source.read_bytes()
+            ).hexdigest()
+            if actual_reference_sha256 != expected_reference_sha256:
+                raise ValueError(
+                    f"Reference snapshot hash mismatch for Task {task['id']}: "
+                    f"expected {expected_reference_sha256}, "
+                    f"got {actual_reference_sha256}"
+                )
+    return payload["site"], report, tasks
 
 
 def status_badge(task: dict[str, Any]) -> str:
@@ -58,6 +110,11 @@ def task_href(root_prefix: str, task: dict[str, Any]) -> str:
 
 def repo_file_url(site: dict[str, Any], path: str) -> str:
     return f'{site["repository"]}/blob/main/{quote(path)}'
+
+
+def site_base_path(site: dict[str, Any]) -> str:
+    path = urlsplit(site["site_url"]).path or "/"
+    return path if path.endswith("/") else f"{path}/"
 
 
 def common_head(
@@ -108,17 +165,20 @@ def header(site: dict[str, Any], root_prefix: str, *, docs: bool = False) -> str
         else ""
     )
     return f"""
+<a class="skip-link" href="#main-content">Skip to content</a>
 <header class="site-header">
   <div class="header-inner">
     <div class="header-leading">
       {mobile_button}
       <a class="brand" href="{root_prefix}">
         <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-        <span class="brand-copy"><strong>OrbitBreakers</strong><small>Benchmark results</small></span>
+        <span class="brand-copy"><strong>OrbitBreakers</strong><small>Evidence report</small></span>
       </a>
     </div>
     <nav class="header-nav" aria-label="Primary">
-      <a href="{root_prefix}" data-nav="results">Results</a>
+      <a href="{root_prefix}" data-nav="results">Summary</a>
+      <a href="{root_prefix}#figures">Figures</a>
+      <a href="{root_prefix}#task-index">Tasks</a>
       <a href="{root_prefix}methodology/" data-nav="methodology">Protocol</a>
     </nav>
     <div class="header-actions">
@@ -157,10 +217,10 @@ def search_dialog(tasks: list[dict[str, Any]], root_prefix: str) -> str:
     <div class="search-box">
       <span aria-hidden="true">⌕</span>
       <label class="sr-only" for="task-search">Search tasks</label>
-      <input id="task-search" type="search" placeholder="Search a task, method, or result…" autocomplete="off">
+      <input id="task-search" type="search" role="combobox" aria-controls="search-results" aria-expanded="false" aria-autocomplete="list" placeholder="Search a task, method, or result…" autocomplete="off">
       <button type="button" class="search-close" data-close-search aria-label="Close search">Esc</button>
     </div>
-    <p class="search-label" id="search-title">Benchmark tasks</p>
+    <p class="search-label" id="search-title">Task search</p>
     <div class="search-results" id="search-results" role="listbox"></div>
     <p class="search-empty" id="search-empty" hidden>No task matches that search.</p>
     <div class="search-help"><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>↵</kbd> open</span></div>
@@ -229,15 +289,15 @@ def sidebar(
 
 
 def diff_patch(task: dict[str, Any]) -> str:
-    reference = ROOT / task["reference_path"]
-    candidate = ROOT / task["candidate_path"]
+    reference = ROOT / task.get("reference_source_path", task["reference_path"])
+    candidate = ROOT / task.get("candidate_source_path", task["candidate_path"])
     before = reference.read_text(encoding="utf-8").splitlines(keepends=True)
     after = candidate.read_text(encoding="utf-8").splitlines(keepends=True)
     return "".join(
         difflib.unified_diff(
             before,
             after,
-            fromfile=f'a/{task["reference_path"]}',
+            fromfile=f'a/{task.get("reference_diff_path", task["reference_path"])}',
             tofile=f'b/{task["candidate_path"]}',
             n=3,
         )
@@ -312,21 +372,261 @@ def metric_bar(task: dict[str, Any]) -> str:
         return f"""
 <div class="runtime-bars runtime-bars-oom" aria-label="Reference exhausted memory; candidate passed">
   <div class="runtime-row"><span>Original</span><div class="runtime-track"><i class="bar-oom"></i></div><strong>{escape(metric["baseline"])}</strong></div>
-  <div class="runtime-row"><span>Campaign best</span><div class="runtime-track"><i class="bar-candidate" style="width: 42%"></i></div><strong>{escape(metric["candidate"])}</strong></div>
+  <div class="runtime-row"><span>Optimized</span><div class="runtime-track"><i class="bar-candidate" style="width: 42%"></i></div><strong>{escape(metric["candidate"])}</strong></div>
 </div>
 """
     percentage = max(2.0, min(100.0, 100.0 * candidate_value / baseline_value))
     return f"""
 <div class="runtime-bars" aria-label="Mean runtime comparison">
   <div class="runtime-row"><span>Original</span><div class="runtime-track"><i class="bar-reference" style="width: 100%"></i></div><strong>{escape(metric["baseline"])}</strong></div>
-  <div class="runtime-row"><span>Campaign best</span><div class="runtime-track"><i class="bar-candidate" style="width: {percentage:.2f}%"></i></div><strong>{escape(metric["candidate"])}</strong></div>
+  <div class="runtime-row"><span>Optimized</span><div class="runtime-track"><i class="bar-candidate" style="width: {percentage:.2f}%"></i></div><strong>{escape(metric["candidate"])}</strong></div>
 </div>
 """
 
 
-def index_page(site: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
-    validated = sum(task["status"]["kind"] in {"validated", "caveat"} for task in tasks)
+def measurement_context(task: dict[str, Any]) -> str:
+    context = task.get("measurement_context")
+    if not context:
+        return ""
+    items = "".join(
+        f"<div><dt>{escape(item['label'])}</dt><dd>{escape(item['value'])}</dd></div>"
+        for item in context["items"]
+    )
+    return f"""
+<aside class="measurement-context" aria-labelledby="measurement-context-{escape(task["id"])}">
+  <div>
+    <p class="eyebrow">Measurement context</p>
+    <h2 id="measurement-context-{escape(task["id"])}">{escape(context["title"])}</h2>
+    <p>{escape(context["note"])}</p>
+  </div>
+  <dl>{items}</dl>
+</aside>
+"""
+
+
+def outcome_cards(report: dict[str, Any]) -> str:
+    cards = []
+    for outcome in report["outcomes"]:
+        cards.append(
+            f"""
+<article class="outcome-card outcome-{escape(outcome["tone"])}">
+  <p class="eyebrow">{escape(outcome["eyebrow"])}</p>
+  <strong>{escape(outcome["value"])}</strong>
+  <span>{escape(outcome["label"])}</span>
+  <p>{escape(outcome["detail"])}</p>
+</article>
+"""
+        )
+    boundaries = "".join(
+        f"""
+<article>
+  <span>{escape(item["label"])}</span>
+  <strong>{escape(item["value"])}</strong>
+  <small>{escape(item["detail"])}</small>
+</article>
+"""
+        for item in report["boundary_results"]
+    )
+    return f"""
+<section class="report-outcomes section-shell" aria-labelledby="outcomes-heading">
+  <div class="section-heading report-section-heading">
+    <div>
+      <p class="eyebrow">Final synthesis</p>
+      <h2 id="outcomes-heading">Three result axes. Two hard boundaries.</h2>
+    </div>
+    <p>Agent validity, artifact runtime, and expert optimization answer different questions. The final report does not collapse them into one leaderboard.</p>
+  </div>
+  <div class="outcome-grid">{''.join(cards)}</div>
+  <div class="boundary-rail" aria-label="Results requiring special interpretation">{boundaries}</div>
+</section>
+"""
+
+
+def evidence_model(report: dict[str, Any]) -> str:
+    axes = "".join(
+        f"""
+<article>
+  <span>{escape(axis["number"])}</span>
+  <h3>{escape(axis["title"])}</h3>
+  <p>{escape(axis["question"])}</p>
+  <code>{escape(axis["metric"])}</code>
+  <small>{escape(axis["direction"])}</small>
+</article>
+"""
+        for axis in report["evidence_axes"]
+    )
+    return f"""
+<section class="evidence-model section-shell" id="evidence-model" aria-labelledby="evidence-model-heading">
+  <div class="section-heading report-section-heading">
+    <div>
+      <p class="eyebrow">Evidence model</p>
+      <h2 id="evidence-model-heading">Read the denominator before the ratio.</h2>
+    </div>
+    <p>Absolute runtimes from different tasks or hosts are never pooled. Every ratio stays attached to its same-task comparison and stated environment.</p>
+  </div>
+  <div class="evidence-axis-grid">{axes}</div>
+</section>
+"""
+
+
+def graph_figure(figure: dict[str, Any], *, eager: bool) -> str:
+    source = (
+        f'<source srcset="figures/{escape(figure["svg"])}" type="image/svg+xml">'
+        if figure.get("svg")
+        else ""
+    )
+    full_size = figure.get("svg", figure["src"])
+    tall = " is-tall" if figure["height"] > figure["width"] else ""
+    loading = "eager" if eager else "lazy"
+    priority = ' fetchpriority="high"' if eager else ""
+    return f"""
+<figure class="report-figure{tall}">
+  <a class="figure-canvas" href="figures/{escape(full_size)}" aria-label="Open full-size graph: {escape(figure["alt"])}">
+    <picture>
+      {source}
+      <img src="figures/{escape(figure["src"])}" width="{escape(figure["width"])}" height="{escape(figure["height"])}" loading="{loading}" decoding="async"{priority} alt="{escape(figure["alt"])}">
+    </picture>
+  </a>
+  <figcaption>
+    <span>{escape(figure["caption"])}</span>
+    <a href="figures/{escape(full_size)}">Open full size ↗</a>
+  </figcaption>
+</figure>
+"""
+
+
+def graph_data_details(tab: dict[str, Any]) -> str:
+    tables = []
+    for table in tab.get("data_tables", []):
+        headers = "".join(
+            f'<th scope="col">{escape(header)}</th>' for header in table["headers"]
+        )
+        rows = "".join(
+            "<tr>"
+            + "".join(
+                f'<th scope="row">{escape(value)}</th>'
+                if column_index == 0
+                else f"<td>{escape(value)}</td>"
+                for column_index, value in enumerate(row)
+            )
+            + "</tr>"
+            for row in table["rows"]
+        )
+        tables.append(
+            f"""
+<section class="graph-data-table">
+  <h4>{escape(table["title"])}</h4>
+  <div class="graph-data-scroll">
+    <table>
+      <thead><tr>{headers}</tr></thead>
+      <tbody>{rows}</tbody>
+    </table>
+  </div>
+  <p>{escape(table["note"])}</p>
+</section>
+"""
+        )
+    sources = "".join(
+        f'<a href="{escape(source["url"])}">{escape(source["label"])} <span aria-hidden="true">↗</span></a>'
+        for source in tab.get("evidence", [])
+    )
+    if not tables and not sources:
+        return ""
+    return f"""
+<details class="graph-data">
+  <summary><span>Accessible data &amp; public evidence</span><small>{len(tables)} table{"s" if len(tables) != 1 else ""} · {len(tab.get("evidence", []))} source{"s" if len(tab.get("evidence", [])) != 1 else ""}</small></summary>
+  <div class="graph-data-body">
+    {''.join(tables)}
+    <nav class="graph-sources" aria-label="{escape(tab["label"])} public evidence">{sources}</nav>
+  </div>
+</details>
+"""
+
+
+def graph_gallery(report: dict[str, Any]) -> str:
+    buttons = []
+    panels = []
+    for index, tab in enumerate(report["graph_tabs"]):
+        active = index == 0
+        tab_id = f'graph-tab-{tab["id"]}'
+        panel_id = f'graph-panel-{tab["id"]}'
+        buttons.append(
+            f'<button type="button" role="tab" id="{escape(tab_id)}" '
+            f'aria-controls="{escape(panel_id)}" aria-selected="{str(active).lower()}" '
+            f'tabindex="{0 if active else -1}" data-graph-tab>{escape(tab["label"])}</button>'
+        )
+        stats = "".join(f"<li>{escape(stat)}</li>" for stat in tab["stats"])
+        figures = "".join(
+            graph_figure(figure, eager=active and figure_index == 0)
+            for figure_index, figure in enumerate(tab["figures"])
+        )
+        hidden = "" if active else " hidden"
+        panels.append(
+            f"""
+<section class="graph-panel" role="tabpanel" id="{escape(panel_id)}" aria-labelledby="{escape(tab_id)}"{hidden}>
+  <div class="graph-panel-copy">
+    <div>
+      <p class="eyebrow">{escape(tab["eyebrow"])}</p>
+      <h3>{escape(tab["title"])}</h3>
+      <p>{escape(tab["summary"])}</p>
+    </div>
+    <ul aria-label="Key graph facts">{stats}</ul>
+  </div>
+  <div class="graph-figure-grid graph-figure-count-{len(tab["figures"])}">{figures}</div>
+  {graph_data_details(tab)}
+</section>
+"""
+        )
+    return f"""
+<section class="graph-gallery section-shell" id="figures" aria-labelledby="figures-heading">
+  <div class="section-heading report-section-heading">
+    <div>
+      <p class="eyebrow">Figures from the final report</p>
+      <h2 id="figures-heading">Inspect the evidence, one view at a time.</h2>
+    </div>
+    <p>These are the report's generated graphs—not decorative mockups. Open any figure at full resolution to inspect task labels and caveats.</p>
+  </div>
+  <div class="graph-shell">
+    <div class="graph-tablist" role="tablist" aria-label="Final-report graph groups">{''.join(buttons)}</div>
+    {''.join(panels)}
+  </div>
+  <noscript><style>.graph-panel[hidden]{{display:block !important}}</style></noscript>
+</section>
+"""
+
+
+def report_findings(report: dict[str, Any]) -> str:
+    findings = "".join(
+        f"""
+<article>
+  <span>{escape(finding["number"])}</span>
+  <h3>{escape(finding["title"])}</h3>
+  <p>{escape(finding["body"])}</p>
+</article>
+"""
+        for finding in report["findings"]
+    )
+    return f"""
+<section class="report-findings section-shell" id="findings" aria-labelledby="findings-heading">
+  <div class="section-heading report-section-heading">
+    <div>
+      <p class="eyebrow">Benchmark-design findings</p>
+      <h2 id="findings-heading">The evaluator is part of the experiment.</h2>
+    </div>
+    <p>Optimization exposed scientific structure, verifier mistakes, allocation assumptions, and one genuine specification loophole.</p>
+  </div>
+  <div class="finding-grid">{findings}</div>
+</section>
+"""
+
+
+def index_page(
+    site: dict[str, Any], report: dict[str, Any], tasks: list[dict[str, Any]]
+) -> str:
+    docker = sum(task["status"]["kind"] in {"validated", "caveat"} for task in tasks)
+    qualified = sum(task["status"]["kind"] == "qualified" for task in tasks)
     provisional = sum(task["status"]["kind"] == "provisional" for task in tasks)
+    special = sum(task["status"]["kind"] in {"caveat", "feasibility"} for task in tasks)
     rows = []
     cards = []
     for task in tasks:
@@ -342,7 +642,7 @@ def index_page(site: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
   </td>
   <td>{status_badge(task)}</td>
   <td class="metric-cell"><span>{escape(metric["baseline"])}</span><small>reference mean</small></td>
-  <td class="metric-cell"><span>{escape(metric["candidate"])}</span><small>campaign best</small></td>
+  <td class="metric-cell"><span>{escape(metric["candidate"])}</span><small>optimized mean</small></td>
   <td class="improvement-cell"><strong>{escape(metric["headline"])}</strong><small>{escape(metric["improvement"])}</small></td>
   <td class="row-arrow" aria-hidden="true">→</td>
 </tr>
@@ -356,7 +656,7 @@ def index_page(site: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
   <p>{escape(task["summary"])}</p>
   <div class="task-card-metrics">
     <span><small>Original</small><strong>{escape(metric["baseline"])}</strong></span>
-    <span><small>Best</small><strong>{escape(metric["candidate"])}</strong></span>
+    <span><small>Optimized</small><strong>{escape(metric["candidate"])}</strong></span>
     <span class="task-card-improvement"><small>Result</small><strong>{escape(metric["headline"])}</strong></span>
   </div>
 </a>
@@ -374,51 +674,62 @@ def index_page(site: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
         + f"""
 <body class="landing-page" data-page="results">
 {header(site, "")}
-<main>
+<main id="main-content">
   <section class="landing-hero">
     <div class="hero-grid" aria-hidden="true"></div>
     <div class="hero-copy">
-      <p class="eyebrow"><span class="live-dot"></span> Public benchmark record · updated {escape(site["updated"])}</p>
-      <h1>Break the runtime.<br><em>Keep the contract.</em></h1>
-      <p class="hero-description">Twelve TensorCircuit-NG expert solutions, measured as paired experiments. Every task page leads with the problem, the evidence, and the focused source diff behind the result.</p>
+      <p class="eyebrow"><span class="live-dot"></span> Final public report · updated {escape(site["updated"])}</p>
+      <h1>{escape(report["title"])}</h1>
+      <p class="hero-description">{escape(report["lede"])}</p>
       <div class="hero-actions">
-        <a class="button button-primary" href="#task-index">Explore all tasks <span aria-hidden="true">↓</span></a>
-        <a class="button button-secondary" href="methodology/">Read the protocol</a>
+        <a class="button button-primary" href="#figures">Explore the figures <span aria-hidden="true">↓</span></a>
+        <a class="button button-secondary" href="#task-index">Open task evidence</a>
       </div>
     </div>
-    <aside class="hero-ledger" aria-label="Benchmark status summary">
-      <div class="ledger-header"><span>Evidence ledger</span><small>public / reproducible</small></div>
-      <div class="ledger-stat ledger-stat-wide"><strong>12</strong><span>tasks indexed</span></div>
-      <div class="ledger-stat"><strong>{validated}</strong><span>six-pair Docker results</span></div>
-      <div class="ledger-stat"><strong>{provisional}</strong><span>six-pair local results</span></div>
-      <div class="ledger-line"><span>Memory result</span><strong>OOM → PASS</strong></div>
-      <div class="ledger-line"><span>Open measurement gate</span><strong>Task 06 · pair 6</strong></div>
-      <p>Speedups are never pooled across tasks. A failed or under-sampled result stays visible without becoming a claim.</p>
+    <aside class="hero-ledger report-ledger" aria-label="Final report at a glance">
+      <div class="ledger-header"><span>At a glance</span><small>three evidence axes</small></div>
+      <div class="report-ledger-grid">
+        <div><span>Fable 5</span><strong>12/12</strong><small>hybrid protocol</small></div>
+        <div><span>GPT-5.6 high</span><strong>10/12</strong><small>final validity</small></div>
+        <div><span>GPT-5.6 ultra</span><strong>11/12†</strong><small>after adjudication</small></div>
+        <div><span>Expert + AI</span><strong>2.88×</strong><small>ordinary-task GM</small></div>
+      </div>
+      <p>Validity, generated-artifact efficiency, and expert co-optimization use different denominators. Read each result in its own evidence frame.</p>
     </aside>
   </section>
 
+  {outcome_cards(report)}
+  {evidence_model(report)}
+  {graph_gallery(report)}
+
   <section class="task-index section-shell" id="task-index">
-    <div class="section-heading">
+    <div class="section-heading report-section-heading">
       <div>
-        <p class="eyebrow">Optimization index</p>
-        <h2>Every task, one evidence row.</h2>
+        <p class="eyebrow">Expert co-optimization index</p>
+        <h2>Every task, its result and boundary.</h2>
       </div>
-      <div class="filter-tabs" role="group" aria-label="Filter tasks">
-        <button type="button" class="is-active" data-filter="all">All <span>12</span></button>
-        <button type="button" data-filter="validated">Docker <span>{validated}</span></button>
-        <button type="button" data-filter="provisional">Local <span>{provisional}</span></button>
-        <button type="button" data-filter="open">Open <span>2</span></button>
+      <p>Open a task for the scientific problem, the decisive implementation insight, the focused git diff, and its public provenance.</p>
+    </div>
+    <div class="task-filter-row">
+      <div class="filter-tabs" role="group" aria-label="Filter task evidence">
+        <button type="button" class="is-active" data-filter="all" aria-pressed="true">All <span>12</span></button>
+        <button type="button" data-filter="docker" aria-pressed="false">6-pair Docker <span>{docker}</span></button>
+        <button type="button" data-filter="qualified" aria-pressed="false">5-pair <span>{qualified}</span></button>
+        <button type="button" data-filter="local" aria-pressed="false">Local <span>{provisional}</span></button>
+        <button type="button" data-filter="special" aria-pressed="false">Special <span>{special}</span></button>
       </div>
+      <p class="filter-count" aria-live="polite"><strong data-filter-count>12</strong> tasks shown</p>
     </div>
 
     <div class="evidence-note">
       <span class="note-icon" aria-hidden="true">i</span>
-      <p><strong>Repository SOTA, not a global SOTA claim.</strong> Results compare the immutable bundled expert with the best recorded candidate on the public evaluator and stated environment. <span>† local-engine evidence; ‡ five-pair descriptive timing.</span></p>
+      <p><strong>Within-task evidence, not a pooled runtime leaderboard.</strong> The 2.88× summary is a descriptive geometric mean of ten ordinary same-task ratios. Task 07's design reduction and Task 08's feasibility result are excluded. <span>† local-engine or adjudicated evidence; ‡ five-pair estimate.</span></p>
     </div>
 
     <div class="task-table-wrap">
       <table class="task-table">
-        <thead><tr><th>Task</th><th>Status</th><th>Original</th><th>Campaign best</th><th>Improvement</th><th><span class="sr-only">Open</span></th></tr></thead>
+        <caption class="sr-only">Task-by-task expert and optimized runtime evidence</caption>
+        <thead><tr><th scope="col">Task</th><th scope="col">Status</th><th scope="col">Original</th><th scope="col">Optimized</th><th scope="col">Mean paired result</th><th scope="col"><span class="sr-only">Open</span></th></tr></thead>
         <tbody>{''.join(rows)}</tbody>
       </table>
     </div>
@@ -426,23 +737,14 @@ def index_page(site: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
 
     <div class="status-legend" aria-label="Status legend">
       <span><i class="status-validated"></i> Six-pair Docker</span>
+      <span><i class="status-qualified"></i> Five-pair qualified</span>
       <span><i class="status-provisional"></i> Six-pair local</span>
-      <span><i class="status-feasibility"></i> Feasibility result</span>
-      <span><i class="status-pending"></i> Measurement open</span>
+      <span><i class="status-caveat"></i> Design reduction</span>
+      <span><i class="status-feasibility"></i> Feasibility</span>
     </div>
   </section>
 
-  <section class="principles section-shell">
-    <div>
-      <p class="eyebrow">Reading the results</p>
-      <h2>The diff is part of the evidence.</h2>
-    </div>
-    <div class="principle-grid">
-      <article><span>01</span><h3>Problem first</h3><p>Each page states the scientific workload and the computation that cannot be removed.</p></article>
-      <article><span>02</span><h3>Claims are gated</h3><p>Correctness, matched pairs, engine, wins, and confidence interval remain visible beside the headline.</p></article>
-      <article><span>03</span><h3>Mechanism over slogan</h3><p>A focused unified diff connects the runtime movement to the retained algorithmic insight.</p></article>
-    </div>
-  </section>
+  {report_findings(report)}
 </main>
 {footer(site, "")}
 {search_dialog(tasks, "")}
@@ -469,6 +771,7 @@ def task_page(
         if task.get("caveat")
         else ""
     )
+    context = measurement_context(task)
     insight_cards = "".join(
         f'<article class="insight-card"><span>{index:02d}</span><h3>{escape(insight["title"])}</h3><p>{escape(insight["body"])}</p></article>'
         for index, insight in enumerate(task["insights"], start=1)
@@ -484,14 +787,22 @@ def task_page(
         else "<span></span>"
     )
     diff_id = f'diff-{task["slug"]}'
-    reference_url = repo_file_url(site, task["reference_path"])
-    candidate_url = repo_file_url(site, task["candidate_path"])
-    evidence_url = repo_file_url(site, task["evidence_path"])
-    source_note = (
-        "Tracked repository-best variant"
-        if "/variants/" in task["candidate_path"]
-        else "Current campaign-best source"
+    reference_url = task.get("reference_url") or repo_file_url(
+        site, task["reference_path"]
     )
+    reference_label = task.get("reference_diff_path", task["reference_path"])
+    candidate_url = task.get("candidate_url") or repo_file_url(
+        site, task["candidate_path"]
+    )
+    evidence_url = task.get("evidence_url") or repo_file_url(
+        site, task["evidence_path"]
+    )
+    if task.get("candidate_url"):
+        source_note = "Final report candidate from the linked ORBIT-Q evidence PR"
+    elif "/variants/" in task["candidate_path"]:
+        source_note = "Tracked secondary variant"
+    else:
+        source_note = "Final report candidate source"
 
     return (
         common_head(
@@ -506,7 +817,7 @@ def task_page(
 {header(site, root_prefix, docs=True)}
 <div class="docs-grid">
   {sidebar(site, tasks, root_prefix, current=task["slug"])}
-  <main class="docs-main">
+  <main class="docs-main" id="main-content">
     <article class="docs-article">
       <nav class="breadcrumbs" aria-label="Breadcrumb">
         <a href="{root_prefix}">Results</a><span>/</span><span>Task {escape(task["id"])}</span>
@@ -539,6 +850,7 @@ def task_page(
         </dl>
       </section>
       {caveat}
+      {context}
 
       <section class="docs-section" id="problem">
         <div class="section-anchor"><span>01</span><h2>The problem</h2></div>
@@ -559,13 +871,13 @@ def task_page(
         <p class="section-intro">A focused excerpt from the actual unified patch. Surrounding bookkeeping and unchanged implementation detail are omitted; the complete generated patch remains available below.</p>
         <div class="diff-shell">
           <div class="diff-toolbar">
-            <div><span class="diff-dot"></span><strong>original → campaign best</strong><small>{escape(source_note)}</small></div>
+            <div><span class="diff-dot"></span><strong>original → optimized</strong><small>{escape(source_note)}</small></div>
             <button type="button" class="copy-button" data-copy-target="{diff_id}">Copy diff</button>
           </div>
           <pre class="diff-block" tabindex="0"><code id="{diff_id}">{diff_markup(patch_excerpt)}</code></pre>
           <div class="diff-footer">
             <a href="{root_prefix}diffs/{escape(task["slug"])}.diff">View full patch</a>
-            <span>{escape(task["reference_path"])}</span>
+            <span>{escape(reference_label)}</span>
           </div>
         </div>
       </section>
@@ -574,14 +886,14 @@ def task_page(
         <div class="section-anchor"><span>04</span><h2>Evidence & provenance</h2></div>
         <div class="evidence-grid">
           <a href="{escape(evidence_url)}"><span>Campaign evidence</span><strong>{escape(task["evidence_path"])}</strong><small>Open the report on GitHub ↗</small></a>
-          <a href="{escape(reference_url)}"><span>Immutable original</span><strong>{escape(task["reference_path"])}</strong><small>Inspect source ↗</small></a>
+          <a href="{escape(reference_url)}"><span>Immutable original</span><strong>{escape(reference_label)}</strong><small>Inspect source ↗</small></a>
           <a href="{escape(candidate_url)}"><span>Compared candidate</span><strong>{escape(task["candidate_path"])}</strong><small>Inspect source ↗</small></a>
         </div>
         <details class="method-details">
           <summary><span>How to interpret this result</span><small>measurement boundary</small></summary>
           <div>
             <p>Evaluator-reported runtime includes tracing and compilation initiated inside <code>run_solution(config)</code>. A runtime is eligible only when the unchanged evaluator reports <code>Overall: PASS</code>.</p>
-            <p>Speedup intervals are scoped to matched pairs on one host and environment. Results are never pooled across heterogeneous tasks, and “campaign best” is not a global hardware-independent SOTA claim.</p>
+            <p>Speedup intervals are scoped to matched pairs on one host and environment. Results are never pooled across heterogeneous tasks, and a recorded candidate is not a global hardware-independent SOTA claim.</p>
           </div>
         </details>
       </section>
@@ -622,7 +934,7 @@ def methodology_page(site: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
 {header(site, root_prefix, docs=True)}
 <div class="docs-grid">
   {sidebar(site, tasks, root_prefix, methodology_current=True)}
-  <main class="docs-main">
+  <main class="docs-main" id="main-content">
     <article class="docs-article">
       <nav class="breadcrumbs" aria-label="Breadcrumb"><a href="{root_prefix}">Results</a><span>/</span><span>Protocol</span></nav>
       <header class="task-header methodology-header">
@@ -644,9 +956,10 @@ def methodology_page(site: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
             <thead><tr><th>Label</th><th>What it means</th><th>Allowed headline</th></tr></thead>
             <tbody>
               <tr><td><span class="status-badge status-validated"><span class="status-dot"></span>Docker promoted</span></td><td>Six or more matched passing pairs in the pinned Docker protocol and all promotion checks pass.</td><td>Measured speedup and runtime reduction.</td></tr>
+              <tr><td><span class="status-badge status-qualified"><span class="status-dot"></span>Five-pair qualified</span></td><td>Five matched passing same-environment pairs support the final-report estimate; the engine is stated on the task page and the stricter six-pair promotion gate remains open.</td><td>Measured estimate, visibly marked ‡ and paired with its limitation.</td></tr>
               <tr><td><span class="status-badge status-provisional"><span class="status-dot"></span>Local six-pair</span></td><td>Six matched passing pairs under the pinned dependency lock, but Docker was unavailable.</td><td>Local-engine speedup, visibly marked †.</td></tr>
+              <tr><td><span class="status-badge status-caveat"><span class="status-dot"></span>Design reduction</span></td><td>The executable task contract permits a shortcut that changes the scale of the measured computation.</td><td>Exact result plus a conservative full-workload fallback.</td></tr>
               <tr><td><span class="status-badge status-feasibility"><span class="status-dot"></span>OOM → PASS</span></td><td>The candidate restores a valid canonical result where the reference cannot return within the fixed allocation.</td><td>Feasibility, never an invented numerical ratio.</td></tr>
-              <tr><td><span class="status-badge status-pending"><span class="status-dot"></span>One pair short</span></td><td>Correct directional evidence exists, but the minimum sample count is not met.</td><td>Pending, with descriptive timing only.</td></tr>
             </tbody>
           </table>
         </div>
@@ -658,7 +971,7 @@ def methodology_page(site: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
           <div><span>Runtime reduction</span><code>100 × (reference mean − candidate mean) / reference mean</code></div>
           <div><span>Paired speedup</span><code>reference runtimeᵢ / candidate runtimeᵢ</code></div>
         </div>
-        <div class="callout"><strong>No aggregate leaderboard</strong><p>Runtime ratios across different scientific workloads are not additive or directly comparable. The landing page is an index, not a pooled benchmark score.</p></div>
+        <div class="callout"><strong>Descriptive aggregate only</strong><p>The 2.88× geometric mean summarizes ten ordinary within-task expert-optimization ratios. It excludes Task 07's design reduction and Task 08's feasibility result; raw runtimes across workloads are never pooled.</p></div>
       </section>
 
       <section class="docs-section" id="boundary">
@@ -692,26 +1005,27 @@ def methodology_page(site: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
 
 
 def not_found_page(site: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
+    root_prefix = site_base_path(site)
     return (
         common_head(
             site=site,
             title=f'Page not found — {site["title"]}',
             description="The requested OrbitBreakers benchmark page does not exist.",
             canonical_path="404.html",
-            root_prefix="",
+            root_prefix=root_prefix,
         )
         + f"""
 <body class="not-found-page">
-{header(site, "")}
-<main class="not-found">
+{header(site, root_prefix)}
+<main class="not-found" id="main-content">
   <p class="eyebrow">404 · Route not found</p>
   <h1>This result is outside the public index.</h1>
   <p>Return to the twelve versioned tasks or inspect the repository directly.</p>
-  <div class="hero-actions"><a class="button button-primary" href="./">Open result index</a><a class="button button-secondary" href="{escape(site["repository"])}">Open GitHub</a></div>
+  <div class="hero-actions"><a class="button button-primary" href="{escape(root_prefix)}">Open result index</a><a class="button button-secondary" href="{escape(site["repository"])}">Open GitHub</a></div>
 </main>
-{footer(site, "")}
-{search_dialog(tasks, "")}
-<script src="assets/app.js" defer></script>
+{footer(site, root_prefix)}
+{search_dialog(tasks, root_prefix)}
+<script src="{escape(root_prefix)}assets/app.js" defer></script>
 </body>
 </html>
 """
@@ -719,7 +1033,7 @@ def not_found_page(site: dict[str, Any], tasks: list[dict[str, Any]]) -> str:
 
 
 def build(output: Path) -> None:
-    site, tasks = load_data()
+    site, report, tasks = load_data()
     output = output.resolve()
     forbidden = {ROOT.resolve(), Path.home().resolve(), Path("/").resolve()}
     if output in forbidden:
@@ -731,7 +1045,9 @@ def build(output: Path) -> None:
     assets = output / "assets"
     shutil.copytree(STATIC_DIR, assets, ignore=shutil.ignore_patterns("og.png"))
     (output / ".nojekyll").write_text("", encoding="utf-8")
-    (output / "index.html").write_text(index_page(site, tasks), encoding="utf-8")
+    (output / "index.html").write_text(
+        index_page(site, report, tasks), encoding="utf-8"
+    )
     (output / "404.html").write_text(not_found_page(site, tasks), encoding="utf-8")
 
     methodology_dir = output / "methodology"
@@ -754,6 +1070,18 @@ def build(output: Path) -> None:
         (diffs_dir / f'{task["slug"]}.focused.diff').write_text(
             excerpt, encoding="utf-8"
         )
+
+    figures_dir = output / "figures"
+    figures_dir.mkdir()
+    figure_names = {
+        figure[key]
+        for tab in report["graph_tabs"]
+        for figure in tab["figures"]
+        for key in ("src", "svg")
+        if figure.get(key)
+    }
+    for figure_name in sorted(figure_names):
+        shutil.copy2(FIGURES_DIR / figure_name, figures_dir / figure_name)
 
     search_index = [
         {
@@ -797,6 +1125,12 @@ def build(output: Path) -> None:
         "",
         site["description"],
         "",
+        "## Final synthesis",
+        "- Fable 5: 12/12 official final reward under a hybrid protocol; solver resources are not directly comparable with Harbor runs.",
+        "- GPT-5.6 Sol: 10/12 at high effort and 11/12 at ultra after Task 07 source adjudication.",
+        "- Expert + AI: 2.88x descriptive geometric mean across ten ordinary supported campaigns.",
+        "- Task 07 is a 45.758x challenge-design reduction; Task 08 is OOM-to-PASS feasibility with no confirmed runtime speedup.",
+        "",
         "## Pages",
         f"- [Result index]({site['site_url']})",
         f"- [Measurement protocol]({site['site_url']}methodology/)",
@@ -820,7 +1154,7 @@ def build(output: Path) -> None:
         shutil.copy2(og_source, output / "og.png")
 
     print(
-        f"Built {len(tasks)} task pages and supporting routes in "
+        f"Built {len(tasks)} task pages, {len(figure_names)} report figures, and supporting routes in "
         f"{output.relative_to(ROOT) if output.is_relative_to(ROOT) else output}"
     )
 

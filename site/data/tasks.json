@@ -1,7 +1,7 @@
 {
   "site": {
     "title": "OrbitBreakers Bench",
-    "description": "A public, evidence-backed record of TensorCircuit-NG optimization results across the twelve ORBIT-Q expert tasks.",
+    "description": "The evidence-backed report on agent validity, generated-artifact efficiency, and human–AI optimization across twelve TensorCircuit-NG tasks.",
     "repository": "https://github.com/hmyuuu/OrbitBreakersBench",
     "site_url": "https://hmyuuu.github.io/OrbitBreakersBench/",
     "updated": "2026-07-30",
@@ -207,46 +207,63 @@
       "short_title": "Non-unitary gate cooling",
       "summary": "Ten differentiable non-unitary cooling layers on an 18-qubit TFIM state, normalized every layer for 600 updates.",
       "problem": [
-        "The expert evolves a dense 18-qubit complex state through alternating non-unitary one- and two-site filters, normalizes after every layer, and differentiates through every normalization.",
-        "The optimized representation must be exact: no truncation, no skipped normalization, no approximate compression, and all 600 Adam updates must remain."
+        "The expert evolves an 18-qubit state through alternating non-unitary one- and two-site filters, normalizes after every layer, and differentiates through every normalization.",
+        "The final report requires a fully TensorCircuit-native implementation: no truncation, no skipped normalization, no raw-simulator replacement, and all 600 Adam updates must remain."
       ],
       "status": {
-        "kind": "validated",
-        "label": "Docker promoted",
-        "detail": "Six matched, counterbalanced Docker pairs; all evaluator cells passed."
+        "kind": "qualified",
+        "label": "TC-native · 5 pairs",
+        "detail": "Five cold-process pairs and 5/5 wins; functional and static checks passed in the linked ORBIT-Q evidence PR."
       },
       "metric": {
-        "headline": "14.076×",
-        "improvement": "92.89% lower runtime",
-        "baseline": "97.084 s",
-        "candidate": "6.898 s",
-        "baseline_value": 97.083712,
-        "candidate_value": 6.898409,
-        "pairs": "6 matched pairs",
-        "engine": "Docker",
-        "ci": "13.676×–14.475×",
-        "wins": "6/6 wins"
+        "headline": "1.939×‡",
+        "improvement": "48.05% lower displayed mean",
+        "baseline": "115.708 s‡",
+        "candidate": "60.114 s‡",
+        "baseline_value": 115.708,
+        "candidate_value": 60.114,
+        "pairs": "5 matched pairs",
+        "engine": "Same image / machine",
+        "ci": "1.105×–2.772×",
+        "wins": "5/5 wins"
       },
-      "headline_insight": "A proof of exact rank is more valuable than a generic compression routine.",
+      "headline_insight": "For the fully TensorCircuit-native network, contraction-path quality matters more than a smaller graph.",
       "insights": [
         {
-          "title": "Bound the exact state",
-          "body": "Operator-Schmidt rank two gives a maximum MPS bond dimension of 32 after the five uses of each bond."
+          "title": "Budget OMECo deliberately",
+          "body": "OMECo 4×4 versus 1×1 on the same fused circuit measured 1.420× with a 1.181×–1.659× interval and won 5/5 pairs."
         },
         {
-          "title": "Skip needless canonicalization",
-          "body": "The TensorCircuit local MPO contraction is retained, but QR/RQ is omitted because the exact rank bound is already known."
+          "title": "A smaller graph is not enough",
+          "body": "Filter fusion measured 1.198× with a 0.916×–1.480× interval. Its isolated effect remains unresolved and is not credited in the headline."
         },
         {
-          "title": "Preserve differentiable normalization",
-          "body": "Every layer norm remains inside the graph. Local RX absorption and dense gate fusion were both slower and were discarded."
+          "title": "Compliance is part of the result",
+          "body": "The revised candidate keeps the circuit, filters, normalization, MPO, and expectation inside TensorCircuit APIs, superseding the earlier backend-einsum exact-MPS prototype."
         }
       ],
       "reference_path": "references/task-05/solution_5.py",
-      "candidate_path": "src/solutions/task-05/solution_5.py",
-      "evidence_path": "research/task-05/IMPLEMENTATION_COMPARISON.md",
-      "diff_keywords": ["def _apply_local_mpo", "tc.MPSCircuit", "def _mps_norm", "K.jaxy_scan"],
-      "caveat": null
+      "reference_source_path": "site/data/comparisons/task-05-reference-solution_5.py",
+      "reference_diff_path": "tasks/challenge-05/solution/solution_5.py",
+      "reference_sha256": "212ec101f72aa87468b5d2aabc76b445b158a69d8f99e709cb8a0bbd05476a8f",
+      "reference_url": "https://github.com/sxzgroup/ORBIT-Q/blob/b3b0c08f0bbc82470da5cbe39a6ba31e39f6a7fe/tasks/challenge-05/solution/solution_5.py",
+      "candidate_path": "optimized_solutions/challenge-05/solution_5.py",
+      "candidate_source_path": "site/data/comparisons/task-05-solution_5.py",
+      "candidate_sha256": "bbe5768d9e3b0e1e7e28d611ad2be8392a8bc3e031fb662604adca90a9f08b79",
+      "candidate_url": "https://github.com/sxzgroup/ORBIT-Q/blob/cd3639e6d5b4046df7a160534ea92c4746e2e5fc/optimized_solutions/challenge-05/solution_5.py",
+      "evidence_path": "sxzgroup/ORBIT-Q#19",
+      "evidence_url": "https://github.com/sxzgroup/ORBIT-Q/pull/19",
+      "diff_keywords": ["tc.set_contractor(\"omeco-4-4\")", "def _cooling_circuit", "mpo_expectation", "K.jaxy_scan"],
+      "measurement_context": {
+        "title": "Why this supersedes the earlier 14.08× row",
+        "items": [
+          {"label": "Median paired result", "value": "1.668×"},
+          {"label": "Four-pair sensitivity", "value": "1.639×"},
+          {"label": "Visible expert long tail", "value": "180.22 s"}
+        ],
+        "note": "The excluded exact-MPS prototype moved core work into handwritten backend einsums. The final report instead headlines the fully TensorCircuit-owned circuit/MPO candidate."
+      },
+      "caveat": "The mean paired result is based on five pairs and is widened by one 180.22 s expert long tail. The linked PR reports that its automated LLM-audit stage was unavailable because the verifier credential returned 401; functional and static checks completed normally."
     },
     {
       "id": "06",
@@ -259,23 +276,23 @@
         "The ODE, tolerances, endpoints, analog variables, all 168 digital angles, and every pre-update energy must be preserved."
       ],
       "status": {
-        "kind": "pending",
-        "label": "One pair short",
-        "detail": "Five matched Docker pairs passed; the benchmark rule requires at least six before a speedup claim."
+        "kind": "qualified",
+        "label": "5-pair Docker",
+        "detail": "Five matched Docker pairs passed and support the final-report estimate; the repository's formal six-pair promotion gate remains open."
       },
       "metric": {
-        "headline": "Pending",
-        "improvement": "1.504× observed over 5 pairs",
+        "headline": "1.504×‡",
+        "improvement": "33.53% lower runtime",
         "baseline": "41.426 s‡",
         "candidate": "27.537 s‡",
         "baseline_value": 41.425923,
         "candidate_value": 27.536613,
         "pairs": "5 matched pairs",
         "engine": "Docker",
-        "ci": "Descriptive only",
+        "ci": "1.489×–1.520×",
         "wins": "5/5 wins"
       },
-      "headline_insight": "The ODE backend dominates; the measurement still needs one more matched pair.",
+      "headline_insight": "TensorCircuit's native ODE backend dominates; Euler fusion is a small compile-oriented refinement.",
       "insights": [
         {
           "title": "Choose the native ODE path",
@@ -294,7 +311,7 @@
       "candidate_path": "src/solutions/task-06/solution_6.py",
       "evidence_path": "research/task-06/IMPLEMENTATION_COMPARISON.md",
       "diff_keywords": ["ode_backend=\"jaxode\"", "jax.lax.scan", "tc.gates.u_gate", "def forward"],
-      "caveat": "The five-pair 1.504× direction is shown for transparency, not as validated SOTA. One additional passing matched pair is required by the repository's immutable promotion rule."
+      "caveat": "The final report presents the five-pair 1.504× estimate and interval. The repository's immutable promotion rule still requires one additional passing matched pair before formal promotion."
     },
     {
       "id": "07",
@@ -370,6 +387,16 @@
         "engine": "Docker",
         "ci": "No speedup claim",
         "wins": "5/5 candidate PASS"
+      },
+      "measurement_context": {
+        "title": "Independent 64-GiB paired context",
+        "items": [
+          {"label": "Mean runtimes", "value": "126.675 → 123.188 s"},
+          {"label": "Mean paired result", "value": "1.045×"},
+          {"label": "95% interval", "value": "0.818×–1.273×"},
+          {"label": "Pair wins", "value": "3/5"}
+        ],
+        "note": "Both implementations pass with more memory, proving the expert is runnable in principle. The interval crosses one, so this does not establish a runtime gain."
       },
       "headline_insight": "Bound the batch dimension, not the scientific workload.",
       "insights": [
@@ -453,19 +480,28 @@
       "status": {
         "kind": "validated",
         "label": "Docker promoted",
-        "detail": "Six matched, counterbalanced Docker pairs; all evaluator cells passed."
+        "detail": "The final report selects the first five predeclared pairs; a sixth supplemental pair also passed."
       },
       "metric": {
-        "headline": "4.940×",
-        "improvement": "79.73% lower runtime",
-        "baseline": "18.921 s",
-        "candidate": "3.835 s",
-        "baseline_value": 18.921006,
-        "candidate_value": 3.835296,
-        "pairs": "6 matched pairs",
+        "headline": "4.898×",
+        "improvement": "79.56% lower runtime",
+        "baseline": "18.931 s",
+        "candidate": "3.869 s",
+        "baseline_value": 18.931296,
+        "candidate_value": 3.869287,
+        "pairs": "5 headline pairs + 1 supplemental",
         "engine": "Docker",
-        "ci": "4.689×–5.191×",
-        "wins": "6/6 wins"
+        "ci": "4.598×–5.199×",
+        "wins": "5/5 + supplemental win"
+      },
+      "measurement_context": {
+        "title": "Supplemental sixth pair",
+        "items": [
+          {"label": "Six-pair expert mean", "value": "18.921 s"},
+          {"label": "Six-pair candidate mean", "value": "3.835 s"},
+          {"label": "Six-pair paired result", "value": "4.940×"}
+        ],
+        "note": "The final synthesis intentionally uses the first five predeclared pairs for its headline; the sixth pair remains visible as supplemental evidence."
       },
       "headline_insight": "A giant hyperedge is small when represented by its exact operator rank.",
       "insights": [
@@ -544,23 +580,23 @@
       "summary": "Maximize direct overlap between a 32-qubit DMRG MPS and a two-layer, 31-gate SU4 circuit over 5,000 updates.",
       "problem": [
         "A 32-qubit Néel state passes through 31 independently parameterized SU4 gates. The loss is the direct tensor-network overlap with an evaluator-provided DMRG MPS, optimized for exactly 5,000 Adam steps.",
-        "The repository-best tracked variant additionally pair-fuses the shallow circuit into sixteen four-level sites. It preserves all 465 parameters, gate order, target overlap, histories, and complex64 semantics."
+        "The registered primary candidate preserves all 465 parameters, gate order, target overlap, histories, and complex64 semantics while batching gate construction and the full optimizer loop."
       ],
       "status": {
         "kind": "provisional",
-        "label": "Local six-pair · variant",
-        "detail": "The repository-best tracked variant passed six local-engine pairs. The formal pinned-Docker promotion run remains pending."
+        "label": "Local six-pair",
+        "detail": "The primary registered candidate passed six local-engine pairs. The formal pinned-Docker promotion run remains pending."
       },
       "metric": {
-        "headline": "4.248×†",
-        "improvement": "76.46% lower runtime",
-        "baseline": "9.021 s†",
-        "candidate": "2.124 s†",
-        "baseline_value": 9.020622,
-        "candidate_value": 2.123708,
+        "headline": "3.914×†",
+        "improvement": "74.45% lower runtime",
+        "baseline": "9.083 s†",
+        "candidate": "2.321 s†",
+        "baseline_value": 9.082742,
+        "candidate_value": 2.320613,
         "pairs": "6 matched pairs",
         "engine": "Local engine",
-        "ci": "4.196×–4.299×",
+        "ci": "3.877×–3.951×",
         "wins": "6/6 wins"
       },
       "headline_insight": "The contraction was cheap; 31 separately traced SU4 constructors were not.",
@@ -574,15 +610,24 @@
           "body": "One training scan removes 5,000 host dispatches, but contributes less than the gate-construction rewrite."
         },
         {
-          "title": "Pair-fuse the shallow network",
-          "body": "Sixteen four-level sites halve the node count and add about 8.5% beyond the primary 3.914× candidate."
+          "title": "Keep the variant secondary",
+          "body": "A tracked pair-fused variant measured 4.248×, but the final synthesis headlines the registered primary solution_12.py and its 3.914× result."
         }
       ],
       "reference_path": "references/task-12/solution_12.py",
-      "candidate_path": "src/solutions/task-12/variants/solution_12_fused.py",
+      "candidate_path": "src/solutions/task-12/solution_12.py",
       "evidence_path": "research/task-12/IMPLEMENTATION_COMPARISON.md",
-      "diff_keywords": ["def _su4_batch", "tc.QuditCircuit", "dim=4", "jax.lax.scan"],
-      "caveat": "The headline uses the tracked fused variant rather than the primary registered solution_12.py, which measured 3.914×. Both six-pair sessions used the pinned local environment; Docker promotion remains pending."
+      "diff_keywords": ["def expm_pade33_fixed", "def su4_batch", "K.jaxy_scan", "jax.lax.scan"],
+      "measurement_context": {
+        "title": "Tracked secondary variant",
+        "items": [
+          {"label": "Variant result", "value": "4.248×"},
+          {"label": "Variant mean runtime", "value": "2.124 s"},
+          {"label": "Increment beyond primary", "value": "≈8.5%"}
+        ],
+        "note": "The pair-fused ququart variant is retained as secondary evidence, not as the final report's registered primary implementation."
+      },
+      "caveat": "The six-pair result used the pinned local environment because the host had no Docker daemon. The formal Docker promotion gate remains pending."
     }
   ]
 }

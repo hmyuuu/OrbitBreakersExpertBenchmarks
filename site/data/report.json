@@ -1,0 +1,407 @@
+{
+  "title": "What we learned from benchmarking agents—and then optimizing the experts",
+  "lede": "Validity, generated-artifact efficiency, and expert co-optimization are different axes. This report keeps them separate, then connects every headline to its public evidence.",
+  "outcomes": [
+    {
+      "eyebrow": "Fable 5",
+      "value": "12/12",
+      "label": "official final reward",
+      "detail": "A complete valid row under a hybrid solving protocol. Solver tokens, cost, and wall time are not comparable with the in-container Harbor runs.",
+      "tone": "mint"
+    },
+    {
+      "eyebrow": "GPT-5.6 Sol",
+      "value": "10/12 → 11/12†",
+      "label": "high → ultra",
+      "detail": "Ultra preserved every High pass and added Task 08. The final 11/12 includes the documented post-hoc Task 07 adjudication.",
+      "tone": "primary"
+    },
+    {
+      "eyebrow": "Expert + AI",
+      "value": "2.88×",
+      "label": "descriptive geometric mean",
+      "detail": "Across ten ordinary supported campaigns. Task 07's design reduction and Task 08's feasibility result are intentionally excluded.",
+      "tone": "apricot"
+    }
+  ],
+  "boundary_results": [
+    {
+      "label": "Task 07",
+      "value": "45.758×",
+      "detail": "exact challenge-design reduction"
+    },
+    {
+      "label": "Task 08",
+      "value": "OOM → 5/5 PASS",
+      "detail": "bounded-memory feasibility; no confirmed speedup"
+    }
+  ],
+  "evidence_axes": [
+    {
+      "number": "01",
+      "title": "Validity",
+      "question": "Did the artifact solve the intended task?",
+      "metric": "functional × static policy × semantic audit",
+      "direction": "Pass/fail; runtime stays separate"
+    },
+    {
+      "number": "02",
+      "title": "Agent artifact efficiency",
+      "question": "How slow is a valid generated artifact versus its same-run expert?",
+      "metric": "T_candidate / T_reference",
+      "direction": "Lower is better"
+    },
+    {
+      "number": "03",
+      "title": "Expert co-optimization",
+      "question": "How much faster is the optimized expert-derived implementation?",
+      "metric": "paired T_expert / T_optimized",
+      "direction": "Higher is better"
+    }
+  ],
+  "graph_tabs": [
+    {
+      "id": "model-generations",
+      "label": "Model generations",
+      "eyebrow": "GPT-5.5 high → GPT-5.6 Sol high",
+      "title": "The same 10/12 validity, with faster valid artifacts",
+      "summary": "Passed-task geometric-mean slowdown moved from 2.197× to 1.428×. This normalized comparison is informative, not causal: hosts, benchmark revisions, and audits differed.",
+      "stats": [
+        "10/12 both",
+        "2.197× → 1.428×",
+        "≈35% lower slowdown"
+      ],
+      "evidence": [
+        {
+          "label": "GPT-5.6 Sol high benchmark PR",
+          "url": "https://github.com/sxzgroup/ORBIT-Q/pull/5"
+        }
+      ],
+      "data_tables": [
+        {
+          "title": "Model-generation comparison",
+          "headers": ["Run", "Final validity", "Passed-task artifact slowdown"],
+          "rows": [
+            ["GPT-5.5 high", "10/12", "2.197×"],
+            ["GPT-5.6 Sol high", "10/12", "1.428×"]
+          ],
+          "note": "The slowdown ratio is candidate runtime divided by its same-run expert runtime. Hosts, benchmark revisions, and audits differed, so this is normalized context rather than a causal model comparison."
+        }
+      ],
+      "figures": [
+        {
+          "src": "gpt55-vs-gpt56-comparison.png",
+          "width": 2539,
+          "height": 1089,
+          "alt": "Two-panel comparison showing GPT-5.5 high and GPT-5.6 Sol high both at ten valid tasks, with the geometric-mean artifact slowdown improving from 2.197 times to 1.428 times.",
+          "caption": "Final validity and same-run expert-normalized artifact runtime. Failed rewards are marked rather than assigned runtime bars."
+        }
+      ]
+    },
+    {
+      "id": "reasoning-effort",
+      "label": "Reasoning effort",
+      "eyebrow": "GPT-5.6 Sol high → ultra",
+      "title": "Ultra added Task 08; Task 01 remained the shared failure",
+      "summary": "Final validity moved from 10/12 to 11/12 after Task 07 source adjudication. On ten common passes, expert-normalized slowdown improved from 1.428× to 1.165×.",
+      "stats": [
+        "10/12 → 11/12†",
+        "Task 08 added",
+        "1.428× → 1.165×"
+      ],
+      "evidence": [
+        {
+          "label": "High benchmark PR",
+          "url": "https://github.com/sxzgroup/ORBIT-Q/pull/5"
+        },
+        {
+          "label": "Ultra benchmark PR",
+          "url": "https://github.com/sxzgroup/ORBIT-Q/pull/6"
+        },
+        {
+          "label": "Task 07 reduction evidence",
+          "url": "https://github.com/hmyuuu/OrbitBreakersBench/blob/main/research/task-07/CLASSICAL_ANCILLA_REDUCTION_REPORT.md"
+        }
+      ],
+      "data_tables": [
+        {
+          "title": "Task-level final validity and artifact runtime",
+          "headers": ["Task", "High final", "Ultra final", "High runtime (s)", "Ultra runtime (s)"],
+          "rows": [
+            ["01", "Fail", "Fail", "107.51", "127.87"],
+            ["02", "Pass", "Pass", "10.65", "14.32"],
+            ["03", "Pass", "Pass", "9.84", "18.45"],
+            ["04", "Pass", "Pass", "14.14", "4.96"],
+            ["05", "Pass", "Pass", "124.92", "75.51"],
+            ["06", "Pass", "Pass", "23.39", "152.16"],
+            ["07", "Pass", "Pass†", "155.52", "84.99"],
+            ["08", "Fail", "Pass", "55.48", "60.94"],
+            ["09", "Pass", "Pass", "87.31", "7.18"],
+            ["10", "Pass", "Pass", "68.68", "71.27"],
+            ["11", "Pass", "Pass", "100.41", "120.07"],
+            ["12", "Pass", "Pass", "12.85", "8.61"],
+            ["Final / mean", "10/12", "11/12", "64.23", "62.19"]
+          ],
+          "note": "† Task 07 is a post-hoc source adjudication; the original Ultra audit and 10/12 reward artifact remain unchanged."
+        }
+      ],
+      "figures": [
+        {
+          "src": "gpt56sol-high-vs-ultra-outcomes.png",
+          "width": 3714,
+          "height": 1082,
+          "alt": "Three-panel chart comparing high and ultra validity, raw task runtimes, and expert-normalized efficiency; Ultra passes Task 08 while both fail Task 01.",
+          "caption": "The original Ultra PR retained a 10/12 audit output; the displayed 11/12 is the final adjudicated result."
+        }
+      ]
+    },
+    {
+      "id": "agent-resources",
+      "label": "Agent resources",
+      "eyebrow": "One run per effort level",
+      "title": "More tokens and cost did not mean more wall time",
+      "summary": "Ultra used 26.8% more solving-side tokens and cost 17.6% more, while agent solve wall time was 7.5% shorter. Per-task changes were highly nonuniform.",
+      "stats": [
+        "+26.8% tokens",
+        "+17.6% cost",
+        "−7.5% wall time"
+      ],
+      "evidence": [
+        {
+          "label": "High benchmark PR",
+          "url": "https://github.com/sxzgroup/ORBIT-Q/pull/5"
+        },
+        {
+          "label": "Ultra benchmark PR",
+          "url": "https://github.com/sxzgroup/ORBIT-Q/pull/6"
+        }
+      ],
+      "data_tables": [
+        {
+          "title": "Solver-resource comparison",
+          "headers": ["Metric", "High", "Ultra", "Ultra − High"],
+          "rows": [
+            ["Final valid solutions", "10", "11", "+1"],
+            ["Agent solve wall time", "197.70 min", "182.80 min", "−7.5%"],
+            ["Non-cache-read input tokens", "1.709 M", "1.312 M", "−23.2%"],
+            ["Cache-read input tokens", "24.199 M", "31.478 M", "+30.1%"],
+            ["Output tokens", "0.163 M", "0.257 M", "+58.1%"],
+            ["Total solving-side tokens", "26.071 M", "33.048 M", "+26.8%"],
+            ["Recorded solver cost", "USD 25.53", "USD 30.02", "+17.6%"],
+            ["Cost per valid solution", "USD 2.55", "USD 2.73", "+6.9%"],
+            ["Solve time per valid solution", "19.77 min", "16.62 min", "−15.9%"],
+            ["All-artifact runtime total", "770.70 s", "746.33 s", "−3.2%"]
+          ],
+          "note": "Across the ten common passes, the geometric mean of Ultra runtime divided by High runtime was 0.815; expert-normalized slowdown improved from 1.428× to 1.165×."
+        }
+      ],
+      "figures": [
+        {
+          "src": "gpt56sol-high-vs-ultra-resources.png",
+          "width": 3698,
+          "height": 1150,
+          "alt": "Per-task comparison of GPT-5.6 Sol high and ultra agent wall time, solving-side tokens, and recorded cost.",
+          "caption": "Aggregate resource changes came from uneven task-level movements rather than a uniform effort multiplier."
+        },
+        {
+          "src": "gpt56sol-high-agent-resource-use.png",
+          "width": 3401,
+          "height": 1092,
+          "alt": "GPT-5.6 Sol high resource chart showing task wall time, token composition, cost, and solve time per valid solution.",
+          "caption": "High: 197.70 agent minutes, 26.071 million solving-side tokens, and USD 25.53 recorded solver cost."
+        },
+        {
+          "src": "gpt56sol-ultra-agent-resource-use.png",
+          "width": 3475,
+          "height": 1106,
+          "alt": "GPT-5.6 Sol ultra resource chart showing task wall time, token composition, cost, and solve time per valid solution.",
+          "caption": "Ultra: 182.80 agent minutes, 33.048 million solving-side tokens, USD 30.02 cost, and final adjudicated validity of 11/12."
+        }
+      ]
+    },
+    {
+      "id": "fable-hybrid",
+      "label": "Fable hybrid",
+      "eyebrow": "Official verifier · hybrid solver protocol",
+      "title": "A complete 12/12 row, with a comparability boundary",
+      "summary": "The artifacts passed the unchanged functional evaluator, static policy, and semantic audit. Fable ran through Cursor with a discipline protocol rather than physical Harbor isolation.",
+      "stats": [
+        "12/12",
+        "2.39× median",
+        "0.74×–18.06× range"
+      ],
+      "evidence": [
+        {
+          "label": "Fable 5 benchmark PR",
+          "url": "https://github.com/sxzgroup/ORBIT-Q/pull/4"
+        }
+      ],
+      "data_tables": [
+        {
+          "title": "Fable 5 official result",
+          "headers": ["Result", "Value"],
+          "rows": [
+            ["Final official reward", "12/12"],
+            ["Median artifact/runtime ratio", "2.39× expert runtime"],
+            ["Best ratio", "0.74×"],
+            ["Worst ratio", "18.06×"],
+            ["Required framework", "TensorCircuit-NG"]
+          ],
+          "note": "The unchanged evaluator, static policy, and semantic audit were official. Cursor-based solver resources are not comparable with the physically isolated Harbor runs."
+        }
+      ],
+      "figures": [
+        {
+          "src": "fable5-runtime-ratios.png",
+          "svg": "fable5-runtime-ratios.svg",
+          "width": 2135,
+          "height": 1119,
+          "alt": "Task-level Fable 5 artifact runtimes relative to the human expert, with a median ratio of 2.39 times and all twelve tasks valid.",
+          "caption": "Artifact validity and same-machine ratios are useful; Fable solver resources are not comparable with the in-container Codex runs."
+        }
+      ]
+    },
+    {
+      "id": "expert-optimization",
+      "label": "Expert optimization",
+      "eyebrow": "Human expert + AI co-optimization",
+      "title": "Representation changes dominated generic optimization slogans",
+      "summary": "Ten ordinary task campaigns have a descriptive geometric mean of 2.88×. Task 07 is a separate design reduction; Task 08 is a feasibility result whose runtime interval includes no change.",
+      "stats": [
+        "2.88× ordinary-task GM",
+        "45.758× Task 07",
+        "Task 08: no speedup"
+      ],
+      "evidence": [
+        {
+          "label": "Final report and task evidence index",
+          "url": "https://github.com/hmyuuu/OrbitBreakersBench#3-human-expert--ai-co-optimization"
+        },
+        {
+          "label": "Public measurement protocol",
+          "url": "https://github.com/hmyuuu/OrbitBreakersBench/blob/main/BENCHMARKING.md"
+        }
+      ],
+      "data_tables": [
+        {
+          "title": "Expert and optimized evaluator runtime",
+          "headers": ["Task", "Expert mean", "Optimized mean", "Mean paired result"],
+          "rows": [
+            ["01", "60.651 s", "6.360 s", "9.636×"],
+            ["02", "4.495 s", "4.031 s", "1.116×"],
+            ["03", "4.101 s", "0.925 s", "4.435×"],
+            ["04", "14.742 s", "5.672 s", "2.602×"],
+            ["05", "115.708 s", "60.114 s", "1.939× mean; 1.668× median"],
+            ["06", "41.426 s", "27.537 s", "1.504×"],
+            ["07", "140.076 s", "3.071 s", "45.758× design reduction"],
+            ["08 · 64 GiB", "126.675 s", "123.188 s", "1.045×; no confirmed speedup"],
+            ["09", "33.504 s", "8.767 s", "3.822× local"],
+            ["10", "18.931 s", "3.869 s", "4.898×"],
+            ["11", "168.362 s", "114.968 s", "1.464× local"],
+            ["12", "9.083 s", "2.321 s", "3.914× local"]
+          ],
+          "note": "The runtime graph uses Task 08's independent 64-GiB paired session, where both implementations passed and the interval crossed one. The primary 7-GiB result shown in the task index is separately OOM → 5/5 PASS with a 47.356-s candidate mean."
+        },
+        {
+          "title": "Factor-overview values and measurement scope",
+          "headers": ["Task", "Factor", "Ratio", "Classification or scope"],
+          "rows": [
+            ["01", "TFIM MPO", "1.512×", "retained"],
+            ["01", "Local fusion", "1.562×", "retained"],
+            ["01", "Batched gates", "3.575×", "retained"],
+            ["01", "Global batching", "1.079×", "retained"],
+            ["02", "Training scan", "1.036×", "retained"],
+            ["02", "Batched purity", "1.074×", "retained"],
+            ["02", "Packed parameters", "0.428×", "rejected"],
+            ["02", "Gate fusion", "0.966×", "rejected"],
+            ["03", "Product reduction", "1.660×", "retained"],
+            ["03", "Local-map vmap", "2.063×", "retained"],
+            ["03", "Training scan", "1.149×", "retained"],
+            ["03", "Observable vmap", "1.093×", "retained"],
+            ["04", "Probe vmap", "2.165×", "retained"],
+            ["04", "Kraus pairing", "1.053×", "retained"],
+            ["04", "RXX–Kraus fusion", "1.104×", "retained"],
+            ["04", "Training scan", "0.987×", "rejected"],
+            ["05", "OMECo 4×4", "1.420×", "retained; five-pair factor"],
+            ["05", "Filter fusion", "1.198×", "unresolved; interval crosses one"],
+            ["06", "Native jaxode", "1.529×", "retained; canonical screen"],
+            ["06", "Euler cold compile", "1.152×", "compile + first execution"],
+            ["06", "Automatic dt0", "1.001×", "neutral / rejected"],
+            ["06", "BCOO microbenchmark", "0.295×", "rejected microbenchmark"],
+            ["07", "Exact reduction", "45.758×", "retained design reduction"],
+            ["07", "Training scan", "0.935×", "rejected"],
+            ["07", "Dense fusion", "0.849×", "rejected"],
+            ["07", "Local contractor", "1.044×", "retained"],
+            ["08", "End to end", "1.045×", "unresolved; 64-GiB interval crosses one"],
+            ["08", "256 vs 512 shots", "1.155×", "supported batch comparison"],
+            ["08", "256 vs 128 shots", "1.253×", "supported batch comparison"],
+            ["09", "Compact cones", "3.822×", "retained"],
+            ["09", "Inner light cone", ">34.2×", "retained"],
+            ["09", "Separate groups", "1.082×", "retained"],
+            ["09", "Manual fusion", "1.020×", "unresolved"],
+            ["10", "Bounded MPS/MPO", "≥4.67×", "retained"],
+            ["10", "Training scan", "0.986×", "rejected"],
+            ["10", "Rotation fusion", "1.052×", "retained"],
+            ["11", "Onsite vector", "81.215×", "retained isolated kernel"],
+            ["11", "Batched Pade", "1.695×", "retained isolated kernel"],
+            ["11", "Training scan", "1.158×", "retained phase-specific execution profile"],
+            ["12", "Batched Pade", "3.109×", "retained isolated kernel"],
+            ["12", "Cold training scan", "1.083×", "retained cold profile"],
+            ["12", "Pair fusion", "1.093×", "supported secondary end-to-end variant"]
+          ],
+          "note": "Panel scales vary. Values from separate rows are not multiplicative; the classification and scope column is part of each measurement."
+        }
+      ],
+      "figures": [
+        {
+          "src": "expert-optimization-runtime-log-bars.png",
+          "svg": "expert-optimization-runtime-log-bars.svg",
+          "width": 2100,
+          "height": 1232,
+          "alt": "Log-scale bars comparing human expert and AI-human optimized mean evaluator runtime across all twelve tasks.",
+          "caption": "Bold labels are predeclared means of paired speedups; they may differ slightly from ratios of the displayed mean runtimes."
+        },
+        {
+          "src": "factor-ablation-overview.png",
+          "svg": "factor-ablation-overview.svg",
+          "width": 3081,
+          "height": 3214,
+          "alt": "Twelve-panel factor overview distinguishing retained or supported factors from rejected or unresolved factors, with starred phase-specific and isolated measurements.",
+          "caption": "Panel scales vary and rows are not multiplicative. Starred Task 06 values are compile-phase or microbenchmarks; Task 11 onsite, Pade, and scan values and Task 12 Pade are phase-specific or isolated. Task 12 pair fusion is a valid secondary end-to-end variant."
+        }
+      ]
+    }
+  ],
+  "findings": [
+    {
+      "number": "01",
+      "title": "Change the exact representation first",
+      "body": "The largest ordinary gains came from shrinking the exact state, observable, or causal cone before contraction—not from blanket rules about fusion or scans."
+    },
+    {
+      "number": "02",
+      "title": "Visible correctness is not semantic correctness",
+      "body": "Both GPT-5.6 efforts passed functional and static checks on all twelve tasks, yet final validity was 10/12 and 11/12 after semantic review."
+    },
+    {
+      "number": "03",
+      "title": "Semantic audits also need evidence",
+      "body": "High Task 05 and Ultra Task 07 were false negatives. Both corrections preserve the original audits and add package- or source-level proof."
+    },
+    {
+      "number": "04",
+      "title": "Task 07 exposes a real loophole",
+      "body": "The 45.758× candidate passes the executable contract by eliminating the measured register. The conservative full-register alternative still reaches 4.479×."
+    },
+    {
+      "number": "05",
+      "title": "Allocation is part of the result",
+      "body": "Task 08's expert failed in 7 GiB, not in principle. A 64-GiB run made both implementations pass but did not establish a runtime gain."
+    },
+    {
+      "number": "06",
+      "title": "The harness required auditing too",
+      "body": "The reward implementation and documented policy were synchronized, and the TensorCircuit nightly pin was updated so all public experts could run unchanged."
+    }
+  ]
+}

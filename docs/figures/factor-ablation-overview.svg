@@ -851,7 +851,7 @@ L 725.279908 272.356
     <g id="ytick_20">
      <g id="line2d_60"/>
      <g id="text_43">
-      <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: end" x="571.383333" y="327.101506" transform="rotate(-0 571.383333 327.101506)">Euler fusion</text>
+      <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: end" x="571.383333" y="327.101506" transform="rotate(-0 571.383333 327.101506)">Euler cold compile</text>
      </g>
     </g>
     <g id="ytick_21">
@@ -863,7 +863,7 @@ L 725.279908 272.356
     <g id="ytick_22">
      <g id="line2d_62"/>
      <g id="text_45">
-      <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: end" x="571.383333" y="398.028983" transform="rotate(-0 571.383333 398.028983)">Sparse BCOO</text>
+      <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: end" x="571.383333" y="398.028983" transform="rotate(-0 571.383333 398.028983)">BCOO microbench</text>
      </g>
     </g>
    </g>
@@ -897,7 +897,7 @@ z
 " clip-path="url(#pb490424491)" style="fill: #0072b2; opacity: 0.88; stroke: #222222; stroke-width: 0.45; stroke-linejoin: miter"/>
    </g>
    <g id="text_47">
-    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="730.533903" y="325.883318" transform="rotate(-0 730.533903 325.883318)">1.15×</text>
+    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="730.533903" y="325.883318" transform="rotate(-0 730.533903 325.883318)">1.152×*</text>
    </g>
    <g id="patch_34">
     <path d="M 678.791542 349.596022
@@ -919,7 +919,7 @@ z
 " clip-path="url(#pb490424491)" style="fill: #d55e00; opacity: 0.88; stroke: #222222; stroke-width: 0.45; stroke-linejoin: miter"/>
    </g>
    <g id="text_49">
-    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="730.533903" y="396.810795" transform="rotate(-0 730.533903 396.810795)">0.295×</text>
+    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="730.533903" y="396.810795" transform="rotate(-0 730.533903 396.810795)">0.295×*</text>
    </g>
    <g id="text_50">
     <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start" x="574.883333" y="266.356" transform="rotate(-0 574.883333 266.356)">Task 06</text>
@@ -1859,7 +1859,7 @@ z
 " clip-path="url(#p45a039e4a4)" style="fill: #0072b2; opacity: 0.88; stroke: #222222; stroke-width: 0.45; stroke-linejoin: miter"/>
    </g>
    <g id="text_86">
-    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="487.151327" y="620.850426" transform="rotate(-0 487.151327 620.850426)">81.2×</text>
+    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="487.151327" y="620.850426" transform="rotate(-0 487.151327 620.850426)">81.215×*</text>
    </g>
    <g id="patch_61">
     <path d="M 336.911534 654.537307
@@ -1870,7 +1870,7 @@ z
 " clip-path="url(#p45a039e4a4)" style="fill: #0072b2; opacity: 0.88; stroke: #222222; stroke-width: 0.45; stroke-linejoin: miter"/>
    </g>
    <g id="text_87">
-    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="487.151327" y="670.167187" transform="rotate(-0 487.151327 670.167187)">1.7×</text>
+    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="487.151327" y="670.167187" transform="rotate(-0 487.151327 670.167187)">1.695×*</text>
    </g>
    <g id="patch_62">
     <path d="M 336.911534 703.854068
@@ -1881,7 +1881,7 @@ z
 " clip-path="url(#p45a039e4a4)" style="fill: #0072b2; opacity: 0.88; stroke: #222222; stroke-width: 0.45; stroke-linejoin: miter"/>
    </g>
    <g id="text_88">
-    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="487.151327" y="719.483949" transform="rotate(-0 487.151327 719.483949)">1.16×</text>
+    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="487.151327" y="719.483949" transform="rotate(-0 487.151327 719.483949)">1.158×*</text>
    </g>
    <g id="text_89">
     <text style="font-weight: 700; font-size: 10px; font-family: 'DejaVu Sans'; text-anchor: start" x="330.626667" y="592.908" transform="rotate(-0 330.626667 592.908)">Task 11</text>
@@ -1959,7 +1959,7 @@ L 721.470265 598.908
     <g id="ytick_40">
      <g id="line2d_156"/>
      <g id="text_90">
-      <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: end" x="571.383333" y="622.068614" transform="rotate(-0 571.383333 622.068614)">Batched Pade</text>
+      <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: end" x="571.383333" y="622.068614" transform="rotate(-0 571.383333 622.068614)">Pade kernel</text>
      </g>
     </g>
     <g id="ytick_41">
@@ -1994,7 +1994,7 @@ z
 " clip-path="url(#pf894cd3372)" style="fill: #0072b2; opacity: 0.88; stroke: #222222; stroke-width: 0.45; stroke-linejoin: miter"/>
    </g>
    <g id="text_93">
-    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="729.976255" y="620.850426" transform="rotate(-0 729.976255 620.850426)">3.11×</text>
+    <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="729.976255" y="620.850426" transform="rotate(-0 729.976255 620.850426)">3.109×*</text>
    </g>
    <g id="patch_66">
     <path d="M 597.186014 654.537307
@@ -2013,7 +2013,7 @@ L 605.158439 703.854068
 L 605.158439 731.471455
 L 597.186014 731.471455
 z
-" clip-path="url(#pf894cd3372)" style="fill: #d55e00; opacity: 0.88; stroke: #222222; stroke-width: 0.45; stroke-linejoin: miter"/>
+" clip-path="url(#pf894cd3372)" style="fill: #0072b2; opacity: 0.88; stroke: #222222; stroke-width: 0.45; stroke-linejoin: miter"/>
    </g>
    <g id="text_95">
     <text style="font-size: 6.6px; font-family: 'DejaVu Sans'; text-anchor: end" x="729.976255" y="719.483949" transform="rotate(-0 729.976255 719.483949)">1.09×</text>
@@ -2033,15 +2033,15 @@ z
    </g>
    <g id="PathCollection_42">
     <g clip-path="url(#pf894cd3372)">
-     <use xlink:href="#m4ac196f2ef" x="605.158439" y="717.662761" style="fill: #d55e00; stroke: #222222; stroke-width: 0.4"/>
+     <use xlink:href="#m6a02de61c9" x="605.158439" y="717.662761" style="fill: #0072b2; stroke: #222222; stroke-width: 0.4"/>
     </g>
    </g>
   </g>
   <g id="text_97">
-   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle" x="367.69" y="16.318125" transform="rotate(-0 367.69 16.318125)">Factor ablations for all twelve expert-optimization campaigns</text>
+   <text style="font-size: 12px; font-family: 'DejaVu Sans'; text-anchor: middle" x="367.69" y="16.318125" transform="rotate(-0 367.69 16.318125)">Factor evidence for all twelve expert-optimization campaigns</text>
   </g>
   <g id="text_98">
-   <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #555555" x="367.69" y="762.768" transform="rotate(-0 367.69 762.768)">Direct-parent speedup (log scale; panel scales vary). Values from different rows are not multiplicative. Task 11 onsite-vector and Pade values are isolated kernels.</text>
+   <text style="font-size: 7.5px; font-family: 'DejaVu Sans'; text-anchor: middle; fill: #555555" x="367.69" y="762.768" transform="rotate(-0 367.69 762.768)">Task-specific ratio (log scale; scales vary). Rows are not multiplicative. * phase-specific / isolated; report gives scope.</text>
   </g>
   <g id="legend_1">
    <g id="patch_68">
@@ -2053,7 +2053,7 @@ z
 " style="fill: #0072b2; stroke: #222222; stroke-linejoin: miter"/>
    </g>
    <g id="text_99">
-    <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: start" x="300.665625" y="43.37475" transform="rotate(-0 300.665625 43.37475)">retained</text>
+    <text style="font-size: 8px; font-family: 'DejaVu Sans'; text-anchor: start" x="300.665625" y="43.37475" transform="rotate(-0 300.665625 43.37475)">supported</text>
    </g>
    <g id="patch_69">
     <path d="M 350.029375 43.37475
