@@ -61,41 +61,6 @@ that one machine or one quantum workload is intrinsically faster than another.
 
 ## 2. Agent benchmark results
 
-### Fable 5: 12/12 under a hybrid solving protocol
-
-The [Fable 5 benchmark PR](https://github.com/sxzgroup/ORBIT-Q/pull/4)
-contains a complete twelve-task row:
-
-| Result | Value |
-|---|---:|
-| Final official reward | **12/12** |
-| Median artifact/runtime ratio | **2.39x expert runtime** |
-| Best ratio | **0.74x** |
-| Worst ratio | **18.06x** |
-| Required framework | TensorCircuit-NG |
-
-![Fable 5 artifact runtime ratios](docs/figures/fable5-runtime-ratios.png)
-
-The verifier side was official: every solution passed the unchanged
-functional evaluator, static policy, and Codex semantic audit. The solver
-side was not the standard Harbor agent axis: Fable 5 ran through Cursor over
-the workspace, while access to tests and expert solutions was controlled by a
-documented discipline protocol rather than physical container isolation.
-Therefore:
-
-- artifact validity and same-machine `T/T_ref` remain useful;
-- solver tokens, cost, and solve wall time are **not** comparable with the
-  in-container Codex runs;
-- 12/12 is evidence that the task set is solvable by this model/tool
-  combination, not a clean model-only leaderboard result.
-
-The run also quantified a framework-compliance boundary. A Task 04 prototype
-built a numerically correct Kraus network from raw tensor-network nodes, but
-the semantic audit rejected it as a framework bypass. The TensorCircuit-native
-rewrite passed and was roughly four times slower. This “compliance tax” is a
-real benchmark outcome: mathematical correctness alone is insufficient when
-the task is intended to measure use of a particular framework.
-
 ### GPT-5.6 Sol high: 10/12, with faster valid artifacts than GPT-5.5 high
 
 The [GPT-5.6 Sol high benchmark PR](https://github.com/sxzgroup/ORBIT-Q/pull/5)
@@ -175,17 +140,53 @@ This single-run comparison supports a narrower conclusion: ultra explored a
 strategy that solved the additional Task 08, while consuming more tokens and
 money. It is not enough evidence to infer a general effort-scaling law.
 
+### Fable 5: 12/12 under a hybrid solving protocol
+
+The [Fable 5 benchmark PR](https://github.com/sxzgroup/ORBIT-Q/pull/4)
+contains a complete twelve-task row:
+
+| Result | Value |
+|---|---:|
+| Final official reward | **12/12** |
+| Median artifact/runtime ratio | **2.39x expert runtime** |
+| Best ratio | **0.74x** |
+| Worst ratio | **18.06x** |
+| Required framework | TensorCircuit-NG |
+
+![Fable 5 artifact runtime ratios](docs/figures/fable5-runtime-ratios.png)
+
+The verifier side was official: every solution passed the unchanged
+functional evaluator, static policy, and Codex semantic audit. The solver
+side was not the standard Harbor agent axis: Fable 5 ran through Cursor over
+the workspace, while access to tests and expert solutions was controlled by a
+documented discipline protocol rather than physical container isolation.
+Therefore:
+
+- artifact validity and same-machine `T/T_ref` remain useful;
+- solver tokens, cost, and solve wall time are **not** comparable with the
+  in-container Codex runs;
+- 12/12 is evidence that the task set is solvable by this model/tool
+  combination, not a clean model-only leaderboard result.
+
+The run also quantified a framework-compliance boundary. A Task 04 prototype
+built a numerically correct Kraus network from raw tensor-network nodes, but
+the semantic audit rejected it as a framework bypass. The TensorCircuit-native
+rewrite passed and was roughly four times slower. This “compliance tax” is a
+real benchmark outcome: mathematical correctness alone is insufficient when
+the task is intended to measure use of a particular framework.
+
 ## 3. Human expert + AI co-optimization
 
 The expert campaigns started from immutable public solutions, profiled cold
 end-to-end execution, changed one factor at a time where possible, checked
 numerical equivalence, and promoted only evaluator-valid candidates.
 
-![Human expert versus AI-human optimized runtime](docs/figures/expert-optimization-runtime.png)
+![Human expert versus AI-human optimized runtime on a logarithmic scale](docs/figures/expert-optimization-runtime-log-bars.png)
 
-Labels in the figure are ratios of the displayed mean runtimes. The table
-uses the predeclared mean of paired speedups and its uncertainty, so the two
-summaries differ slightly when run-to-run noise is asymmetric.
+Bars show mean end-to-end evaluator runtime on a logarithmic scale. Values
+above the individual bars are seconds; bold labels are the predeclared means
+of paired speedups, so they can differ slightly from the ratio of the two
+displayed means when run-to-run noise is asymmetric.
 
 | Task | Mean runtime: expert → optimized | Paired result | Main defensible insight |
 |---:|---:|---:|---|
@@ -201,6 +202,19 @@ summaries differ slightly when run-to-run noise is asymmetric.
 | [10](research/task-10/IMPLEMENTATION_COMPARISON.md) | 18.931 → 3.869 s | **4.898x**, CI 4.598–5.199 | Use the exact low-rank MPS/MPO structure of the two CMZ reflections instead of repeated generic path search. |
 | [11](research/task-11/IMPLEMENTATION_COMPARISON.md) | 168.362 → 114.968 s | **1.464x**, CI 1.457–1.472 | Reduce dense-state passes and replace twelve diagonal onsite expectations with one coefficient-vector contraction. |
 | [12](research/task-12/IMPLEMENTATION_COMPARISON.md) | 9.083 → 2.321 s | **3.914x**, CI 3.877–3.951 | Batch the 31 fixed-order SU4 exponentials; this is the promoted primary candidate, not the secondary fused variant. |
+
+### Combined factor ablations
+
+![Combined factor ablations for Tasks 01 through 12](docs/figures/factor-ablation-overview.png)
+
+Each panel summarizes the task's direct factor-removal or matched-parent
+experiment. Blue factors were retained; orange factors were rejected or
+remain statistically unresolved. The horizontal distance from `1x` shows the
+measured effect of adding that factor to its direct parent. Panel scales vary,
+and values from separate rows must not be multiplied. Task 11's onsite-vector
+and Pade measurements are isolated kernels; the task-level reports linked in
+the table retain the complete paired data, confidence intervals, and
+experiment context.
 
 Ten ordinary, statistically supported speedups—Tasks 01–06 and 09–12—have
 an unweighted descriptive geometric mean of **2.88x**. Task 07 is excluded
@@ -326,16 +340,6 @@ The combined evidence supports four conclusions:
    edits contributed little, interacted with graph structure, or regressed.
    The retained reports identify the dominant factor instead of crediting
    every code change.
-
-They do **not** establish:
-
-- a hardware-independent runtime ranking;
-- a general superiority claim from one trial per model/effort/task;
-- solver-resource comparability between Fable's hybrid workflow and Harbor
-  agent runs;
-- a confirmed Task 08 runtime speedup;
-- acceptance of the Task 07 reduction under a stricter intended contract; or
-- global SOTA performance outside these public workloads and evaluators.
 
 ## 6. Reproducibility and evidence index
 
