@@ -39,6 +39,14 @@ equivalence checks, and experiment ledgers needed to audit those conclusions.
 The original operational documentation is preserved in
 [`BENCHMARKING.md`](BENCHMARKING.md).
 
+## Challenge 08 Boundary Framework v2
+
+The repository now includes a reusable matched BASE/PROBE instrument for
+spatially indexed TensorCircuit-NG circuit semantics. Its public contract,
+role-separated candidate and official loaders, controls, reproducibility
+commands, and validation limitations are documented in
+[`boundary_framework_v2/README.md`](boundary_framework_v2/README.md).
+
 ## 1. Evidence model
 
 Three quantities must not be conflated.
