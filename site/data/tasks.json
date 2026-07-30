@@ -1,0 +1,588 @@
+{
+  "site": {
+    "title": "OrbitBreakers Bench",
+    "description": "A public, evidence-backed record of TensorCircuit-NG optimization results across the twelve ORBIT-Q expert tasks.",
+    "repository": "https://github.com/hmyuuu/OrbitBreakersBench",
+    "site_url": "https://hmyuuu.github.io/OrbitBreakersBench/",
+    "updated": "2026-07-30",
+    "commit": "fb9b730"
+  },
+  "tasks": [
+    {
+      "id": "01",
+      "slug": "task-01",
+      "title": "DMRG-MPS Input With Variational Circuit Refinement",
+      "short_title": "DMRG-MPS refinement",
+      "summary": "Refine a supplied 32-qubit DMRG MPS with four trainable brickwork layers and 500 dependent Adam updates.",
+      "problem": [
+        "The evaluator supplies a normalized 32-site DMRG matrix-product state. The expert adds four variational brickwork layers, measures the open-boundary transverse-field Ising Hamiltonian, and performs exactly 500 Adam updates.",
+        "The original graph constructs hundreds of scalar gate operations and differentiates through 63 separate observable contractions on every update. The optimization must preserve all 570 parameters, the TensorCircuit-NG execution path, the input MPS, and the complete pre-update energy history."
+      ],
+      "status": {
+        "kind": "validated",
+        "label": "Docker promoted",
+        "detail": "Six matched, counterbalanced Docker pairs; all evaluator cells passed."
+      },
+      "metric": {
+        "headline": "9.636×",
+        "improvement": "89.51% lower runtime",
+        "baseline": "60.651 s",
+        "candidate": "6.360 s",
+        "baseline_value": 60.651144,
+        "candidate_value": 6.359807,
+        "pairs": "6 matched pairs",
+        "engine": "Docker",
+        "ci": "8.681×–10.592×",
+        "wins": "6/6 wins"
+      },
+      "headline_insight": "Shrink the differentiated graph before tuning the contractor.",
+      "insights": [
+        {
+          "title": "One Hamiltonian contraction",
+          "body": "A bond-dimension-three TFIM MPO replaces 31 ZZ and 32 X measurement patterns without changing the Hamiltonian."
+        },
+        {
+          "title": "Exact local fusion",
+          "body": "Commuting bond rotations and ordered Euler gates collapse 570 primitive nodes into 66 exact local gates while retaining every parameter."
+        },
+        {
+          "title": "Batch construction first",
+          "body": "Closed-form batched gate construction was the dominant measured factor. Larger OMECo search budgets and a whole-training scan did not earn promotion."
+        }
+      ],
+      "reference_path": "references/task-01/solution_1.py",
+      "candidate_path": "src/solutions/task-01/solution_1.py",
+      "evidence_path": "research/task-01/IMPLEMENTATION_COMPARISON.md",
+      "diff_keywords": ["def one_qubit_gates", "def two_qubit_gates", "def tfim_mpo", "mpo_expectation"],
+      "caveat": null
+    },
+    {
+      "id": "02",
+      "slug": "task-02",
+      "title": "Entanglement-Profile-Constrained VQE",
+      "short_title": "Entanglement-profile VQE",
+      "summary": "A 12-qubit XXZ VQE constrained by three half-chain Rényi-2 checkpoints over 500 updates.",
+      "problem": [
+        "This task trains a 12-qubit brickwork circuit against an XXZ energy objective while matching a prescribed three-point entanglement profile. Each update must retain the three normalized half-chain Rényi-2 measurements.",
+        "The optimization must preserve all 243 angles, three circuit blocks, 500 sequential Adam steps, checkpoint timing, and the four-key output contract."
+      ],
+      "status": {
+        "kind": "validated",
+        "label": "Docker promoted",
+        "detail": "Six matched, counterbalanced Docker pairs; all evaluator cells passed."
+      },
+      "metric": {
+        "headline": "1.116×",
+        "improvement": "10.33% lower runtime",
+        "baseline": "4.495 s",
+        "candidate": "4.031 s",
+        "baseline_value": 4.495463,
+        "candidate_value": 4.031039,
+        "pairs": "6 matched pairs",
+        "engine": "Docker",
+        "ci": "1.058×–1.174×",
+        "wins": "6/6 wins"
+      },
+      "headline_insight": "Batch a shared observable kernel; do not assume fewer gates means faster.",
+      "insights": [
+        {
+          "title": "Move the loop into TensorCircuit",
+          "body": "One K.jaxy_scan removes 500 host dispatches while preserving every pre-update value."
+        },
+        {
+          "title": "Share the purity kernel",
+          "body": "The three checkpoint states are evaluated together and Tr(ρ²) becomes an exact Frobenius norm."
+        },
+        {
+          "title": "Negative evidence matters",
+          "body": "Gate fusion, sparse XXZ action, and parameter packing all regressed. VMAP or Frobenius purity alone was statistically inconclusive."
+        }
+      ],
+      "reference_path": "references/task-02/solution_2.py",
+      "candidate_path": "src/solutions/task-02/solution_2.py",
+      "evidence_path": "research/task-02/IMPLEMENTATION_COMPARISON.md",
+      "diff_keywords": ["K.jaxy_scan", "purity = K.real", "K.vmap", "def block_states"],
+      "caveat": null
+    },
+    {
+      "id": "03",
+      "slug": "task-03",
+      "title": "Probability-Aware Post-Selected Many-Body Cooling",
+      "short_title": "Post-selected cooling",
+      "summary": "Twelve-qubit cooling with 60 explicit zero-outcome post-selections, probability-aware loss, and 300 updates.",
+      "problem": [
+        "Five cooling layers apply parameterized two-qubit gates, then post-select every even qubit onto zero. The loss combines TFIM energy with all 60 conditional event probabilities.",
+        "The candidate must retain every post-selection, all 230 independent parameters, complex64 semantics, and the exact 300-step optimizer trajectory."
+      ],
+      "status": {
+        "kind": "validated",
+        "label": "Docker promoted",
+        "detail": "Six matched, counterbalanced Docker pairs; all evaluator cells passed."
+      },
+      "metric": {
+        "headline": "4.435×",
+        "improvement": "77.46% lower runtime",
+        "baseline": "4.101 s",
+        "candidate": "0.925 s",
+        "baseline_value": 4.10135,
+        "candidate_value": 0.924608,
+        "pairs": "6 matched pairs",
+        "engine": "Docker",
+        "ci": "4.287×–4.584×",
+        "wins": "6/6 wins"
+      },
+      "headline_insight": "Post-selection does not merely reduce the state—it proves an exact product structure.",
+      "insights": [
+        {
+          "title": "Exploit the invariant",
+          "body": "After every measurement layer, the state is exactly a product of six surviving one-qubit states and six fixed zero states."
+        },
+        {
+          "title": "Vectorize local maps",
+          "body": "K.vmap over the six conditional two-qubit maps was the largest isolated factor, above 2× versus its parent."
+        },
+        {
+          "title": "Optimization order matters",
+          "body": "A whole-training scan helped only after the graph was reduced; on the early unrolled graph it was slower than the expert."
+        }
+      ],
+      "reference_path": "references/task-03/solution_3.py",
+      "candidate_path": "src/solutions/task-03/solution_3.py",
+      "evidence_path": "research/task-03/IMPLEMENTATION_COMPARISON.md",
+      "diff_keywords": ["def pair_map", "def cooling_product", "K.vmap", "K.jaxy_scan"],
+      "caveat": null
+    },
+    {
+      "id": "04",
+      "slug": "task-04",
+      "title": "Trainable Kraus Noise Calibration From Multi-Circuit Data",
+      "short_title": "Kraus-noise calibration",
+      "summary": "Fit a differentiable asymmetric bit-flip channel from four noisy 12-qubit probes over 120 updates.",
+      "problem": [
+        "Four different probe states pass through the same trainable asymmetric noise channel after fixed RXX entanglers. The optimizer fits the channel from single-site Z values and full-chain parity.",
+        "The physical channel, all probe circuits, 120 updates, target generation, pre-update loss history, and fitted observables must stay unchanged."
+      ],
+      "status": {
+        "kind": "validated",
+        "label": "Docker promoted",
+        "detail": "Six matched, counterbalanced Docker pairs; all evaluator cells passed."
+      },
+      "metric": {
+        "headline": "2.602×",
+        "improvement": "61.52% lower runtime",
+        "baseline": "14.742 s",
+        "candidate": "5.672 s",
+        "baseline_value": 14.742286,
+        "candidate_value": 5.672258,
+        "pairs": "6 matched pairs",
+        "engine": "Docker",
+        "ci": "2.529×–2.675×",
+        "wins": "6/6 wins"
+      },
+      "headline_insight": "For a compilation-bound workload, trace one shared circuit family instead of four copies.",
+      "insights": [
+        {
+          "title": "VMAP the probes",
+          "body": "Batching the four exact probe networks cuts StableHLO from 21,720 to 4,855 lines and supplies the dominant gain."
+        },
+        {
+          "title": "Compose the exact channel",
+          "body": "Two adjacent one-qubit channels become one nine-Kraus two-qubit channel, then absorb the fixed RXX unitary."
+        },
+        {
+          "title": "Do not scan by reflex",
+          "body": "The 120-step training scan regressed because repeated execution was already small compared with graph construction and compilation."
+        }
+      ],
+      "reference_path": "references/task-04/solution_4.py",
+      "candidate_path": "src/solutions/task-04/solution_4.py",
+      "evidence_path": "research/task-04/IMPLEMENTATION_COMPARISON.md",
+      "diff_keywords": ["def observable_table", "K.vmap", "apply_general_kraus", "K.kron"],
+      "caveat": null
+    },
+    {
+      "id": "05",
+      "slug": "task-05",
+      "title": "Custom Non-Unitary Gate Cooling",
+      "short_title": "Non-unitary gate cooling",
+      "summary": "Ten differentiable non-unitary cooling layers on an 18-qubit TFIM state, normalized every layer for 600 updates.",
+      "problem": [
+        "The expert evolves a dense 18-qubit complex state through alternating non-unitary one- and two-site filters, normalizes after every layer, and differentiates through every normalization.",
+        "The optimized representation must be exact: no truncation, no skipped normalization, no approximate compression, and all 600 Adam updates must remain."
+      ],
+      "status": {
+        "kind": "validated",
+        "label": "Docker promoted",
+        "detail": "Six matched, counterbalanced Docker pairs; all evaluator cells passed."
+      },
+      "metric": {
+        "headline": "14.076×",
+        "improvement": "92.89% lower runtime",
+        "baseline": "97.084 s",
+        "candidate": "6.898 s",
+        "baseline_value": 97.083712,
+        "candidate_value": 6.898409,
+        "pairs": "6 matched pairs",
+        "engine": "Docker",
+        "ci": "13.676×–14.475×",
+        "wins": "6/6 wins"
+      },
+      "headline_insight": "A proof of exact rank is more valuable than a generic compression routine.",
+      "insights": [
+        {
+          "title": "Bound the exact state",
+          "body": "Operator-Schmidt rank two gives a maximum MPS bond dimension of 32 after the five uses of each bond."
+        },
+        {
+          "title": "Skip needless canonicalization",
+          "body": "The TensorCircuit local MPO contraction is retained, but QR/RQ is omitted because the exact rank bound is already known."
+        },
+        {
+          "title": "Preserve differentiable normalization",
+          "body": "Every layer norm remains inside the graph. Local RX absorption and dense gate fusion were both slower and were discarded."
+        }
+      ],
+      "reference_path": "references/task-05/solution_5.py",
+      "candidate_path": "src/solutions/task-05/solution_5.py",
+      "evidence_path": "research/task-05/IMPLEMENTATION_COMPARISON.md",
+      "diff_keywords": ["def _apply_local_mpo", "tc.MPSCircuit", "def _mps_norm", "K.jaxy_scan"],
+      "caveat": null
+    },
+    {
+      "id": "06",
+      "slug": "task-06",
+      "title": "Digital-Analog Hybrid VQE With Trainable Analog Blocks",
+      "short_title": "Digital-analog hybrid VQE",
+      "summary": "Four trainable adaptive analog evolutions interleaved with digital Euler rotations on 14 qubits for 100 updates.",
+      "problem": [
+        "Each of four blocks applies a digital Euler layer followed by a true adaptive continuous-time evolution under a trainable analog Hamiltonian. The target energy is optimized for 100 Adam steps.",
+        "The ODE, tolerances, endpoints, analog variables, all 168 digital angles, and every pre-update energy must be preserved."
+      ],
+      "status": {
+        "kind": "pending",
+        "label": "One pair short",
+        "detail": "Five matched Docker pairs passed; the benchmark rule requires at least six before a speedup claim."
+      },
+      "metric": {
+        "headline": "Pending",
+        "improvement": "1.504× observed over 5 pairs",
+        "baseline": "41.426 s‡",
+        "candidate": "27.537 s‡",
+        "baseline_value": 41.425923,
+        "candidate_value": 27.536613,
+        "pairs": "5 matched pairs",
+        "engine": "Docker",
+        "ci": "Descriptive only",
+        "wins": "5/5 wins"
+      },
+      "headline_insight": "The ODE backend dominates; the measurement still needs one more matched pair.",
+      "insights": [
+        {
+          "title": "Choose the native ODE path",
+          "body": "TensorCircuit's jaxode backend is the dominant provisional change while preserving the same adaptive vector field and tolerances."
+        },
+        {
+          "title": "Fusion helps cold cost",
+          "body": "Exact Euler fusion primarily reduces first-call compilation; its isolated steady-state gain is small."
+        },
+        {
+          "title": "Record neutral and negative paths",
+          "body": "Automatic Diffrax dt0 was neutral, while BCOO Hamiltonian actions were 3.4–3.5× slower."
+        }
+      ],
+      "reference_path": "references/task-06/solution_6.py",
+      "candidate_path": "src/solutions/task-06/solution_6.py",
+      "evidence_path": "research/task-06/IMPLEMENTATION_COMPARISON.md",
+      "diff_keywords": ["ode_backend=\"jaxode\"", "jax.lax.scan", "tc.gates.u_gate", "def forward"],
+      "caveat": "The five-pair 1.504× direction is shown for transparency, not as validated SOTA. One additional passing matched pair is required by the repository's immutable promotion rule."
+    },
+    {
+      "id": "07",
+      "slug": "task-07",
+      "title": "16-Qubit Measurement-Feedback VQE",
+      "short_title": "Measurement-feedback VQE",
+      "summary": "Two adaptive layers, 64 fixed trajectories, and eight measured ancillas feeding back into eight data qubits.",
+      "problem": [
+        "The reference simulates eight data and eight ancilla qubits, measures every ancilla along 64 fixed trajectories, applies outcome-conditioned feedback, and optimizes the mean energy for 100 updates.",
+        "The current executable-contract winner proves that the ancilla process is an exact classical Bernoulli/prefix-XOR model. It still returns every required trajectory output, but it no longer literally executes the measured ancilla register."
+      ],
+      "status": {
+        "kind": "caveat",
+        "label": "Docker promoted · caveat",
+        "detail": "Six matched Docker pairs pass the executable contract; the winning reduction exposes a challenge-design loophole."
+      },
+      "metric": {
+        "headline": "45.758×",
+        "improvement": "97.81% lower runtime",
+        "baseline": "140.076 s",
+        "candidate": "3.071 s",
+        "baseline_value": 140.076441,
+        "candidate_value": 3.070839,
+        "pairs": "6 matched pairs",
+        "engine": "Docker",
+        "ci": "39.385×–52.131×",
+        "wins": "6/6 wins"
+      },
+      "headline_insight": "The biggest speedup is also a benchmark-design finding.",
+      "insights": [
+        {
+          "title": "Collapse equivalent trajectories",
+          "body": "The fixed batch has only two unique classical patterns, weighted 63/64 and 1/64, so quantum work is evaluated once per pattern."
+        },
+        {
+          "title": "Reduce feedback exactly",
+          "body": "A measured ancilla turns conditional RZZ into a signed data-only RZ; no sampled quantum amplitude is needed."
+        },
+        {
+          "title": "Keep the literal fallback",
+          "body": "The conservative cond_measure implementation remains available and independently validates a 4.479× speedup."
+        }
+      ],
+      "reference_path": "references/task-07/solution_7.py",
+      "candidate_path": "src/solutions/task-07/solution_7.py",
+      "evidence_path": "research/task-07/CLASSICAL_ANCILLA_REDUCTION_REPORT.md",
+      "diff_keywords": ["def trajectory_patterns", "batched_patterns", "weights", "def make_one_pattern"],
+      "caveat": "This candidate passes the public executable contract, but analytically eliminates the measured ancilla register. Treat 45.758× as both an optimization result and evidence that the challenge specification should say whether literal ancilla execution is required."
+    },
+    {
+      "id": "08",
+      "slug": "task-08",
+      "title": "7×7 Mixed-Axis Grid Tensor-Network Sampling",
+      "short_title": "Grid tensor-network sampling",
+      "summary": "Exact conditional sampling of 8,192 shots from a shallow 49-qubit grid circuit without a dense statevector.",
+      "problem": [
+        "A fixed 7×7 circuit uses mixed RY, RZZ, RXX, and RX gates, then calls TensorCircuit perfect_sampling for every one of 8,192 seeded status rows.",
+        "Mapping all shots into one XLA program makes the shot axis part of every tensor-network intermediate. Under the fixed 7-GiB Docker limit, the immutable expert never returns a valid canonical runtime."
+      ],
+      "status": {
+        "kind": "feasibility",
+        "label": "OOM → PASS",
+        "detail": "The candidate passed all five canonical 7-GiB attempts. No numerical speedup passed the confidence rule."
+      },
+      "metric": {
+        "headline": "OOM → PASS",
+        "improvement": "Canonical workload restored",
+        "baseline": "OOM · 5/5",
+        "candidate": "47.356 s",
+        "baseline_value": null,
+        "candidate_value": 47.356313,
+        "pairs": "5 canonical attempts",
+        "engine": "Docker",
+        "ci": "No speedup claim",
+        "wins": "5/5 candidate PASS"
+      },
+      "headline_insight": "Bound the batch dimension, not the scientific workload.",
+      "insights": [
+        {
+          "title": "Chunk only the shot axis",
+          "body": "The same jitted perfect_sampling function processes contiguous 256-shot blocks and concatenates results in original order."
+        },
+        {
+          "title": "Keep the headline honest",
+          "body": "At 2,048 shots the mean was 7.47% lower, but only 4/6 pairs won and the confidence interval crossed one."
+        },
+        {
+          "title": "Memory is the result",
+          "body": "The canonical finding is repeatable feasibility under 7 GiB. High-memory runs show the expert is algorithmically runnable, not numerically dominated."
+        }
+      ],
+      "reference_path": "references/task-08/solution_8.py",
+      "candidate_path": "src/solutions/task-08/solution_8.py",
+      "evidence_path": "research/task-08/IMPLEMENTATION_COMPARISON.md",
+      "diff_keywords": ["for start in range", "sample_batch", "np.concatenate", "chunk"],
+      "caveat": "A 64-GiB five-pair canonical session measured a descriptive 2.75% reduction, but the candidate won only 3/5 pairs and the 95% interval crossed one. This page therefore makes no numerical speedup claim."
+    },
+    {
+      "id": "09",
+      "slug": "task-09",
+      "title": "Random Local Light-Cone Optimization",
+      "short_title": "Random light-cone optimization",
+      "summary": "Optimize two local observables in a 512-qubit irregular circuit across 200 restarts and 100 updates.",
+      "problem": [
+        "The public tape contains 3,897 parameterized gates on 512 qubits, but the objective contains only two local Pauli terms. The reference constructs the full circuit before asking TensorCircuit to cancel irrelevant gates.",
+        "All 200 seeded restarts, 100 Adam updates, objective histories, active gradients, and TensorCircuit expectation semantics must be retained."
+      ],
+      "status": {
+        "kind": "provisional",
+        "label": "Local six-pair",
+        "detail": "Six matched local-engine pairs passed. The formal pinned-Docker promotion run remains pending."
+      },
+      "metric": {
+        "headline": "3.822×†",
+        "improvement": "73.83% lower runtime",
+        "baseline": "33.504 s†",
+        "candidate": "8.767 s†",
+        "baseline_value": 33.503727,
+        "candidate_value": 8.766516,
+        "pairs": "6 matched pairs",
+        "engine": "Local engine",
+        "ci": "3.730×–3.914×",
+        "wins": "6/6 wins"
+      },
+      "headline_insight": "Prune the tape before constructing nodes, then keep TensorCircuit's inner light cone.",
+      "insights": [
+        {
+          "title": "Build only exact cones",
+          "body": "Backward tape analysis reduces 3,897 gates to local cones of 74 and 80 gates before TensorCircuit graph construction."
+        },
+        {
+          "title": "Pack active coordinates",
+          "body": "Only 154 parameter coordinates influence the two terms; inactive Adam moments remain provably zero."
+        },
+        {
+          "title": "Two levels of cancellation",
+          "body": "TensorCircuit's own enable_lightcone pass remains enabled inside each compact cone. Removing it timed out."
+        }
+      ],
+      "reference_path": "references/task-09/solution_9.py",
+      "candidate_path": "src/solutions/task-09/solution_9.py",
+      "evidence_path": "research/TASK_09_CAUSAL_CONE_COMPARISON.md",
+      "diff_keywords": ["def extract_cone", "def parameter_groups", "cone[\"n_qubits\"]", "active_indices"],
+      "caveat": "The six-pair result used the pinned dependency lock through the local engine because the host had no Docker daemon. It is strong same-host evidence, but the repository's formal Docker gate remains open."
+    },
+    {
+      "id": "10",
+      "slug": "task-10",
+      "title": "22-Qubit VQE With an 18-Qubit Controlled-Z Hyperedge",
+      "short_title": "Controlled-Z hyperedge VQE",
+      "summary": "A two-layer VQE containing an exact 18-qubit controlled-Z hyperedge and 200 Adam updates.",
+      "problem": [
+        "The expert constructs a general 22-qubit tensor network with two enormous controlled-Z hyperedges and contracts the TFIM energy through a circuit-bra/MPO/circuit-ket network.",
+        "The candidate must preserve both hyperedges, all local rotations, the exact open TFIM Hamiltonian, and the full 200-step pre-update history."
+      ],
+      "status": {
+        "kind": "validated",
+        "label": "Docker promoted",
+        "detail": "Six matched, counterbalanced Docker pairs; all evaluator cells passed."
+      },
+      "metric": {
+        "headline": "4.940×",
+        "improvement": "79.73% lower runtime",
+        "baseline": "18.921 s",
+        "candidate": "3.835 s",
+        "baseline_value": 18.921006,
+        "candidate_value": 3.835296,
+        "pairs": "6 matched pairs",
+        "engine": "Docker",
+        "ci": "4.689×–5.191×",
+        "wins": "6/6 wins"
+      },
+      "headline_insight": "A giant hyperedge is small when represented by its exact operator rank.",
+      "insights": [
+        {
+          "title": "Exact rank-four state",
+          "body": "Each CMZ is a bond-two MPO, so two layers bound the exact MPS rank at four."
+        },
+        {
+          "title": "Avoid QR-induced drift",
+          "body": "No compression is needed. Omitting QR/RQ both removes work and avoids a round-off path that sent Adam to an invalid basin."
+        },
+        {
+          "title": "Deterministic energy contraction",
+          "body": "A bond-three TFIM MPO and fixed left-to-right contraction remove general path search from the objective."
+        }
+      ],
+      "reference_path": "references/task-10/solution_10.py",
+      "candidate_path": "src/solutions/task-10/solution_10.py",
+      "evidence_path": "research/task-10/IMPLEMENTATION_COMPARISON.md",
+      "diff_keywords": ["def _cmz_mpo", "def _apply_mpo", "tc.MPSCircuit", "def _mpo_expectation"],
+      "caveat": null
+    },
+    {
+      "id": "11",
+      "slug": "task-11",
+      "title": "Spin-1 Haldane-Chain VQE With String-Order Verification",
+      "short_title": "Spin-1 Haldane-chain VQE",
+      "summary": "Twelve qutrit sites, five Haldane-chain layers, 500 updates, and final string-order verification.",
+      "problem": [
+        "The dense spin-1 circuit applies per-site Euler rotations and even/odd two-qutrit entanglers across five layers, optimizes Haldane energy, then evaluates three non-local string-order observables.",
+        "All qutrit gates, 500 Adam updates, seeded initialization, dense TensorCircuit evolution, and final string-order checks must remain."
+      ],
+      "status": {
+        "kind": "provisional",
+        "label": "Local six-pair",
+        "detail": "Six matched local-engine pairs passed. The formal pinned-Docker promotion run remains pending."
+      },
+      "metric": {
+        "headline": "1.464×†",
+        "improvement": "31.71% lower runtime",
+        "baseline": "168.362 s†",
+        "candidate": "114.968 s†",
+        "baseline_value": 168.361539,
+        "candidate_value": 114.968325,
+        "pairs": "6 matched pairs",
+        "engine": "Local engine",
+        "ci": "1.457×–1.472×",
+        "wins": "6/6 wins"
+      },
+      "headline_insight": "Dense-state bandwidth rewards fewer passes more than cleverer algebra.",
+      "insights": [
+        {
+          "title": "Fuse across the layer",
+          "body": "Site rotations are absorbed into entanglers, reducing dense-state applications per layer from 47 to 11."
+        },
+        {
+          "title": "Batch fixed exponentials",
+          "body": "A fixed-order diagonal Padé kernel batches every 9×9 entangler while retaining unitary structure."
+        },
+        {
+          "title": "Make diagonal physics explicit",
+          "body": "Twelve onsite expectations become one coefficient-weighted probability sum. The residual is memory-bandwidth bound."
+        }
+      ],
+      "reference_path": "references/task-11/solution_11.py",
+      "candidate_path": "src/solutions/task-11/solution_11.py",
+      "evidence_path": "research/task-11/IMPLEMENTATION_COMPARISON.md",
+      "diff_keywords": ["def expm_pade33_fixed", "def entangler_batch", "singles = K.einsum", "onsite_coeffs"],
+      "caveat": "The six-pair result used the pinned dependency lock through the local engine because the host had no Docker daemon. The formal Docker promotion gate remains open."
+    },
+    {
+      "id": "12",
+      "slug": "task-12",
+      "title": "Variational Circuit to MPS Overlap Optimization",
+      "short_title": "Circuit-to-MPS overlap",
+      "summary": "Maximize direct overlap between a 32-qubit DMRG MPS and a two-layer, 31-gate SU4 circuit over 5,000 updates.",
+      "problem": [
+        "A 32-qubit Néel state passes through 31 independently parameterized SU4 gates. The loss is the direct tensor-network overlap with an evaluator-provided DMRG MPS, optimized for exactly 5,000 Adam steps.",
+        "The repository-best tracked variant additionally pair-fuses the shallow circuit into sixteen four-level sites. It preserves all 465 parameters, gate order, target overlap, histories, and complex64 semantics."
+      ],
+      "status": {
+        "kind": "provisional",
+        "label": "Local six-pair · variant",
+        "detail": "The repository-best tracked variant passed six local-engine pairs. The formal pinned-Docker promotion run remains pending."
+      },
+      "metric": {
+        "headline": "4.248×†",
+        "improvement": "76.46% lower runtime",
+        "baseline": "9.021 s†",
+        "candidate": "2.124 s†",
+        "baseline_value": 9.020622,
+        "candidate_value": 2.123708,
+        "pairs": "6 matched pairs",
+        "engine": "Local engine",
+        "ci": "4.196×–4.299×",
+        "wins": "6/6 wins"
+      },
+      "headline_insight": "The contraction was cheap; 31 separately traced SU4 constructors were not.",
+      "insights": [
+        {
+          "title": "Batch the Lie algebra",
+          "body": "All 31 SU4 generators and fixed-order Padé exponentials are built together, shrinking StableHLO from 8,884 to 954 lines."
+        },
+        {
+          "title": "Scan the long optimizer",
+          "body": "One training scan removes 5,000 host dispatches, but contributes less than the gate-construction rewrite."
+        },
+        {
+          "title": "Pair-fuse the shallow network",
+          "body": "Sixteen four-level sites halve the node count and add about 8.5% beyond the primary 3.914× candidate."
+        }
+      ],
+      "reference_path": "references/task-12/solution_12.py",
+      "candidate_path": "src/solutions/task-12/variants/solution_12_fused.py",
+      "evidence_path": "research/task-12/IMPLEMENTATION_COMPARISON.md",
+      "diff_keywords": ["def _su4_batch", "tc.QuditCircuit", "dim=4", "jax.lax.scan"],
+      "caveat": "The headline uses the tracked fused variant rather than the primary registered solution_12.py, which measured 3.914×. Both six-pair sessions used the pinned local environment; Docker promotion remains pending."
+    }
+  ]
+}
