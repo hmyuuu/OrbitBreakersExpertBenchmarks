@@ -1,251 +1,365 @@
-# OrbitBreakersExpertBenchmarks
+# OrbitBreakersBench
 
-This repository packages the twelve ORBIT-Q human expert TensorCircuit-NG
-solutions as a reproducible runtime benchmark. It also registers the Task
-01 MPO variant and Task 05 OMECo variant without replacing the publication
-references.
+## What we learned from benchmarking agents—and then optimizing the experts
 
-The benchmark implements the measurement contract from
-[quantum.harness issue #78](https://github.com/QuantumBFS/quantum.harness/issues/78):
-run the same evaluator on the same machine and software image, reject invalid
-solutions, and compare evaluator-reported runtime across repeated paired runs.
+OrbitBreakersBench is the evidence repository behind a series of experiments
+on the twelve TensorCircuit-NG tasks in
+[ORBIT-Q](https://github.com/sxzgroup/ORBIT-Q). The work asked four related
+questions:
 
-## Bootstrap and verify
+1. How well do Fable 5 and GPT-5.6 Sol solve the tasks under semantic
+   verification?
+2. Does increasing GPT-5.6 Sol reasoning effort from `high` to `ultra`
+   improve the result?
+3. How much faster can the public human-expert implementations become when a
+   human and an AI profile, ablate, and rewrite them together?
+4. What do failures, false rejections, memory limits, and challenge-design
+   loopholes reveal about the benchmark itself?
 
-Run this command from this directory:
+The short answer is that validity, artifact efficiency, and expert
+co-optimization are different axes:
 
-```bash
-./bench verify
-./bench env doctor
-```
+- **Fable 5 reached 12/12**, but through a hybrid workflow whose solver-side
+  resource use is not directly comparable with an in-container agent run.
+- **GPT-5.6 Sol high reached 10/12 and ultra reached 11/12** after correcting
+  a Task 07 verifier false negative. Ultra solved every task high solved and
+  additionally passed Task 08.
+- **Ten ordinary expert-optimization campaigns produced statistically
+  supported speedups** with a descriptive geometric mean of **2.88x**.
+  Task 07 separately exposed a **45.76x exact challenge-design reduction**,
+  while Task 08 established bounded-memory feasibility rather than a
+  statistically confirmed runtime gain.
+- The largest gains usually came from **changing the exact tensor-network
+  representation before contraction**, not from generic advice such as
+  “always fuse gates” or “always put the optimizer in a scan.”
 
-Build the pinned image only when `env doctor` reports that it is absent:
+This README is the human-facing synthesis. The repository retains the
+task-level source, immutable references, paired measurements, ablations,
+equivalence checks, and experiment ledgers needed to audit those conclusions.
+The original operational documentation is preserved in
+[`BENCHMARKING.md`](BENCHMARKING.md).
 
-```bash
-./bench env build tensorcircuit-py311
-```
+## 1. Evidence model
 
-The tracked default profile is 8 CPUs and 9 GiB. On a different Docker
-backend, pass per-run `--cpus` and `--memory` overrides and keep the same
-values for every measurement in that campaign. Start a new baseline campaign
-if the host, resource limits, image ID, or dependency lock changes.
+Three quantities must not be conflated.
 
-## Step 1: measure the original references
+| Axis | Question | Metric used here |
+|---|---|---|
+| Validity | Did the artifact solve the intended task without bypassing the required framework or semantics? | `functional × static policy × LLM audit` |
+| Agent artifact efficiency | How slow is a generated valid artifact relative to the expert on the same machine? | `T_candidate / T_reference`; lower is better |
+| Expert co-optimization | How much faster is an optimized expert-derived implementation under matched conditions? | paired `T_expert / T_optimized`; higher is better |
 
-Run every immutable human answer four times and average the result:
+Runtime is reported separately from pass/fail reward. For expert
+co-optimization, reference and candidate run in alternating order on the same
+machine and software environment, with fresh evaluator processes. The
+task-level reports retain every pair, mean, median, uncertainty estimate,
+validity result, and source hash.
 
-```bash
-./bench run all \
-  --solution reference \
-  --repeat 4 \
-  --engine docker \
-  --no-build \
-  --output results/reference-bootstrap
-```
+Absolute runtimes from different tasks or hosts are not pooled. The aggregate
+ratios below are descriptive summaries of within-task comparisons, not claims
+that one machine or one quantum workload is intrinsically faster than another.
 
-Use at least six repeats for a balanced, reportable baseline:
+## 2. Agent benchmark results
 
-```bash
-./bench run all \
-  --solution reference \
-  --repeat 6 \
-  --engine docker \
-  --no-build \
-  --output results/reference-baseline
-```
+### Fable 5: 12/12 under a hybrid solving protocol
 
-## Step 2: compare the editable sources
+The [Fable 5 benchmark PR](https://github.com/sxzgroup/ORBIT-Q/pull/4)
+contains a complete twelve-task row:
 
-`src/solutions/` starts as a byte-identical copy of `references/`. For each
-task, the paired command creates one container and runs every reference and
-optimized measurement inside it as a fresh Python process. Pair order alternates
-`reference → optimized`, then `optimized → reference`, to balance within-pair
-position. The CLI reports each runtime as `mean ± standard error` and computes:
+| Result | Value |
+|---|---:|
+| Final official reward | **12/12** |
+| Median artifact/runtime ratio | **2.39x expert runtime** |
+| Best ratio | **0.74x** |
+| Worst ratio | **18.06x** |
+| Required framework | TensorCircuit-NG |
+
+![Fable 5 artifact runtime ratios](docs/figures/fable5-runtime-ratios.png)
+
+The verifier side was official: every solution passed the unchanged
+functional evaluator, static policy, and Codex semantic audit. The solver
+side was not the standard Harbor agent axis: Fable 5 ran through Cursor over
+the workspace, while access to tests and expert solutions was controlled by a
+documented discipline protocol rather than physical container isolation.
+Therefore:
+
+- artifact validity and same-machine `T/T_ref` remain useful;
+- solver tokens, cost, and solve wall time are **not** comparable with the
+  in-container Codex runs;
+- 12/12 is evidence that the task set is solvable by this model/tool
+  combination, not a clean model-only leaderboard result.
+
+The run also quantified a framework-compliance boundary. A Task 04 prototype
+built a numerically correct Kraus network from raw tensor-network nodes, but
+the semantic audit rejected it as a framework bypass. The TensorCircuit-native
+rewrite passed and was roughly four times slower. This “compliance tax” is a
+real benchmark outcome: mathematical correctness alone is insufficient when
+the task is intended to measure use of a particular framework.
+
+### GPT-5.6 Sol high: 10/12, with faster valid artifacts than GPT-5.5 high
+
+The [GPT-5.6 Sol high benchmark PR](https://github.com/sxzgroup/ORBIT-Q/pull/5)
+used one clean Harbor trial per task, no retries, and `high` effort for both
+solver and audit.
+
+| Result | GPT-5.6 Sol high |
+|---|---:|
+| Functional checks | 12/12 |
+| Static-policy checks | 12/12 |
+| Final semantic audits / rewards | **10/12** |
+| Failed tasks | 01, 08 |
+| Passed-task geometric-mean slowdown | **1.428x** |
+| Solving-side tokens | 26.071 M |
+| Recorded cost | USD 25.53 |
+| Agent solve wall time | 197.70 min |
+
+GPT-5.5 high and GPT-5.6 Sol high both produced ten valid solutions. The
+paper's GPT-5.5 high row had a 2.197x passed-task geometric-mean slowdown,
+versus 1.428x for GPT-5.6 Sol high. Under this normalized but not fully
+controlled comparison, the GPT-5.6 artifacts were about **35% closer to the
+expert runtime baseline**.
+
+The comparison is informative rather than causal: the two model generations
+used different hosts, benchmark revisions, and audit procedures. Normalizing
+each candidate to a same-run expert reduces hardware confounding but cannot
+remove every difference.
+
+### GPT-5.6 Sol ultra: 11/12 after Task 07 adjudication
+
+The [GPT-5.6 Sol ultra benchmark PR](https://github.com/sxzgroup/ORBIT-Q/pull/6)
+changed solver effort to `ultra` while keeping the audit at `high`. That PR
+retains the original 10/12 audit output; the table below reports the final
+11/12 result after the Task 07 source-level adjudication documented here and
+in the later reduction study.
+
+| Outcome | High | Ultra |
+|---|---:|---:|
+| Valid solutions | **10/12** | **11/12** |
+| Additional ultra pass | — | Task 08 |
+| Shared failure | Task 01 | Task 01 |
+| Agent solve wall time | 197.70 min | 182.80 min |
+| Solving-side tokens | 26.071 M | 33.048 M |
+| Recorded cost | USD 25.53 | USD 30.02 |
+
+![GPT-5.6 Sol high versus ultra](docs/figures/gpt56-high-vs-ultra-outcomes.png)
+
+Ultra used **26.8% more tokens** and cost **17.6% more**, while its agent wall
+time was **7.5% shorter** and it produced one additional valid solution.
+Cost per valid solution increased by **6.9%** (USD 2.55 to USD 2.73), while
+agent wall time per valid solution fell by **15.9%** (19.77 to 16.62 min).
+Across the ten tasks passed by high—and also passed by ultra—the geometric
+mean of `ultra_runtime / high_runtime` was **0.815**. On that same common set,
+the expert-normalized geometric-mean slowdown improved from **1.428x** for
+high to **1.165x** for ultra. Task 08 is excluded from the latter comparison
+because the contemporaneous expert reference did not fit the original
+memory allocation.
+
+Two adjudications are central to the final 11/12 result:
+
+- **Task 07:** the original semantic audit rejected ultra for sampling the
+  branches once and then reusing them. A later exact reduction analysis
+  showed that this was a false negative. With fixed uniforms, the only
+  parameters that affect the branch distribution are the ancilla rotation
+  angles; their pathwise derivative through the discrete samples is exactly
+  zero, so they do not update and the realized branches remain unchanged.
+  Ultra's analytic branch reuse therefore preserves this benchmark
+  trajectory rather than replacing it.
+- **Task 08:** high used fixed Sobol quasi-samples and was rejected. Ultra
+  constructed TensorCircuit probability networks and used a
+  Metropolis-Hastings correction, yielding a valid sampler.
+- **Task 01:** both efforts capped MPS bond dimension after two-qubit gates.
+  The audit correctly treated the unrequested truncation as a change to the
+  prescribed ansatz.
+
+This single-run comparison supports a narrower conclusion: ultra explored a
+strategy that solved the additional Task 08, while consuming more tokens and
+money. It is not enough evidence to infer a general effort-scaling law.
+
+## 3. Human expert + AI co-optimization
+
+The expert campaigns started from immutable public solutions, profiled cold
+end-to-end execution, changed one factor at a time where possible, checked
+numerical equivalence, and promoted only evaluator-valid candidates.
+
+![Human expert versus AI-human optimized runtime](docs/figures/expert-optimization-runtime.png)
+
+Labels in the figure are ratios of the displayed mean runtimes. The table
+uses the predeclared mean of paired speedups and its uncertainty, so the two
+summaries differ slightly when run-to-run noise is asymmetric.
+
+| Task | Mean runtime: expert → optimized | Paired result | Main defensible insight |
+|---:|---:|---:|---|
+| [01](research/task-01/IMPLEMENTATION_COMPARISON.md) | 60.651 → 6.360 s | **9.636x**, 95% CI 8.681–10.592 | Batch exact gate construction and reduce the Hamiltonian to one bond-3 MPO before contraction. |
+| [02](research/task-02/IMPLEMENTATION_COMPARISON.md) | 4.495 → 4.031 s | **1.116x**, CI 1.058–1.174 | A whole-training scan helps modestly; the stronger retained secondary factor is batched exact purity. |
+| [03](research/task-03/IMPLEMENTATION_COMPARISON.md) | 4.101 → 0.925 s | **4.435x**, CI 4.287–4.584 | Post-selection makes the surviving state an exact product over six local maps; vectorizing those maps is the largest isolated gain. |
+| [04](research/task-04/IMPLEMENTATION_COMPARISON.md) | 14.742 → 5.672 s | **2.602x**, CI 2.529–2.675 | `K.vmap` over four exact probe networks dominates; exact channel and RXX/Kraus fusion add smaller gains. |
+| [05](https://github.com/sxzgroup/ORBIT-Q/pull/19) | 115.708 → 60.114 s | **1.939x** mean, **1.668x** median | The revised fully TensorCircuit-native solution is stabilized by a larger OMECo path-search budget; isolated gate fusion is unresolved. |
+| [06](research/task-06/IMPLEMENTATION_COMPARISON.md) | 41.426 → 27.537 s | **1.504x**, CI 1.489–1.520 | TensorCircuit's `jaxode` backend is the dominant factor; Euler fusion is only a small compile-oriented refinement. |
+| [07](research/task-07/CLASSICAL_ANCILLA_REDUCTION_REPORT.md) | 140.076 → 3.071 s | **45.758x**, CI 39.385–52.131 | Exact challenge-design reduction: 64 measured 16-qubit trajectories collapse to two weighted 8-qubit circuits. |
+| [08](research/task-08/IMPLEMENTATION_COMPARISON.md) | 126.675 → 123.188 s | 1.045x, CI 0.818–1.273 | No confirmed runtime gain; contiguous 256-shot batching converts 0/5 OOM into 5/5 PASS under 7 GiB. |
+| [09](research/TASK_09_CAUSAL_CONE_COMPARISON.md) | 33.504 → 8.767 s | **3.822x**, CI 3.730–3.914 | Prune the exact causal cone before TensorCircuit graph construction, then retain the framework's inner light-cone cancellation. |
+| [10](research/task-10/IMPLEMENTATION_COMPARISON.md) | 18.931 → 3.869 s | **4.898x**, CI 4.598–5.199 | Use the exact low-rank MPS/MPO structure of the two CMZ reflections instead of repeated generic path search. |
+| [11](research/task-11/IMPLEMENTATION_COMPARISON.md) | 168.362 → 114.968 s | **1.464x**, CI 1.457–1.472 | Reduce dense-state passes and replace twelve diagonal onsite expectations with one coefficient-vector contraction. |
+| [12](research/task-12/IMPLEMENTATION_COMPARISON.md) | 9.083 → 2.321 s | **3.914x**, CI 3.877–3.951 | Batch the 31 fixed-order SU4 exponentials; this is the promoted primary candidate, not the secondary fused variant. |
+
+Ten ordinary, statistically supported speedups—Tasks 01–06 and 09–12—have
+an unweighted descriptive geometric mean of **2.88x**. Task 07 is excluded
+from that number because it is a benchmark-design reduction, and Task 08 is
+excluded because its high-memory runtime interval crosses one.
+
+Two rows require special care:
+
+- **Task 05 supersession.** An earlier 14.08x exact-MPS result put the core
+  state update and expectation contractions in handwritten backend einsums.
+  It is excluded from the compliant headline. The table uses the later
+  TensorCircuit-owned circuit/MPO implementation. Its five-pair mean is
+  affected by one 180.22 s expert long tail; the four-pair sensitivity
+  estimate is 1.639x, still directionally consistent with the 1.668x median.
+- **Task 08 feasibility.** The expert was never algorithmically impossible.
+  It failed because the original 8192-shot `vmap` requested 9–18 GiB buffers
+  inside a 7-GiB allocation. A 64-GiB five-pair run proved that both expert
+  and candidate pass; it did not establish a significant runtime difference.
+
+The task-level factor plots matter because cumulative speedups are otherwise
+easy to misattribute. Examples include:
+
+- whole-training scan was helpful on Tasks 02, 03, 11, and 12, but neutral or
+  harmful in several other graphs;
+- fewer gate nodes did not guarantee faster contractions on Tasks 02, 08,
+  and 10;
+- larger contraction-path searches helped Task 05, while smaller searches
+  helped Tasks 01 and 07;
+- structurally shrinking the exact state or causal cone dominated local
+  micro-optimizations on Tasks 03, 07, 09, and 10.
+
+## 4. Findings about benchmark design and measurement
+
+### Visible correctness is not semantic correctness
+
+Both GPT-5.6 effort levels passed functional and static checks on all twelve
+tasks, but final adjudicated validity was 10/12 for high and 11/12 for ultra.
+Task 01's truncation and high Task 08's quasi-sampling satisfy many
+output-level checks while changing the requested computation.
+
+This supports a layered verifier: functional tests detect output failures,
+static policy rejects obvious bypasses, and semantic source audit checks
+whether the computation still represents the task.
+
+### Semantic audits can also be wrong
+
+Two source audits produced false negatives:
+
+- **High Task 05** was initially rejected because the audit assumed
+  TensorCircuit's `exp1` always uses a half-angle convention. In the pinned
+  package, `exp1(..., half=False)` is the default; direct matrix checks
+  matched the required filters to approximately `10^-8`.
+- **Ultra Task 07** was rejected for freezing its sampled branches. Exact
+  analysis showed that the ancilla sampling angles have zero pathwise
+  gradient for the fixed discrete trajectories and therefore stay at their
+  initial values. The same realized branches are consequently valid across
+  all optimizer updates.
+
+Both results were adjudicated from failure to pass while preserving the
+original audit artifacts.
+
+The lesson is not to remove semantic audit, but to make adjudication
+reproducible: retain the original decision, record the exact package version,
+and support a correction with direct API-level evidence.
+
+### OOM is an experimental result, not an algorithmic verdict
+
+Task 08 was initially described as though the expert implementation could not
+run. The correct statement was allocation-specific: it could not fit the
+available container. The later 64-GiB session produced ten valid cells and
+closed the feasibility question.
+
+Resource failures should therefore be reported as:
 
 ```text
-improvement_pct = 100 * (reference_mean - optimized_mean) / reference_mean
-speedup         = reference_mean / optimized_mean
+implementation + workload + software stack + allocation -> outcome
 ```
 
-Run all tasks:
+not as a context-free property of the algorithm.
 
-```bash
-./bench run all \
-  --solution optimized \
-  --compare-to reference \
-  --repeat 4 \
-  --engine docker \
-  --no-build \
-  --output results/reference-vs-optimized
-```
+### Task 07 exposes a real loophole
 
-Run one task:
+The public fixed trajectories and diagonal ancilla interactions allow exact
+classical elimination of the measured register. Under the executable
+contract, the 45.76x reduction is valid. Under the likely intent—to benchmark
+TensorCircuit mid-circuit measurement—it is a loophole because the candidate
+no longer executes the 16-qubit measured circuit.
 
-```bash
-./bench run 05 \
-  --solution optimized \
-  --compare-to reference \
-  --repeat 4
-```
+The conservative full-register alternative still achieves **4.479x** paired
+speedup. A future task revision should require framework-native mid-circuit
+measurement in the timed region or introduce interactions for which ancilla
+measurement probabilities genuinely depend on the data state.
 
-Because the initial files are identical, a small nonzero percentage is timing
-noise, not an optimization claim. The CLI omits improvement and speedup when
-either side fails, times out, or lacks a valid runtime.
+### The harness itself required auditing
 
-The completed two-pair setup sweep is summarized in
-`baselines/bootstrap-2026-07-27.md`. Symmetric failures are retained as
-`runtime unavailable`; they do not invalidate the infrastructure smoke test.
+The experiments identified two infrastructure defects:
 
-Named expert-derived variants remain available:
+1. The documented reward formula excluded runtime, but the scorer still
+   multiplied by `runtime_score`. A fully valid slow solution could therefore
+   receive a fractional reward. The scorer was synchronized with the
+   documented policy while preserving runtime as a separate field.
+2. The pinned TensorCircuit nightly predated the public OMECo integration
+   required by expert references. The framework pin was updated so all twelve
+   references could run unchanged.
 
-```bash
-./bench run 05 --solution omeco --compare-to reference --repeat 4
-./bench run 01 --solution mpo --compare-to reference --repeat 4
-```
+These are not incidental engineering notes. A benchmark result is only as
+credible as the versioned harness that produces it.
 
-An external experiment file can be measured with `--candidate`, but tracked
-autoresearch work should edit the task's file under `src/solutions/`.
+## 5. What these results support
 
-Use `--engine local` only when the active Python environment exactly matches
-`envs/tensorcircuit-py311/requirements.lock`. Docker is the comparison default.
+The combined evidence supports four conclusions:
 
-## Commands
+1. **The benchmark separates validity from speed.** A model can produce a
+   fast invalid shortcut, a slow valid solution, or a valid solution faster
+   than the expert.
+2. **Human–AI collaboration improves both implementations and evaluation.**
+   Profiling found substantial exact speedups, while adversarial optimization
+   exposed under-specified semantics and resource assumptions.
+3. **More reasoning changed both coverage and resource use in this run.**
+   Ultra preserved all ten high passes, added Task 08, used 26.8% more tokens,
+   and cost 17.6% more.
+4. **Ablation is necessary for useful take-home messages.** Many plausible
+   edits contributed little, interacted with graph structure, or regressed.
+   The retained reports identify the dominant factor instead of crediting
+   every code change.
 
-| Command | Purpose |
-| --- | --- |
-| `./bench list` | List tasks, environments, and registered solutions |
-| `./bench list --json` | Print the registry for scripts |
-| `./bench verify` | Check the 12-task inventory, paths, entrypoints, and hashes |
-| `./bench env doctor` | Inspect Docker, image availability, and resource fit |
-| `./bench env build` | Build the pinned TensorCircuit-NG image |
-| `./bench run TASK` | Run `01` through `12`, `task-XX`, or `all`; defaults to `optimized` |
+They do **not** establish:
 
-`run` accepts `--repeat`, `--solution`, `--candidate`, `--compare-to`,
-`--timeout`, `--cpus`, `--memory`, `--engine`, `--output`, `--no-build`, and
-`--dry-run`. Resource overrides affect only that invocation and do not modify
-`bench.toml`. The default repeat count comes from `bench.toml` and is currently
-four. The timeout is 300 seconds per evaluator process, not per task container.
+- a hardware-independent runtime ranking;
+- a general superiority claim from one trial per model/effort/task;
+- solver-resource comparability between Fable's hybrid workflow and Harbor
+  agent runs;
+- a confirmed Task 08 runtime speedup;
+- acceptance of the Task 07 reduction under a stricter intended contract; or
+- global SOTA performance outside these public workloads and evaluators.
 
-## Runtime contract
+## 6. Reproducibility and evidence index
 
-Each copied evaluator imports one staged solution module and calls
-`run_solution(config)`. The evaluator starts its timer immediately before that
-call and stops after the solution returns its NumPy results.
+- Benchmarking and environment guide: [`BENCHMARKING.md`](BENCHMARKING.md)
+- Reusable expert-optimization workflow:
+  [`autoresearch/EXPERT_OPTIMIZATION_WORKFLOW.md`](autoresearch/EXPERT_OPTIMIZATION_WORKFLOW.md)
+- Benchmark protocol:
+  [`research/BENCHMARK_PROTOCOL.md`](research/BENCHMARK_PROTOCOL.md)
+- Per-task experiment ledgers and comparisons: [`research/`](research/)
+- Immutable public experts: [`references/`](references/)
+- Optimized implementations: [`src/solutions/`](src/solutions/)
+- Public workloads and evaluator copies: [`datasets/`](datasets/) and
+  [`tasks/`](tasks/)
+- Fable 5 evidence PR: [sxzgroup/ORBIT-Q#4](https://github.com/sxzgroup/ORBIT-Q/pull/4)
+- GPT-5.6 Sol high evidence PR:
+  [sxzgroup/ORBIT-Q#5](https://github.com/sxzgroup/ORBIT-Q/pull/5)
+- GPT-5.6 Sol ultra evidence PR:
+  [sxzgroup/ORBIT-Q#6](https://github.com/sxzgroup/ORBIT-Q/pull/6)
+- Task 07 design-reduction discussion:
+  [sxzgroup/ORBIT-Q#7](https://github.com/sxzgroup/ORBIT-Q/pull/7)
+- Revised TensorCircuit-native Task 05 evidence:
+  [sxzgroup/ORBIT-Q#19](https://github.com/sxzgroup/ORBIT-Q/pull/19)
 
-The reported runtime:
-
-- includes JAX tracing and compilation started inside `run_solution`;
-- excludes module import, evaluator setup, DMRG input preparation, and exact
-  reference calculations outside the timed call;
-- counts only when the evaluator prints both the runtime marker and
-  `Overall: PASS`.
-
-The original evaluators return process status zero after a functional failure.
-The CLI parses the pass marker instead of trusting process status.
-
-Docker creates one long-lived container for each task. Every measurement starts
-a fresh evaluator process inside that container, so the image, cgroup, mounts,
-and filesystem are shared without leaking Python module or JAX state between
-solutions. The reference and optimized source snapshots are staged before the
-container starts. The runner records controller wall time as diagnostic data
-and uses `End-to-end solution time` as the comparison metric.
-
-For a task submission, run reference and optimized sources on the same idle
-host, container session, image ID, CPU allocation, and repeat count. Use at least
-six paired runs. Report each timing, mean, median, sample standard deviation,
-standard error, percentage improvement, and paired speedup. A failed,
-unpaired, or timed-out candidate has no eligible runtime.
-
-All-task JSON keeps these comparison metrics per task; it does not pool runtime
-ratios or paired speedups across heterogeneous tasks.
-
-## Environment
-
-All tasks currently select `tensorcircuit-py311`. The lock contains:
-
-- Python 3.11;
-- TensorCircuit nightly `1.7.0.dev20260618`;
-- JAX and JAXLIB `0.10.0`;
-- Optax `0.2.8`, Quimb `1.11.1`, Diffrax `0.7.2`;
-- OMECo `0.2.4` and TensorNetwork-NG `0.5.1`.
-
-The container runs without network access and sets `NUMBA_DISABLE_JIT=1`.
-`bench.toml` currently requests 8 CPUs and 9 GiB of memory. `env doctor` rejects
-a profile that exceeds the Docker backend. Each run records the image ID and
-host details so mismatched comparisons can be rejected.
-
-The installed nightly predates the official `tc.set_contractor("omeco")`
-shortcut used by three human references. The tracked environment shim backports
-that exact TensorCircuit-NG shortcut before evaluator import and is hashed in
-every result. The copied evaluators print the unchanged timer at six-decimal
-precision so standard errors are not rounded to 10 milliseconds.
-
-## Files
-
-```text
-bench                         single CLI
-bench.toml                    environment and runner defaults
-tasks/task-XX/
-  problem.md                  public task statement
-  task.toml                   solution, evaluator, hash, and timeout registry
-  evaluator/evaluate_N.py     functional evaluator; timer printed to 6 decimals
-references/task-XX/      immutable publication human expert
-src/solutions/task-XX/   editable optimization starting point
-  variants/                   named reference-derived variants
-envs/tensorcircuit-py311/     Dockerfile and dependency locks
-baselines/historical.json     prior timings, for context only
-baselines/bootstrap-*.md      measured setup summaries and evidence hashes
-GOAL.md                       autonomous research objective
-program.md                    Karpathy-style entrypoint
-autoresearch/                 worktree protocol, log, and result templates
-research/task-XX/             task-scoped survey, ledger, insights, and reports
-datasets/                     selected-task public workload policy
-```
-
-The parent ORBIT-Q Harbor tasks keep their solution copies because Harbor uses
-each task directory as a Docker context. This directory holds the portable
-expert benchmark, and `./bench verify` detects drift through SHA-256 hashes.
-See `PROVENANCE.md` for source commits and paths.
-
-## Autoresearch
-
-Karpathy's [autoresearch](https://github.com/karpathy/autoresearch) uses a fixed
-evaluator, one editable program, short measured experiments, Git checkpoints,
-and an experiment ledger. `GOAL.md` maps that loop to one eligible ORBIT-Q
-task per campaign and one hypothesis per fresh Git worktree.
-
-The reusable gate-to-PR checklist, including factor ablation and one chart per
-measured factor, is
-[`autoresearch/EXPERT_OPTIMIZATION_WORKFLOW.md`](autoresearch/EXPERT_OPTIMIZATION_WORKFLOW.md).
-
-Do not start optimization until the selected-task survey and public workload
-dataset required by `GOAL.md` exist. Before starting a campaign, inspect the
-open pull requests on `sxzgroup/ORBIT-Q` and choose one task that has no active
-improvement PR. Bind the campaign to that one task and do not switch tasks
-inside its worktrees. A symmetric failure of the reference and its initial
-byte-identical candidate is acceptable bootstrap evidence; repeated passing
-pairs are required later for promotion or any improvement claim. All workload
-configurations, evaluators, and validity rules are public and versioned; no
-hidden tuning set, sealed holdout, or trusted-controller attestation is
-required.
-
-`autoresearch/LOCAL_PRECEDENTS.md` records which conventions were adopted after
-the read-only review of the local BooleanRazor and IntrQCtrl repositories, plus
-which incomplete or plan-only pieces were deliberately not treated as working
-infrastructure.
-
-`research/check_gates.py` reports separate `research_ready` and
-`promotion_ready` states. Research requires the cited survey, versioned public
-dataset for the selected task. Promotion additionally requires a valid six-run
-reference report for that task.
-
-Each campaign keeps its tracked records under `research/task-XX/`.
-`LOG.md` is the append-only evidence history; `INSIGHTS.md` is the maintained
-cross-round synthesis; `SURVEY.md` freezes the pre-experiment research and
-measurement plan; and `IMPLEMENTATION_COMPARISON.md` closes out the accepted
-result. See `research/README.md` for the layout.
-
-The optimization target is lower valid runtime. Preserve
-`run_solution(config)`, TensorCircuit-NG semantics, and every functional check.
-Do not edit evaluators, manifests, environment locks, workload data, or result
-parsing during an experiment.
+All headline performance claims are tied to evaluator-passing artifacts.
+Where a result is descriptive, resource-limited, adjudicated, local-engine
+only, or dependent on the executable rather than intended contract, the
+qualification is part of the result rather than a footnote to be omitted.
