@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "task_id": "08",
+  "experiment": "e07-fuse-final-rx",
+  "candidate_commit": "caa0f2b",
+  "candidate_sha256": "3eef7ec94a6b4268cc6806d1e1a2327b255cf40393f13b5f5bfd0169d91be09b",
+  "diff_sha256": "b08233efdfcabdb6e930dc00451400b5c76163ad6bfb9336bdec81a7ad134b6c",
+  "transformation": "Absorb 42 final RX gates into 21 disjoint vertical RXX gates; seven row-6 RX gates remain.",
+  "exact_observable_validation": {
+    "observable_count": 44,
+    "elapsed_sec": 9.617958255003032,
+    "max_abs_error": 1.0180550574778735e-06,
+    "mean_abs_error": 2.7062069471576894e-07,
+    "threshold": 2e-06,
+    "passed": true,
+    "reference_elapsed_sec": 11.031930867000483
+  },
+  "canonical_8192_screen": {
+    "runtime_sec": 60.989109,
+    "passed": true,
+    "max_single_z_error": 0.0046682336,
+    "max_hidden_z_string_error": 0.0188068181,
+    "mean_hidden_z_string_error": 0.0039698657
+  },
+  "comparison_to_unfused_chunk256": {
+    "parent_runtime_sec": 44.028239,
+    "candidate_over_parent_ratio": 1.385222,
+    "regression_pct": 38.5222
+  },
+  "decision": "discard",
+  "reason": "The fusion helps light-cone expectation contractions but harms the repeated perfect-sampling contraction paths; fewer nodes are not sufficient when their numerical/path structure is worse."
+}

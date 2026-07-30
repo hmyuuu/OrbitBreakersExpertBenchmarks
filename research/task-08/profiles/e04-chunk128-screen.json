@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "task_id": "08",
+  "experiment": "e04-chunk128",
+  "candidate_commit": "d7bd87d",
+  "candidate_sha256": "5caecfd033af167849503c3cbc6bfa918208ff0344b72c7a58bdb82c9e02485e",
+  "diff_sha256": "104366a653faaf2341991981fe60bc32b4bb0bfe1d750dcaa4ad5b94ddb2dc46",
+  "chunk_size": 128,
+  "canonical_8192_screen": {
+    "runtime_sec": 55.182176,
+    "passed": true,
+    "max_single_z_error": 0.0048927686,
+    "max_hidden_z_string_error": 0.0188068181,
+    "mean_hidden_z_string_error": 0.003964317
+  },
+  "comparison_to_chunk256_screen": {
+    "chunk256_runtime_sec": 44.028239,
+    "candidate_over_chunk256_ratio": 1.253336,
+    "regression_pct": 25.3336
+  },
+  "decision": "discard",
+  "reason": "The extra 32 chunk dispatches and synchronizations dominate any smaller-graph benefit."
+}

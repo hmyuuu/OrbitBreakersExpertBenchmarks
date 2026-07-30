@@ -6,7 +6,7 @@
   "created_at": "2026-07-29T15:04:30Z",
   "generator_commit": "0819ed34dd3f1eaa8f77587c2a40d95a420ea829",
   "environment_image_digest": null,
-  "selected_task_id": "05",
+  "selected_task_id": "08",
   "coverage_requirements": {
     "canonical_case": 1,
     "reduced_smoke_case_when_supported": 1,
@@ -110,7 +110,26 @@
       "provenance": "Canonical public configuration from tasks/task-02/problem.md and tasks/task-02/evaluator/evaluate_2.py at commit d13e2591574cc1480507b00bcb33b0c6a48e6b99.",
       "expert_validation_status": "PASS",
       "expert_validation_report_sha256": "7d450e074cc5a4cabca72e9f6cd5787e2f5226c42c69cf6c3016ec53465b9912"
+    },
+    {
+      "task_id": "08",
+      "case_id": "task-08-canonical-fixed-v1",
+      "path": "task-08/canonical.json",
+      "sha256": "a4973deb3f3a727966de495fdc385101283d87e2702ec8ea5c1d7dfef9d7c5df",
+      "provenance": "Canonical public configuration from tasks/task-08/problem.md and tasks/task-08/evaluator/evaluate_8.py at commit 5af98f27b9404c513df8eee0f4568b1512edee19.",
+      "expert_validation_status": "RESOURCE_EXHAUSTED",
+      "independent_oracle_status": "PASS",
+      "independent_oracle_report_sha256": "871fe485ba5b168f09f8cb13a2885d76426f152f148503c4ab77961d7a567de7"
+    },
+    {
+      "task_id": "08",
+      "case_id": "task-08-reduced-2048-v1",
+      "path": "task-08/reduced-2048.json",
+      "sha256": "509957ba5a1757d7d1c3ebac5f8c20320f586a525bfc08d205bb5a789fb1440c",
+      "provenance": "Public --n-samples 2048 scale probe supported by tasks/task-08/evaluator/evaluate_8.py at commit 5af98f27b9404c513df8eee0f4568b1512edee19; circuit, seed, sampling algorithm, thresholds and output semantics unchanged.",
+      "expert_validation_status": "PASS",
+      "expert_validation_runtime_sec": 48.113225
     }
   ],
-  "environment_note": "Tasks 01, 02, 04, and 06 were validated in image sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833 with 6 CPUs, 7 GiB, no network, and TensorCircuit-NG 1.8.0.dev20260726. Tasks 01, 02, and 04 used six immutable-reference runs; earlier task cases retain their original validation records."
+  "environment_note": "Tasks 01, 02, 04, 06, and 08 were validated in image sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833 with 6 CPUs, 7 GiB, no network, and TensorCircuit-NG 1.8.0.dev20260726. Tasks 01, 02, and 04 used six immutable-reference runs. The Task 08 canonical immutable expert reproducibly exhausted memory while requesting 17,998,348,288 bytes, so its semantics were independently validated by 44 exact TensorCircuit light-cone expectation contractions; the public 2048-shot scale probe passed. Earlier task cases retain their original validation records."
 }

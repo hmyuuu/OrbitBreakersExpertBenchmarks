@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task_id": "08",
+  "experiment": "e05-scan256",
+  "candidate_commit": "c07c660",
+  "candidate_sha256": "51c55e16ce6021b4ac3ff3da0387038beb347dd0b4105d91b416953d5b1bcb87",
+  "diff_sha256": "6aba49e302f4e0bb2f6698b95d308fdb9d503f7b21d2af9eaa7f601e7dd30c52",
+  "chunk_size": 256,
+  "loop_implementation": "TensorCircuit backend K.jaxy_scan inside one K.jit",
+  "canonical_8192_screen": {
+    "runtime_sec": 67.400915,
+    "passed": true,
+    "max_single_z_error": 0.0048927686,
+    "max_hidden_z_string_error": 0.0188068181,
+    "mean_hidden_z_string_error": 0.003980963
+  },
+  "comparison_to_python_chunk256": {
+    "python_chunk_runtime_sec": 44.028239,
+    "candidate_over_python_ratio": 1.530855,
+    "regression_pct": 53.0855
+  },
+  "decision": "discard",
+  "reason": "Staging the large conditional-contraction body inside XLA scan adds compile/control-flow cost much larger than the 31 host dispatches it removes."
+}

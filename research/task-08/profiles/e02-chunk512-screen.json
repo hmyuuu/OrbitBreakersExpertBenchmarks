@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "task_id": "08",
+  "experiment": "e02-shot-chunks",
+  "classification": "passing candidate screen; formal paired benchmark pending",
+  "candidate_commit": "673b3b3",
+  "candidate_sha256": "60f23741c1fcbc13ae67884b3c6f94ad939548056820bbace2b73da7c9a27e03",
+  "diff_sha256": "90314a596f75ebc26d11bd5fdab9f3a2d18e71741fd632b327931be36c785f81",
+  "chunk_size": 512,
+  "environment_image_id": "sha256:b059c5fa7f75702f9afbf94ec7866e102ac32afd59d25634ec0aca0fd56e2833",
+  "cpu_limit": 6,
+  "memory_limit": "7 GiB",
+  "reduced_2048_screen": {
+    "candidate_runtime_sec": 31.478739,
+    "reference_initial_runtime_sec": 48.113225,
+    "screen_speedup": 1.528443,
+    "candidate_passed": true,
+    "reference_passed": true,
+    "candidate_max_single_z_error": 0.0171194055,
+    "candidate_max_hidden_z_string_error": 0.0412643455,
+    "candidate_mean_hidden_z_string_error": 0.0101740381,
+    "observable_metrics_identical_to_reference": true,
+    "formal_claim_eligible": false,
+    "reason": "Single non-paired screen; six counterbalanced pairs remain required."
+  },
+  "canonical_8192_screen": {
+    "candidate_runtime_sec": 50.843383,
+    "candidate_passed": true,
+    "reference_status": "RESOURCE_EXHAUSTED",
+    "reference_runtime_sec": null,
+    "sample_shape": [
+      8192,
+      49
+    ],
+    "max_single_z_error": 0.0046486279,
+    "max_hidden_z_string_error": 0.0188068181,
+    "mean_hidden_z_string_error": 0.0039865117,
+    "classification": "OOM-to-PASS feasibility; not a speedup"
+  },
+  "decision": "keep provisionally and tune chunk size before formal pairs"
+}

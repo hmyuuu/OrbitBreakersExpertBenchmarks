@@ -1,0 +1,150 @@
+{
+  "schema_version": 1,
+  "task_id": "08",
+  "workload": "canonical n_samples=8192",
+  "classification": "high-memory canonical feasibility; descriptive runtime difference not promoted",
+  "raw_report_sha256": "c6f281479979d34e8293a3ad0bde749fad8140cc095daeb8bb0661921102f2b8",
+  "slurm": {
+    "job_id": "23014910",
+    "state": "COMPLETED",
+    "elapsed": "00:21:26",
+    "partition": "xhacnormalb",
+    "node": "a01r04n07",
+    "cpu": "AMD EPYC 7742 64-Core Processor",
+    "architecture": "x86_64",
+    "requested_memory": "64 GiB",
+    "max_rss_kib": 26051648,
+    "max_rss_gib": 24.84478759765625,
+    "allocated_cpus": 17,
+    "benchmark_cpu_affinity": [
+      2,
+      4,
+      10,
+      18,
+      20,
+      34
+    ],
+    "benchmark_cpu_count": 6,
+    "allocation_note": "The partition permits 3931 MiB per requested CPU, so 17 CPUs were reserved to obtain 64 GiB. The controller and every evaluator child were affinity-limited to the same six CPUs."
+  },
+  "environment": {
+    "container": "Apptainer 1.3.4 pre-expanded Python sandbox",
+    "python": "3.11.15",
+    "tensorcircuit": "1.7.0.dev20260618",
+    "jax": "0.10.0",
+    "jaxlib": "0.10.0",
+    "numpy": "2.2.6",
+    "omeco_distribution": "0.2.4",
+    "network_during_cells": false,
+    "fresh_evaluator_process_per_cell": true,
+    "timeout_sec_per_cell": 300
+  },
+  "provenance": {
+    "reference_sha256": "0b0df74257e8f55d717ca29bb36e2edbb803206e9b2966fa423fefca9f15c311",
+    "candidate_sha256": "7696f4d742d07da92a06cf5bdd4634f26ca5fe9251471163a90a4b6da280b45d",
+    "evaluator_sha256": "bffda6b012b07fd1cb8d5a1ec8a763bba4f1b967e5adc0d2b704e6ae99de9c41",
+    "sitecustomize_sha256": "02800060761f2b15abe9055aded49d2af3877ab93d7b0fae8af94b30bac30120",
+    "requirements_lock_sha256": "cd5ac5cb2102ea7b40bd46dc81320cc59e0ce0671ab88c597f81d82b384a824b",
+    "sif_sha256": "17dcff888e341955e53682a44ebd8b6894ed38ecc6fc95e8ee5b9c20fd35989a",
+    "runner_sha256": "1094bbe619bdcf332f46796260c6c56a150a89dba2ff63404f988c2786fd175b",
+    "repository_archive_sha256": "e33e53713463dae575d2901875c2fc70c91f1e65a72e8def70e8b2a13701aad5",
+    "repository_commit": "178d06d",
+    "snapshot_sha256": "c8abfb27a942132a8032dc66a25004f536e364d222d2093600cec3e04c46d9ec"
+  },
+  "pair_order": "odd reference->candidate; even candidate->reference",
+  "pairs": [
+    {
+      "pair": 1,
+      "order": "reference->candidate",
+      "reference_sec": 133.779068,
+      "candidate_sec": 104.469589,
+      "speedup": 1.2805551288231831,
+      "candidate_won": true
+    },
+    {
+      "pair": 2,
+      "order": "candidate->reference",
+      "reference_sec": 117.35176,
+      "candidate_sec": 124.285933,
+      "speedup": 0.9442079016295433,
+      "candidate_won": false
+    },
+    {
+      "pair": 3,
+      "order": "reference->candidate",
+      "reference_sec": 116.30697,
+      "candidate_sec": 143.334082,
+      "speedup": 0.8114397383868549,
+      "candidate_won": false
+    },
+    {
+      "pair": 4,
+      "order": "candidate->reference",
+      "reference_sec": 132.744516,
+      "candidate_sec": 114.131608,
+      "speedup": 1.1630828508085158,
+      "candidate_won": true
+    },
+    {
+      "pair": 5,
+      "order": "reference->candidate",
+      "reference_sec": 133.194228,
+      "candidate_sec": 129.717456,
+      "speedup": 1.0268026532990286,
+      "candidate_won": true
+    }
+  ],
+  "reference": {
+    "attempts": 5,
+    "passing_runs": 5,
+    "runtimes_sec": [
+      133.779068,
+      117.35176,
+      116.30697,
+      132.744516,
+      133.194228
+    ],
+    "mean_sec": 126.6753084,
+    "median_sec": 132.744516,
+    "sample_stdev_sec": 9.003138203451773,
+    "stderr_sec": 4.026325806748699,
+    "min_sec": 116.30697,
+    "max_sec": 133.779068,
+    "all_functional_checks_passed": true
+  },
+  "candidate": {
+    "attempts": 5,
+    "passing_runs": 5,
+    "runtimes_sec": [
+      104.469589,
+      124.285933,
+      143.334082,
+      114.131608,
+      129.717456
+    ],
+    "mean_sec": 123.1877336,
+    "median_sec": 124.285933,
+    "sample_stdev_sec": 14.850092748421549,
+    "stderr_sec": 6.641163371529453,
+    "min_sec": 104.469589,
+    "max_sec": 143.334082,
+    "all_functional_checks_passed": true
+  },
+  "comparison": {
+    "eligible_runtime_pairs": 5,
+    "candidate_pair_wins": 3,
+    "ratio_of_means_speedup": 1.0283110558014195,
+    "ratio_of_means_improvement_pct": 2.753160694100986,
+    "mean_pairwise_speedup": 1.0452176545894252,
+    "median_pairwise_speedup": 1.0268026532990286,
+    "pairwise_speedup_sample_stdev": 0.18335084389500847,
+    "pairwise_speedup_stderr": 0.08199699013623825,
+    "pairwise_speedup_95pct_t_ci": [
+      0.8175575126845338,
+      1.2728777964943165
+    ]
+  },
+  "promotion_rule_passed": false,
+  "claim": "The immutable expert is reproducibly runnable with sufficient memory. On this separate x86_64 host the candidate mean is descriptively 2.75% lower, but it wins only 3/5 pairs and the paired 95% confidence interval includes 1.0; no confirmed runtime speedup is claimed.",
+  "cross_hardware_note": "Absolute times from this x86_64 Slurm node are not combined with the Apple M2 Docker sessions. Only within-session reference/candidate comparisons are used."
+}

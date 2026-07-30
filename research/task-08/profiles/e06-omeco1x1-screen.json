@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task_id": "08",
+  "experiment": "e06-omeco1x1",
+  "candidate_commit": "74b4be2",
+  "candidate_sha256": "861b610773d33f4f04cbf5422aa7b71c419105811c991f7bcd5ccd36220f050b",
+  "diff_sha256": "e9c000f299a1585021c87ba0c1ebe07b02567e1c747e3d84fb994488e5bfc321",
+  "parent_candidate": "256-shot Python chunks with OMECo 4x4",
+  "contractor": "omeco-1-1",
+  "canonical_8192_screen": {
+    "runtime_sec": 131.95854,
+    "passed": true,
+    "max_single_z_error": 0.0046682336,
+    "max_hidden_z_string_error": 0.0188068181,
+    "mean_hidden_z_string_error": 0.0039754143
+  },
+  "comparison_to_omeco4x4": {
+    "omeco4x4_runtime_sec": 44.028239,
+    "candidate_over_parent_ratio": 2.997132,
+    "regression_pct": 199.7132
+  },
+  "decision": "discard",
+  "reason": "The smaller search budget selects much worse contraction paths; repeated execution across 32 chunks dominates the saved path-search time."
+}
