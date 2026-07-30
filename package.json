@@ -1,0 +1,9 @@
+{
+  "name": "orbitbreakers-benchmark-results-site",
+  "private": true,
+  "scripts": {
+    "build": "python3 site/build.py --output _site",
+    "test": "python3 site/test_site.py",
+    "check": "npm run build && npm test"
+  }
+}
